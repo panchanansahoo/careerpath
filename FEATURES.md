@@ -1,4 +1,4 @@
-# Thita.ai - Complete Feature List
+# CareerPath - Complete Feature List
 
 ## 🎯 Core Platform Features
 

@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Access
 
-**Live URL**: `https://thita.ai/dashboard/learning-path/ai`
+**Live URL**: `https://careerpath.ai/dashboard/learning-path/ai`
 
 **Local Development**: `http://localhost:3000/dashboard/learning-path/ai`
 

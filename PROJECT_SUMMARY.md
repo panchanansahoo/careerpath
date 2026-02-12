@@ -1,8 +1,8 @@
-# Thita.ai - Project Summary
+# CareerPath - Project Summary
 
 ## 🎯 Project Overview
 
-**Thita.ai** is a comprehensive, production-ready AI-powered interview preparation platform built from scratch. It provides end-to-end functionality for software engineers preparing for technical interviews at top tech companies.
+**CareerPath** is a comprehensive, production-ready AI-powered interview preparation platform built from scratch. It provides end-to-end functionality for software engineers preparing for technical interviews at top tech companies.
 
 ## 📊 Project Statistics
 
@@ -447,7 +447,7 @@ This is not a prototype or proof-of-concept. This is a **production-ready, featu
 
 ## 🎉 Conclusion
 
-**Thita.ai** is a fully-functional, production-ready AI-powered interview preparation platform. With 200+ features, comprehensive AI integration, modern tech stack, and extensive documentation, it's ready to help thousands of engineers land their dream jobs.
+**CareerPath** is a fully-functional, production-ready AI-powered interview preparation platform. With 200+ features, comprehensive AI integration, modern tech stack, and extensive documentation, it's ready to help thousands of engineers land their dream jobs.
 
 ### Project Status: ✅ **COMPLETE & READY**
 

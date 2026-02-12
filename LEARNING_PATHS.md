@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Thita.ai platform now includes comprehensive learning paths for various technical domains. Each path is designed to guide users through structured learning journeys with modules, lessons, and practice problems.
+The CareerPath platform now includes comprehensive learning paths for various technical domains. Each path is designed to guide users through structured learning journeys with modules, lessons, and practice problems.
 
 ## Available Learning Paths
 

@@ -4,7 +4,7 @@
 
 A comprehensive, end-to-end learning platform for AI & Machine Learning with **Theory**, **Problems**, and **Patterns** fully integrated.
 
-**Live URL**: `https://thita.ai/dashboard/learning-path/ai`
+**Live URL**: `https://careerpath.ai/dashboard/learning-path/ai`
 
 ---
 

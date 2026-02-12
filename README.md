@@ -1,4 +1,4 @@
-# Thita.ai - AI Interview Prep Platform
+# CareerPath - AI Interview Prep Platform
 
 A comprehensive, full-stack AI-powered interview preparation platform featuring DSA patterns, system design, mock interviews, and resume analysis.
 
@@ -54,7 +54,7 @@ A comprehensive, full-stack AI-powered interview preparation platform featuring 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd thita-ai-platform
+cd careerpath
 ```
 
 2. Install dependencies:
@@ -70,10 +70,10 @@ cp .env.example .env
 Edit `.env` and configure:
 ```env
 PORT=3000
-DATABASE_URL=postgresql://user:password@localhost:5432/thita_ai
+DATABASE_URL=postgresql://user:password@localhost:5432/careerpath
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=thita_ai
+DB_NAME=careerpath
 DB_USER=postgres
 DB_PASSWORD=postgres
 JWT_SECRET=your-super-secret-jwt-key
@@ -85,7 +85,7 @@ FRONTEND_URL=http://localhost:5173
 
 Create PostgreSQL database:
 ```bash
-createdb thita_ai
+createdb careerpath
 ```
 
 Run setup script:
@@ -109,7 +109,7 @@ This will start:
 ## Project Structure
 
 ```
-thita-ai-platform/
+careerpath/
 ├── server/
 │   ├── db/
 │   │   ├── index.js          # Database connection

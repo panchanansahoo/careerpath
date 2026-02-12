@@ -256,7 +256,7 @@ class NeuralNetwork:
 
 ### Live URLs (Production)
 ```
-Base: https://thita.ai
+Base: https://careerpath.ai
 
 Overview:
 /dashboard/learning-path/ai

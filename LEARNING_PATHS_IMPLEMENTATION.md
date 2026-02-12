@@ -361,4 +361,4 @@ CREATE TABLE user_lesson_progress (
 - Comprehensive documentation
 - Ready for production deployment
 
-The learning paths feature is now a core part of the Thita.ai platform, providing structured guidance for users across multiple technical domains.
+The learning paths feature is now a core part of the CareerPath platform, providing structured guidance for users across multiple technical domains.

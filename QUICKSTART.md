@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get Thita.ai running in 5 minutes!
+Get CareerPath running in 5 minutes!
 
 ## Prerequisites
 
@@ -17,10 +17,10 @@ npm install
 2. **Set Up PostgreSQL**
 ```bash
 # Create database
-createdb thita_ai
+createdb careerpath
 
 # Or using psql
-psql -U postgres -c "CREATE DATABASE thita_ai;"
+psql -U postgres -c "CREATE DATABASE careerpath;"
 ```
 
 3. **Configure Environment**
@@ -85,7 +85,7 @@ After signup:
 pg_isready
 
 # Verify database exists
-psql -U postgres -l | grep thita_ai
+psql -U postgres -l | grep careerpath
 ```
 
 **Port in use?**

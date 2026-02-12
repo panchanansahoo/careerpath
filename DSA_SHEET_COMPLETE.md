@@ -179,7 +179,7 @@ Each of the 425 problems includes:
 
 ### Main URL
 ```
-https://thita.ai/dsa-patterns-sheet
+https://careerpath.ai/dsa-patterns-sheet
 or
 http://localhost:5173/dsa-patterns-sheet
 ```

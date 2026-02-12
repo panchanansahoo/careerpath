@@ -9,15 +9,15 @@ Successfully implemented comprehensive learning paths feature with **6 complete 
 All requested URLs are now functional and accessible at:
 
 ### Main Overview
-- **https://thita.ai/dashboard/learning-path**
+- **https://careerpath.ai/dashboard/learning-path**
 
 ### Individual Learning Paths
-1. **https://thita.ai/dashboard/learning-path/dsa-basics** ← DSA Fundamentals (Beginner)
-2. **https://thita.ai/dashboard/learning-path/dsa** ← Advanced DSA (Advanced)  
-3. **https://thita.ai/dashboard/learning-path/data-science** ← Data Science Prep (Intermediate)
-4. **https://thita.ai/dashboard/learning-path/ai** ← AI & Machine Learning (Advanced)
-5. **https://thita.ai/dashboard/learning-path/lld** ← Low Level Design (Intermediate)
-6. **https://thita.ai/dashboard/learning-path/hld** ← High Level Design (Advanced)
+1. **https://careerpath.ai/dashboard/learning-path/dsa-basics** ← DSA Fundamentals (Beginner)
+2. **https://careerpath.ai/dashboard/learning-path/dsa** ← Advanced DSA (Advanced)  
+3. **https://careerpath.ai/dashboard/learning-path/data-science** ← Data Science Prep (Intermediate)
+4. **https://careerpath.ai/dashboard/learning-path/ai** ← AI & Machine Learning (Advanced)
+5. **https://careerpath.ai/dashboard/learning-path/lld** ← Low Level Design (Intermediate)
+6. **https://careerpath.ai/dashboard/learning-path/hld** ← High Level Design (Advanced)
 
 ## What Was Built
 
@@ -135,7 +135,7 @@ Created comprehensive documentation:
 
 ## How to Use
 
-1. **Login** to Thita.ai
+1. **Login** to CareerPath
 2. **Navigate** to Dashboard → Learning Path
 3. **Browse** all 6 learning paths
 4. **Click** on any path card to view details
@@ -244,7 +244,7 @@ For questions or issues:
 ✅ **Comprehensive documentation**
 ✅ **Ready for user testing and deployment**
 
-The learning paths feature is now a core part of Thita.ai, providing structured guidance for interview preparation across multiple technical domains.
+The learning paths feature is now a core part of CareerPath, providing structured guidance for interview preparation across multiple technical domains.
 
 ---
 

@@ -1,6 +1,6 @@
-# Thita.ai Setup Guide
+# CareerPath Setup Guide
 
-This guide will help you set up and run the Thita.ai platform locally.
+This guide will help you set up and run the CareerPath platform locally.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ Before you begin, make sure you have the following installed:
 
 ```bash
 git clone <repository-url>
-cd thita-ai-platform
+cd careerpath-platform
 ```
 
 ### 2. Install Dependencies
@@ -69,7 +69,7 @@ This will install all required packages including:
    psql -U postgres
    
    # Create database
-   CREATE DATABASE thita_ai;
+   CREATE DATABASE careerpath;
    
    # Exit
    \q
@@ -78,9 +78,9 @@ This will install all required packages including:
 #### Option B: Using Docker
 
 ```bash
-docker run --name thita-postgres \
+docker run --name careerpath-postgres \
   -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=thita_ai \
+  -e POSTGRES_DB=careerpath \
   -p 5432:5432 \
   -d postgres:14
 ```
@@ -100,12 +100,12 @@ nano .env  # or vim, code, etc.
 # Database - Update if your PostgreSQL uses different credentials
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=thita_ai
+DB_NAME=careerpath
 DB_USER=postgres
 DB_PASSWORD=postgres
 
 # JWT Secret - CHANGE THIS for production!
-JWT_SECRET=thita-ai-super-secret-jwt-key-change-in-production-12345
+JWT_SECRET=careerpath-super-secret-jwt-key-change-in-production-12345
 
 # OpenAI API Key - Add your key here for AI features
 OPENAI_API_KEY=sk-your-actual-openai-key-here
@@ -237,14 +237,14 @@ taskkill /PID <PID> /F
    ```
 
 2. Verify database credentials in `.env`
-3. Make sure database `thita_ai` exists:
+3. Make sure database `careerpath` exists:
    ```bash
    psql -U postgres -l
    ```
 
 4. Test connection manually:
    ```bash
-   psql -h localhost -U postgres -d thita_ai
+   psql -h localhost -U postgres -d careerpath
    ```
 
 ### Module Not Found Errors
@@ -306,7 +306,7 @@ To add more DSA problems, you can:
 
 View data:
 ```bash
-psql -U postgres -d thita_ai
+psql -U postgres -d careerpath
 
 # List tables
 \dt
@@ -324,8 +324,8 @@ SELECT id, email, full_name FROM users;
 Reset database:
 ```bash
 # Drop and recreate
-psql -U postgres -c "DROP DATABASE thita_ai;"
-psql -U postgres -c "CREATE DATABASE thita_ai;"
+psql -U postgres -c "DROP DATABASE careerpath;"
+psql -U postgres -c "CREATE DATABASE careerpath;"
 
 # Re-run setup
 npm run setup
@@ -365,7 +365,7 @@ For production deployment:
 3. **Use process manager:**
    ```bash
    npm install -g pm2
-   pm2 start server/index.js --name thita-api
+   pm2 start server/index.js --name careerpath-api
    ```
 
 4. **Set up reverse proxy (Nginx):**

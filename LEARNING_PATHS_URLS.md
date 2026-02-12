@@ -11,37 +11,37 @@
 
 #### 1. DSA Basics
 - **URL**: `/dashboard/learning-path/dsa-basics`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/dsa-basics`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/dsa-basics`
 - **Level**: Beginner
 - **Focus**: Fundamental data structures and algorithms
 
 #### 2. Advanced DSA
 - **URL**: `/dashboard/learning-path/dsa`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/dsa`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/dsa`
 - **Level**: Advanced
 - **Focus**: Complex algorithms for FAANG interviews
 
 #### 3. Data Science Interview Prep
 - **URL**: `/dashboard/learning-path/data-science`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/data-science`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/data-science`
 - **Level**: Intermediate
 - **Focus**: Statistics, ML, and Python for DS roles
 
 #### 4. AI & Machine Learning
 - **URL**: `/dashboard/learning-path/ai`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/ai`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/ai`
 - **Level**: Advanced
 - **Focus**: Deep learning and neural networks
 
 #### 5. Low Level Design
 - **URL**: `/dashboard/learning-path/lld`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/lld`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/lld`
 - **Level**: Intermediate
 - **Focus**: OOP and design patterns
 
 #### 6. High Level Design
 - **URL**: `/dashboard/learning-path/hld`
-- **Equivalent**: `https://thita.ai/dashboard/learning-path/hld`
+- **Equivalent**: `https://careerpath.ai/dashboard/learning-path/hld`
 - **Level**: Advanced
 - **Focus**: System design and distributed systems
 

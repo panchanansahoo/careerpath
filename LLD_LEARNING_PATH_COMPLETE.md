@@ -396,7 +396,7 @@ Each includes:
 
 ### Main URL
 ```
-https://thita.ai/dashboard/learning-path/lld
+https://careerpath.ai/dashboard/learning-path/lld
 or
 http://localhost:5173/dashboard/learning-path/lld
 ```

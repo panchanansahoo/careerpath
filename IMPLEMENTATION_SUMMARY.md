@@ -186,7 +186,7 @@ server/
 npm install
 
 # 2. Set up PostgreSQL database
-createdb thita_ai
+createdb careerpath
 
 # 3. Copy environment variables
 cp .env.example .env

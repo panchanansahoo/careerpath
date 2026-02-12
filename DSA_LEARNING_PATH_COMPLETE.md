@@ -359,7 +359,7 @@ Each of the 14 modules contains:
 
 ### Main URL
 ```
-https://thita.ai/dashboard/learning-path/dsa
+https://careerpath.ai/dashboard/learning-path/dsa
 or
 http://localhost:5173/dashboard/learning-path/dsa
 ```

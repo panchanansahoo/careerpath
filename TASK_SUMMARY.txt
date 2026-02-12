@@ -3,7 +3,7 @@
 
 
 "Add all Theory with problems and patterns means build end to end 
-everything" for https://thita.ai/dashboard/learning-path/ai
+everything" for https://careerpath.ai/dashboard/learning-path/ai
 
  STATUS: COMPLETE
 

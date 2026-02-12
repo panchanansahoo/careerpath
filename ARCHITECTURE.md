@@ -1,8 +1,8 @@
-# Thita.ai Architecture Documentation
+# CareerPath Architecture Documentation
 
 ## System Overview
 
-Thita.ai is a full-stack AI-powered interview preparation platform built with modern web technologies. The system consists of three main layers:
+CareerPath is a full-stack AI-powered interview preparation platform built with modern web technologies. The system consists of three main layers:
 
 1. **Frontend Layer**: React-based SPA
 2. **Backend Layer**: Node.js/Express REST API

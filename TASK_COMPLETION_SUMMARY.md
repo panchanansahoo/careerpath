@@ -6,7 +6,7 @@ All requested work for the LLD learning path has been completed and committed.
 
 ## Commit Information
 
-- **Branch**: cto-task-https-thita-ai-build-this-website-end-to-end-backend-and-fon
+- **Branch**: cto-task-https-careerpath-ai-build-this-website-end-to-end-backend-and-fon
 - **Latest Commit**: 886b839
 - **Commit Message**: "Add complete LLD learning path with all 24 design patterns, SOLID principles, and 15 practice problems"
 - **Status**: All changes committed, working tree clean
@@ -38,7 +38,7 @@ All requested work for the LLD learning path has been completed and committed.
 
 The LLD learning path is accessible at:
 ```
-https://thita.ai/dashboard/learning-path/lld
+https://careerpath.ai/dashboard/learning-path/lld
 ```
 
 ## Features Delivered

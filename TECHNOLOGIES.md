@@ -1,6 +1,6 @@
-# Technology Stack - Thita.ai
+# Technology Stack - CareerPath
 
-Complete list of technologies, libraries, and tools used in the Thita.ai platform.
+Complete list of technologies, libraries, and tools used in the CareerPath platform.
 
 ## Frontend Technologies
 
@@ -441,4 +441,4 @@ src/
 - **Security**: JWT, bcrypt, Helmet
 - **Total Dependencies**: 20+ production packages
 
-This technology stack provides a modern, scalable, and maintainable foundation for the Thita.ai interview preparation platform.
+This technology stack provides a modern, scalable, and maintainable foundation for the CareerPath interview preparation platform.
