@@ -1,0 +1,54 @@
+{
+  "name": "careerpath",
+  "version": "1.0.0",
+  "description": "AI-powered interview preparation platform",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node --watch server/index.js",
+    "client": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "setup": "node server/setup.js"
+  },
+  "keywords": [
+    "ai",
+    "interview",
+    "dsa",
+    "system-design"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "groq-sdk": "^0.37.0",
+    "helmet": "^7.1.0",
+    "multer": "^1.4.5-lts.1",
+    "pdf-parse": "^1.1.1",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.24",
+    "axios": "^1.6.7",
+    "concurrently": "^8.2.2",
+    "lucide-react": "^0.323.0",
+    "pg": "^8.18.0",
+    "postcss": "^8.5.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "tailwindcss": "^4.1.18",
+    "vite": "^5.1.0"
+  }
+}
