@@ -1,153 +1,194 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Check, Play, Code2, AlertCircle, Loader, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CursorGlow from '../components/CursorGlow';
 import axios from 'axios';
-import { BookOpen, ChevronRight, Search, Filter, Layers, Code2 } from 'lucide-react';
+
+const PatternCard = ({ pattern, index }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    // Calculate progress
+    const problems = pattern.problems || [];
+    const totalProblems = problems.length;
+    const solvedProblems = problems.filter(p => p.status === 'solved' || p.completed).length;
+    const progress = totalProblems > 0 ? (solvedProblems / totalProblems) * 100 : 0;
+    
+    // Determine colors based on index or category
+    const colors = [
+        "from-purple-500/20 to-blue-500/20 border-purple-500/30 hover:border-purple-500/50",
+        "from-emerald-500/20 to-teal-500/20 border-emerald-500/30 hover:border-emerald-500/50",
+        "from-orange-500/20 to-red-500/20 border-orange-500/30 hover:border-orange-500/50",
+        "from-pink-500/20 to-rose-500/20 border-pink-500/30 hover:border-pink-500/50",
+        "from-blue-500/20 to-cyan-500/20 border-blue-500/30 hover:border-blue-500/50"
+    ];
+    const colorClass = colors[index % colors.length];
+
+    return (
+        <div className={`rounded-xl border transition-all duration-300 backdrop-blur-md bg-gradient-to-br ${colorClass} mb-4 overflow-hidden group`}>
+            {/* Header / Summary */}
+            <div 
+                className="p-5 flex items-center justify-between cursor-pointer"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center font-bold text-white border border-white/10">
+                        {index + 1}
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-white group-hover:text-white/90 transition-colors">
+                            {pattern.name || pattern.category}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs text-white/50 mt-1">
+                            <Code2 size={12} />
+                            <span>{solvedProblems}/{totalProblems} Solved</span>
+                            <span className="text-zinc-600">•</span>
+                            <span className={`${progress === 100 ? 'text-emerald-400' : 'text-blue-400'}`}>
+                                {Math.round(progress)}% Complete
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                     {/* Progress Bar Mini */}
+                    <div className="hidden md:block w-32 h-1.5 bg-black/20 rounded-full overflow-hidden">
+                        <div 
+                            className="h-full bg-white transition-all duration-500"
+                            style={{ width: `${progress}%` }}
+                        ></div>
+                    </div>
+                    
+                    <button className={`p-2 rounded-full bg-white/5 hover:bg-white/10 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                         <ChevronDown size={18} className="text-white/70" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Expanded Content: Problem List */}
+            <div className={`border-t border-white/5 bg-black/20 transition-all duration-300 ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                <div className="p-4 space-y-2">
+                    {problems.map((problem, i) => (
+                        <div key={problem.id || i} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group/problem border border-transparent hover:border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border ${problem.status === 'solved' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'border-white/10 text-transparent'}`}>
+                                    <Check size={12} />
+                                </div>
+                                <span className={`text-sm font-medium ${problem.status === 'solved' ? 'text-white/40 line-through' : 'text-zinc-300 group-hover/problem:text-white'}`}>
+                                    {problem.title}
+                                </span>
+                                {problem.difficulty && (
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                        problem.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                        problem.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                        'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                    }`}>
+                                        {problem.difficulty}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            <div className="flex items-center gap-2 opacity-0 group-hover/problem:opacity-100 transition-opacity">
+                                <Link 
+                                    to={`/problem/${problem.id}`}
+                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                                >
+                                    <Play size={12} fill="currentColor" /> Solve
+                                </Link>
+                            </div>
+                        </div>
+                    ))}
+                    
+                    {problems.length === 0 && (
+                        <div className="p-4 text-center text-zinc-500 text-sm">
+                            No problems available in this category yet.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function DSAPatterns() {
-  const [patterns, setPatterns] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+    const [patterns, setPatterns] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPatterns();
-  }, []);
+    useEffect(() => {
+        const fetchPatterns = async () => {
+            try {
+                // Fetch patterns from API
+                const response = await axios.get('/api/dsa/patterns');
+                
+                // If API returns a flat list of patterns (like the sheet), grouping might be needed
+                // But typically the backend should return grouped data or we group it here.
+                // Assuming response.data.patterns is an array of categories with problems
+                
+                // If the API matches the new structure:
+                if (response.data?.patterns) {
+                     setPatterns(response.data.patterns);
+                } else {
+                    // Fallback mock data if API fails or is empty during dev
+                    setPatterns([
+                        {
+                            name: "Arrays & Hashing",
+                            problems: [
+                                { id: "contains-duplicate", title: "Contains Duplicate", difficulty: "Easy", status: "solved" },
+                                { id: "valid-anagram", title: "Valid Anagram", difficulty: "Easy", status: "pending" },
+                                { id: "two-sum", title: "Two Sum", difficulty: "Easy", status: "solved" }
+                            ]
+                        },
+                        {
+                            name: "Two Pointers",
+                            problems: [
+                                { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending" },
+                                { id: "3sum", title: "3Sum", difficulty: "Medium", status: "pending" }
+                            ]
+                        }
+                    ]);
+                }
+            } catch (error) {
+                console.error("Failed to load patterns", error);
+                // Fallback
+                setPatterns([]);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-  const fetchPatterns = async () => {
-    try {
-      const response = await axios.get('/api/dsa/patterns');
-      setPatterns(response.data.patterns);
-    } catch (error) {
-      console.error('Error fetching patterns:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        fetchPatterns();
+    }, []);
 
-  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
-  const filteredPatterns = patterns.filter(p => {
-    const matchesCategory = filter === 'all' || p.category.toLowerCase() === filter.toLowerCase();
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const categories = ['all', ...new Set(patterns.map(p => p.category))];
-
-  return (
-    <div className="container py-10 px-6">
-      {/* Header */}
-      <div className="text-center mb-12 animate-fade-up">
-        <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-          DSA Patterns
-        </h1>
-        <p className="text-xl text-secondary max-w-2xl mx-auto">
-          Master 90+ algorithmic patterns covering all major data structures and algorithms.
-          Stop memorizing solutions, start seeing patterns.
-        </p>
-      </div>
-
-      {/* Filters & Search */}
-      <div className="glass-panel p-6 rounded-2xl mb-10 flex flex-col md:flex-row gap-6 justify-between items-center animate-fade-up delay-100">
-        <div className="relative w-full md:w-96">
-          <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
-          <input 
-            type="text" 
-            placeholder="Search patterns..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-accent transition-colors"
-          />
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 custom-scrollbar">
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setFilter(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                filter === category 
-                  ? 'bg-accent text-white shadow-lg shadow-accent/30' 
-                  : 'bg-white/5 text-secondary hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPatterns.map((pattern, index) => (
-          <Link
-            key={pattern.id}
-            to={`/patterns/${pattern.id}`}
-            className="group block animate-fade-up"
-            style={{ animationDelay: `${0.1 + (index * 0.05)}s` }}
-          >
-            <div className="h-full glass-panel p-6 rounded-2xl border border-white/5 hover:border-accent/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-accent/10 relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
-                <ChevronRight size={20} className="text-muted group-hover:text-white transform group-hover:translate-x-1 transition-transform" />
-              </div>
-              
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent group-hover:scale-110 transition-transform duration-300">
-                  <Layers size={20} />
+        <div className="min-h-screen bg-[#020305] text-white font-sans pb-20 relative">
+            <CursorGlow />
+            
+             {/* Background Effects */}
+            <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+            <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+            
+            <div className="max-w-4xl mx-auto px-6 py-12 relative z-10">
+                <div className="mb-10 text-center">
+                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-white mb-4">
+                        Master the Patterns
+                    </h1>
+                    <p className="text-zinc-400 max-w-lg mx-auto">
+                        A structured roadmap to ace your coding interviews. Master 15 key patterns to solve 95% of questions.
+                    </p>
                 </div>
-                <h3 className="text-lg font-bold text-white group-hover:text-accent transition-colors line-clamp-1">
-                  {pattern.name}
-                </h3>
-              </div>
-              
-              <p className="text-secondary text-sm mb-6 line-clamp-2 h-10">
-                {pattern.description}
-              </p>
 
-              <div className="flex items-center justify-between mt-auto">
-                <div className="flex gap-2">
-                  <span className={`px-2 py-1 rounded text-xs font-medium border ${
-                    pattern.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                    pattern.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-                    'bg-red-500/10 text-red-400 border-red-500/20'
-                  }`}>
-                    {pattern.difficulty}
-                  </span>
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    {pattern.category}
-                  </span>
-                </div>
-                {pattern.problem_count > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-muted">
-                    <Code2 size={12} />
-                    <span>{pattern.problem_count} problems</span>
-                  </div>
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <Loader className="animate-spin text-purple-500" size={32} />
+                        <p className="text-zinc-500">Loading your roadmap...</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {patterns.map((pattern, index) => (
+                            <PatternCard key={index} pattern={pattern} index={index} />
+                        ))}
+                    </div>
                 )}
-              </div>
             </div>
-          </Link>
-        ))}
-      </div>
-
-      {filteredPatterns.length === 0 && (
-        <div className="text-center py-20 text-muted">
-          <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
-          <p className="text-lg">No patterns found matching your criteria</p>
-          <button 
-            onClick={() => {setFilter('all'); setSearchQuery('')}}
-            className="mt-4 text-accent hover:underline"
-          >
-            Clear filters
-          </button>
         </div>
-      )}
-    </div>
-  );
+    );
 }

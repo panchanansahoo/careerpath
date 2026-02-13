@@ -53,14 +53,14 @@ export default function Signup() {
         }} />
 
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'white', textDecoration: 'none', marginBottom: 48, fontSize: 20, fontWeight: 700 }}>
-          <Sparkles size={22} color="#a78bfa" /> CareerPath
+          <Sparkles size={22} color="#a78bfa" /> CareerLoop
         </Link>
 
         <h2 style={{ fontSize: 36, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 16 }}>
           Start Your Journey<br />to FAANG
         </h2>
         <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 40, maxWidth: 400 }}>
-          Join thousands of engineers who landed their dream jobs using CareerPath's AI-powered interview preparation.
+          Join thousands of engineers who landed their dream jobs using CareerLoop's AI-powered interview preparation.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

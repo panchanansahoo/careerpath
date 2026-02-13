@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Overview from './pages/Overview';
 import Dashboard from './pages/Dashboard';
 import DSAPatterns from './pages/DSAPatterns';
 import PatternDetail from './pages/PatternDetail';
@@ -22,8 +23,13 @@ import DSAPatternsSheet from './pages/DSAPatternsSheet';
 import CodePractice from './pages/CodePractice';
 import Community from './pages/Community';
 import Pricing from './pages/Pricing';
-import Blog from './pages/Blog';
+import BlogList from './pages/BlogList';
+import BlogPost from './pages/BlogPost';
+import CreateBlog from './pages/CreateBlog';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import About from './pages/About';
+import Library from './pages/Library';
 import Contact from './pages/Contact';
 import VerifyEmail from './pages/VerifyEmail';
 import Onboarding from './pages/Onboarding';
@@ -79,7 +85,7 @@ function AppContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Public pages that don't show sidebar
-  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet'];
+  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet', '/privacy', '/terms', '/library'];
   const isPublicPage = publicPaths.includes(location.pathname);
   const showSidebar = user && !isPublicPage;
 
@@ -103,6 +109,10 @@ function AppContent() {
             <Route
               path="/dashboard"
               element={<PrivateRoute><Dashboard /></PrivateRoute>}
+            />
+            <Route
+              path="/overview"
+              element={<PrivateRoute><Overview /></PrivateRoute>}
             />
             <Route path="/dsa-patterns" element={<DSAPatterns />} />
             <Route path="/patterns/:id" element={<PatternDetail />} />
@@ -145,9 +155,14 @@ function AppContent() {
             <Route path="/code-practice" element={<CodePractice />} />
             <Route path="/community" element={<Community />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/blog" element={<Navigate to="/community" replace />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/blog" element={<BlogList />} />
+            <Route path="/blog/new" element={<PrivateRoute><CreateBlog /></PrivateRoute>} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
@@ -174,7 +189,7 @@ function Footer() {
           <div className="footer-brand">
             <h3 className="text-gradient">
               <Code2 size={24} />
-              CareerPath
+              CareerLoop
             </h3>
             <p>
               Comprehensive interview preparation platform helping engineers land their dream jobs at top tech companies.
@@ -186,7 +201,7 @@ function Footer() {
             <ul className="footer-links">
               <li><a href="/#features">Features</a></li>
               <li><Link to="/pricing">Pricing</Link></li>
-              <li><a href="/#testimonials">Success Stories</a></li>
+              <li><Link to="/blog">Blog</Link></li>
             </ul>
           </div>
 
@@ -204,14 +219,14 @@ function Footer() {
             <h4>Support</h4>
             <ul className="footer-links">
               <li><Link to="/contact">Contact Us</Link></li>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          © 2026 CareerPath. All rights reserved. Made with ❤️ for engineers.
+          © 2026 CareerLoop. All rights reserved. Made with ❤️ for engineers.
         </div>
       </div>
     </footer>

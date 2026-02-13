@@ -50,7 +50,7 @@ export default function Navbar({ hasSidebar }) {
   };
 
   // Define public paths that should show the public navbar
-  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet'];
+  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet', '/library'];
   const isPublicPage = publicPaths.includes(location.pathname);
 
   // Render Public Navbar if not logged in OR if on a public page
@@ -62,16 +62,17 @@ export default function Navbar({ hasSidebar }) {
             <div className="brand-logo">
               <Code2 size={24} color="white" />
             </div>
-            <span className="brand-text">CareerPath</span>
+            <span className="brand-text">CareerLoop</span>
           </Link>
 
           {/* Desktop Nav */}
           <div className="nav-links desktop-only">
             <a href="/#features" className="nav-link">Features</a>
+            <Link to="/library" className="nav-link">Library</Link>
             <Link to="/dsa-patterns-sheet" className="nav-link">DSA Patterns</Link>
-            <Link to="/pricing" className="nav-link">Pricing</Link>
-            <Link to="/community" className="nav-link">Community</Link>
-            <a href="/#testimonials" className="nav-link">Stories</a>
+            <a href="/#pricing" className="nav-link">Pricing</a>
+            <a href="/#faq" className="nav-link">FAQ</a>
+            <Link to="/blog" className="nav-link">Blog</Link>
           </div>
 
           <div className="nav-actions desktop-only">
@@ -99,9 +100,10 @@ export default function Navbar({ hasSidebar }) {
         {mobileMenuOpen && (
           <div className="mobile-menu">
             <a href="/#features" className="mobile-link">Features</a>
+            <Link to="/library" className="mobile-link">Library</Link>
             <Link to="/dsa-patterns-sheet" className="mobile-link">DSA Patterns</Link>
-            <Link to="/pricing" className="mobile-link">Pricing</Link>
-            <Link to="/community" className="mobile-link">Community</Link>
+            <a href="/#pricing" className="mobile-link">Pricing</a>
+            <a href="/#faq" className="mobile-link">FAQ</a>
             {user ? (
               <Link to="/dashboard" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>Go to Dashboard</Link>
             ) : (

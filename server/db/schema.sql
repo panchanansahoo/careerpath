@@ -1,4 +1,4 @@
--- Supabase Schema for CareerPath
+-- Supabase Schema for CareerLoop
 -- Note: Users are managed by Supabase Auth (auth.users)
 -- This schema creates app-specific tables that reference auth.users
 

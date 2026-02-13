@@ -98,7 +98,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     <span className="brand-icon">
                         <Sparkles size={18} color="white" />
                     </span>
-                    {!collapsed && <span>CareerPath</span>}
+                    {!collapsed && <span>CareerLoop</span>}
                 </Link>
                 {!collapsed && (
                     <button className="sidebar-toggle" onClick={onToggle} title="Collapse">

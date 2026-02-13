@@ -1,160 +1,199 @@
 import React, { useState } from 'react';
-import { Mail, Clock, MessageSquare, Send } from 'lucide-react';
+import { Mail, MessageSquare, MapPin, Send, Linkedin, Github, Twitter, Loader } from 'lucide-react';
+import CursorGlow from '../components/CursorGlow';
 
 export default function Contact() {
-    const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+    });
     const [sending, setSending] = useState(false);
-    const [sent, setSent] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSending(true);
         try {
-            await fetch('/api/contact', {
+            const response = await fetch('http://localhost:3000/api/contact', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
             });
-            setSent(true);
-            setForm({ name: '', email: '', subject: '', message: '' });
-        } catch (err) {
-            alert('Failed to send message. Please try again.');
+
+            if (response.ok) {
+                setSubmitted(true);
+                setFormData({ name: '', email: '', subject: '', message: '' });
+            } else {
+                alert("Failed to send message. Please try again.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error sending message.");
+        } finally {
+            setSending(false);
         }
-        setSending(false);
+    };
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     return (
-        <div>
-            <section className="home-hero" style={{ padding: '80px 20px 60px' }}>
-                <div className="container">
-                    <h1 style={{ fontSize: '48px' }}>Get in Touch</h1>
-                    <p className="hero-sub">
-                        Have questions about our AI interview coaching? Need technical support? We're here to help you succeed in your interview preparation journey.
+        <div style={{ minHeight: '100vh', background: '#020203', color: 'white', position: 'relative' }}>
+            <CursorGlow />
+
+            <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', position: 'relative', zIndex: 10 }}>
+
+                {/* Header */}
+                <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                    <h1 style={{ fontSize: '48px', marginBottom: '16px' }}>Let's <span className="text-gradient">Connect</span></h1>
+                    <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
+                        Have a question about the platform? Want to partner up? Or just want to talk about AI and System Design? We'd love to hear from you.
                     </p>
                 </div>
-            </section>
 
-            <section className="home-section">
-                <div className="container" style={{ maxWidth: 1000 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginBottom: 50 }}>
-                        {/* Info Cards */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                            <div className="home-feature-card">
-                                <div className="home-feature-icon" style={{ background: 'rgba(108,92,231,0.15)', color: '#a78bfa' }}>
-                                    <Mail size={24} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '64px', alignItems: 'start' }}>
+
+                    {/* Contact Info Side */}
+                    <div>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '24px', border: '1px solid var(--zinc-800)' }}>
+                            <h3 style={{ fontSize: '24px', marginBottom: '32px' }}>Contact Information</h3>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8' }}>
+                                        <Mail size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>Email Us</h4>
+                                        <a href="mailto:careerloop.me@gmail.com" style={{ color: 'var(--zinc-400)', textDecoration: 'none', fontSize: '15px', transition: 'color 0.2s' }} className="hover:text-white">
+                                            careerloop.me@gmail.com
+                                        </a>
+                                    </div>
                                 </div>
-                                <h3>Email Support</h3>
-                                <p>Our primary communication channel</p>
-                                <a href="mailto:support@careerpath.ai" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 15 }}>
-                                    support@careerpath.ai
-                                </a>
-                                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
-                                    We respond to all emails within 24 hours
-                                </p>
+
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f472b6' }}>
+                                        <Linkedin size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>Connect on LinkedIn</h4>
+                                        <a href="https://www.linkedin.com/in/panchanansahoo/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--zinc-400)', textDecoration: 'none', fontSize: '15px' }} className="hover:text-white">
+                                            Panchanan Sahoo
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                                        <MapPin size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>Location</h4>
+                                        <p style={{ color: 'var(--zinc-400)', fontSize: '15px', margin: 0 }}>
+                                            Bangalore, India
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="home-feature-card">
-                                <div className="home-feature-icon" style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399' }}>
-                                    <Clock size={24} />
+                            <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid var(--zinc-800)' }}>
+                                <p style={{ color: 'var(--zinc-500)', fontSize: '14px', marginBottom: '16px' }}>Follow our journey</p>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <a href="#" className="icon-btn" style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--zinc-900)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', border: '1px solid var(--zinc-800)' }}><Twitter size={18} /></a>
+                                    <a href="#" className="icon-btn" style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--zinc-900)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', border: '1px solid var(--zinc-800)' }}><Github size={18} /></a>
                                 </div>
-                                <h3>Response Times</h3>
-                                <ul>
-                                    <li style={{ padding: '6px 0', fontSize: 14, color: 'var(--text-secondary)' }}>General inquiries: within 24 hours</li>
-                                    <li style={{ padding: '6px 0', fontSize: 14, color: 'var(--text-secondary)' }}>Technical support: within 12 hours</li>
-                                    <li style={{ padding: '6px 0', fontSize: 14, color: 'var(--text-secondary)' }}>Billing issues: within 6 hours</li>
-                                </ul>
                             </div>
-
-                            <div className="home-feature-card">
-                                <div className="home-feature-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>
-                                    <MessageSquare size={24} />
-                                </div>
-                                <h3>Business Hours</h3>
-                                <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                                    Monday - Friday: 9:00 AM - 6:00 PM IST
-                                </p>
-                                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>
-                                    Emergency support available 24/7 for critical issues
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Contact Form */}
-                        <div className="home-feature-card" style={{ padding: 32 }}>
-                            <h3 style={{ fontSize: 20, marginBottom: 4 }}>Send us a Message</h3>
-                            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24 }}>
-                                Fill out the form below and we'll get back to you as soon as possible
-                            </p>
-
-                            {sent ? (
-                                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                    <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-                                    <h3>Message Sent!</h3>
-                                    <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>
-                                        We'll get back to you within 24 hours.
-                                    </p>
-                                    <button onClick={() => setSent(false)} className="btn-hero-primary" style={{ marginTop: 20, border: 'none', cursor: 'pointer' }}>
-                                        Send Another Message
-                                    </button>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleSubmit}>
-                                    <div className="form-group">
-                                        <label>Name</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={form.name}
-                                            onChange={e => setForm({ ...form, name: e.target.value })}
-                                            placeholder="Your name"
-                                            style={{ width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Email</label>
-                                        <input
-                                            type="email"
-                                            required
-                                            value={form.email}
-                                            onChange={e => setForm({ ...form, email: e.target.value })}
-                                            placeholder="you@example.com"
-                                            style={{ width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Subject</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={form.subject}
-                                            onChange={e => setForm({ ...form, subject: e.target.value })}
-                                            placeholder="How can we help?"
-                                            style={{ width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14 }}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Message</label>
-                                        <textarea
-                                            required
-                                            rows={5}
-                                            value={form.message}
-                                            onChange={e => setForm({ ...form, message: e.target.value })}
-                                            placeholder="Tell us more about your question..."
-                                            style={{ width: '100%', padding: '10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)', fontSize: 14, resize: 'vertical', fontFamily: 'inherit' }}
-                                        />
-                                    </div>
-                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
-                                        If you're contacting about an existing account, please provide the email associated with it
-                                    </p>
-                                    <button type="submit" disabled={sending} className="btn-hero-primary" style={{ width: '100%', justifyContent: 'center', border: 'none', cursor: 'pointer', opacity: sending ? 0.6 : 1 }}>
-                                        <Send size={16} /> {sending ? 'Sending...' : 'Send Message'}
-                                    </button>
-                                </form>
-                            )}
                         </div>
                     </div>
+
+                    {/* Form Side */}
+                    <div style={{ background: 'rgba(10,10,10,0.6)', padding: '48px', borderRadius: '24px', border: '1px solid var(--zinc-800)', backdropFilter: 'blur(10px)' }}>
+                        {submitted ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#34d399' }}>
+                                    <MessageSquare size={40} />
+                                </div>
+                                <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>Message Sent!</h3>
+                                <p style={{ color: 'var(--zinc-400)', marginBottom: '32px' }}>
+                                    Thanks for reaching out. We'll get back to you at <strong>{formData.email}</strong> as soon as possible.
+                                </p>
+                                <button onClick={() => setSubmitted(false)} className="btn btn-outline">Send another message</button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSubmit}>
+                                <h3 style={{ fontSize: '24px', marginBottom: '32px' }}>Send a Message</h3>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                                    <div className="form-group">
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--zinc-400)', fontSize: '14px' }}>Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--zinc-800)', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                            placeholder="John Doe"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--zinc-400)', fontSize: '14px' }}>Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--zinc-800)', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                            placeholder="john@example.com"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: '24px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--zinc-400)', fontSize: '14px' }}>Subject</label>
+                                    <input
+                                        type="text"
+                                        name="subject"
+                                        value={formData.subject}
+                                        onChange={handleChange}
+                                        style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--zinc-800)', borderRadius: '8px', color: 'white', outline: 'none' }}
+                                        placeholder="Collaboration / Inquiry"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group" style={{ marginBottom: '32px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', color: 'var(--zinc-400)', fontSize: '14px' }}>Message</label>
+                                    <textarea
+                                        name="message"
+                                        value={formData.message}
+                                        onChange={handleChange}
+                                        style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--zinc-800)', borderRadius: '8px', color: 'white', outline: 'none', minHeight: '150px', resize: 'vertical' }}
+                                        placeholder="Tell us more..."
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={sending}
+                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
+                                >
+                                    {sending ? <Loader size={20} className="animate-spin" /> : <>Send Message <Send size={18} /></>}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+
                 </div>
-            </section>
+            </div>
         </div>
     );
 }

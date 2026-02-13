@@ -46,7 +46,7 @@ export default function Login() {
         }} />
 
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'white', textDecoration: 'none', marginBottom: 48, fontSize: 20, fontWeight: 700 }}>
-          <Sparkles size={22} color="#a78bfa" /> CareerPath
+          <Sparkles size={22} color="#a78bfa" /> CareerLoop
         </Link>
 
         <h2 style={{ fontSize: 36, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: 16 }}>

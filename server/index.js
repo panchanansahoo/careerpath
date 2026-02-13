@@ -14,6 +14,7 @@ import communityRoutes from './routes/community.js';
 import coachRoutes from './routes/coach.js';
 import interviewRoutes from './routes/interview.js';
 import contactRoutes from './routes/contact.js';
+import blogRoutes from './routes/blog.js';
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/community', communityRoutes);
 app.use('/api/ai/coach', coachRoutes);
 app.use('/api/ai/interview', interviewRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/blog', blogRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

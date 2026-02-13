@@ -6,7 +6,7 @@ const router = express.Router();
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
 
 const getSystemPrompt = (mode) => {
-  const basePrompt = "You are an expert AI Technical Coach on CareerPath. Your goal is to help users master software engineering concepts through the Socratic method. Do not just give answers; ask guiding questions to help the user derive the solution. Be concise, encouraging, and technically precise.";
+  const basePrompt = "You are an expert AI Technical Coach on CareerLoop. Your goal is to help users master software engineering concepts through the Socratic method. Do not just give answers; ask guiding questions to help the user derive the solution. Be concise, encouraging, and technically precise.";
   
   const prompts = {
     general: `${basePrompt} You can assist with DSA, System Design, and Career advice.`,

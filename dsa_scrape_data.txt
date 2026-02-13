@@ -1,0 +1,615 @@
+thita.ai
+collapse
+Dashboard
+Overview & quick start
+AI Interview
+AI-powered mock interviews
+AI Coach
+Revolutionary AI-powered learning
+Learning Path
+Pattern-based learning journey
+DSA Pattern Mastery
+Browse interview questions
+Resume Analyzer
+ATS optimization & analysis
+AI Code Practice
+AI-powered code practice
+Community
+Learn from the community
+Referrals
+Earn credits by referring friends
+DSA Pattern Mastery
+⌘K
+Toggle theme
+Sign In
+All Difficulties
+All Status
+Solving Problems Alone Won't Get You Hired
+
+Pair this sheet with AI mock interviews, instant code feedback, and a structured 90-day roadmap. See what plan fits your prep.
+
+Compare Plans
+DSA Pattern Mastery
+
+Systematic approach to Data Structures & Algorithms
+
+I
+Two Pointer Patterns
+7
+patterns
+0
+attempted
+1/93
+Two Pointers - Converging (Sorted Array Target Sum)
+Theory
+Watch
+9 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+Container With Most Water
+[M]
+Editorial
+Solve
+2.
+3Sum
+[M]
+Unlock
+Solve
+3.
+3Sum Closest
+[M]
+Unlock
+Solve
+4.
+4Sum
+[M]
+Editorial
+Solve
+5.
+Two Sum II - Input Array Is Sorted
+[M]
+Unlock
+Solve
+6.
+Intersection of Two Arrays
+[E]
+Editorial
+Solve
+7.
+Boats to Save People
+[M]
+Editorial
+Solve
+8.
+Squares of a Sorted Array
+[E]
+Unlock
+Solve
+9.
+3Sum Smaller
+[M]
+Unlock
+Solve
+2/93
+Two Pointers - Fast & Slow (Cycle Detection)
+Theory
+4 problems
+0 attempted
+3/93
+Two Pointers - Fixed Separation (Nth Node from End)
+Theory
+3 problems
+0 attempted
+4/93
+Two Pointers - In-place Array Modification
+Theory
+9 problems
+0 attempted
+5/93
+Two Pointers - String Comparison with Backspaces
+Theory
+2 problems
+0 attempted
+6/93
+Two Pointers - Expanding From Center (Palindromes)
+Theory
+2 problems
+0 attempted
+7/93
+Two Pointers - String Reversal
+Theory
+4 problems
+0 attempted
+II
+Sliding Window Patterns
+4
+patterns
+0
+attempted
+8/93
+Sliding Window - Fixed Size (Subarray Calculation)
+Theory
+Watch
+5 problems
+0 attempted
+9/93
+Sliding Window - Variable Size (Condition-Based)
+Theory
+20 problems
+0 attempted
+10/93
+Sliding Window - Monotonic Queue for Max/Min
+Theory
+3 problems
+0 attempted
+11/93
+Sliding Window - Character Frequency Matching
+Theory
+2 problems
+0 attempted
+III
+Tree Traversal Patterns (DFS & BFS)
+6
+patterns
+0
+attempted
+12/93
+Tree BFS - Level Order Traversal
+Theory
+5 problems
+0 attempted
+13/93
+Tree DFS - Recursive Preorder Traversal
+Theory
+7 problems
+0 attempted
+14/93
+Tree DFS - Recursive Inorder Traversal
+Theory
+6 problems
+0 attempted
+15/93
+Tree DFS - Recursive Postorder Traversal
+Theory
+10 problems
+0 attempted
+16/93
+Tree - Lowest Common Ancestor (LCA) Finding
+Theory
+2 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+Lowest Common Ancestor of a Binary Search Tree
+[M]
+Unlock
+Solve
+2.
+Lowest Common Ancestor of a Binary Tree
+[M]
+Unlock
+Solve
+17/93
+Tree - Serialization and Deserialization
+Theory
+3 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+Serialize and Deserialize Binary Tree
+[H]
+Unlock
+Solve
+2.
+Subtree of Another Tree
+[E]
+Unlock
+Solve
+3.
+Find Duplicate Subtrees
+[M]
+Editorial
+Solve
+IV
+Graph Traversal Patterns (DFS & BFS)
+12
+patterns
+0
+attempted
+V
+Dynamic Programming (DP) Patterns
+12
+patterns
+0
+attempted
+VI
+Heap (Priority Queue) Patterns
+4
+patterns
+0
+attempted
+VII
+Backtracking Patterns
+7
+patterns
+0
+attempted
+VIII
+Greedy Patterns
+6
+patterns
+0
+attempted
+IX
+Binary Search Patterns
+5
+patterns
+0
+attempted
+X
+Stack Patterns
+6
+patterns
+0
+attempted
+XI
+Bit Manipulation Patterns
+4
+patterns
+0
+attempted
+XII
+Linked List Manipulation Patterns
+5
+patterns
+0
+attempted
+XIII
+Array/Matrix Manipulation Patterns
+7
+patterns
+0
+attempted
+79/93
+Array/Matrix - In-place Rotation
+Theory
+Unlock
+3 problems
+0 attempted
+80/93
+Array/Matrix - Spiral Traversal
+Theory
+Unlock
+4 problems
+0 attempted
+81/93
+Array/Matrix - Set Matrix Zeroes (In-place Marking)
+Theory
+Unlock
+3 problems
+0 attempted
+82/93
+Array - Product Except Self (Prefix/Suffix Products)
+Theory
+Unlock
+2 problems
+0 attempted
+83/93
+Array - Plus One (Handling Carry)
+Theory
+Unlock
+4 problems
+0 attempted
+84/93
+Array - Merge Sorted Array (In-place from End)
+Theory
+Unlock
+2 problems
+0 attempted
+85/93
+Array - Cyclic Sort
+Theory
+Watch
+5 problems
+0 attempted
+XIV
+String Manipulation Patterns
+6
+patterns
+0
+attempted
+86/93
+String - Palindrome Check (Two Pointers / Reverse)
+Theory
+Watch
+3 problems
+0 attempted
+87/93
+String - Anagram Check (Frequency Count/Sort)
+Theory
+Unlock
+2 problems
+0 attempted
+88/93
+String - Roman to Integer Conversion/ String to Integer (atoi)
+Theory
+Unlock
+3 problems
+0 attempted
+89/93
+String - Multiply Strings/Add Strings (Manual Simulation)
+Theory
+Unlock
+3 problems
+0 attempted
+90/93
+String Matching - Naive / KMP / Rabin-Karp
+Theory
+Unlock
+5 problems
+0 attempted
+91/93
+String - Repeated Substring Pattern Detection
+Theory
+Unlock
+3 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+Repeated Substring Pattern
+[E]
+Unlock
+Solve
+2.
+Find the Index of the First Occurrence in a String
+[E]
+Editorial
+Solve
+3.
+Repeated String Match
+[M]
+Unlock
+Solve
+XV
+Design Patterns
+2
+patterns
+0
+attempted
+92/93
+Design (General/Specific)
+Theory
+33 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+LRU Cache
+[M]
+Unlock
+Solve
+2.
+Min Stack
+[M]
+Unlock
+Solve
+3.
+Implement Stack using Queues
+[E]
+Editorial
+Solve
+4.
+Implement Queue using Stacks
+[E]
+Editorial
+Solve
+5.
+Flatten 2D Vector
+[M]
+Editorial
+Solve
+6.
+Encode and Decode Strings
+[M]
+Editorial
+Solve
+7.
+Find Median from Data Stream
+[H]
+Editorial
+Solve
+8.
+Flatten Nested List Iterator
+[M]
+Editorial
+Solve
+9.
+Moving Average from Data Stream
+[E]
+Unlock
+Solve
+10.
+Design Snake Game
+[M]
+Editorial
+Solve
+11.
+Logger Rate Limiter
+[E]
+Editorial
+Solve
+12.
+Design Hit Counter
+[M]
+Editorial
+Solve
+13.
+Design Phone Directory
+[M]
+Editorial
+Solve
+14.
+Insert Delete GetRandom O(1)
+[M]
+Editorial
+Solve
+15.
+All O`one Data Structure
+[H]
+Editorial
+Solve
+16.
+LFU Cache
+[H]
+Editorial
+Solve
+17.
+Design Compressed String Iterator
+[E]
+Editorial
+Solve
+18.
+Design Circular Queue
+[M]
+Editorial
+Solve
+19.
+Design Circular Deque
+[M]
+Editorial
+Solve
+20.
+Design Search Autocomplete System
+[H]
+Editorial
+Solve
+21.
+Design HashMap
+[E]
+Editorial
+Solve
+22.
+Range Module
+[H]
+Unlock
+Solve
+23.
+RLE Iterator
+[M]
+Unlock
+Solve
+24.
+Time Based Key-Value Store
+[M]
+Unlock
+Solve
+25.
+Snapshot Array
+[M]
+Unlock
+Solve
+26.
+Tweet Counts Per Frequency
+[M]
+Unlock
+Solve
+27.
+Product of the Last K Numbers
+[M]
+Unlock
+Solve
+28.
+Design a Stack With Increment Operation
+[M]
+Editorial
+Solve
+29.
+Design Most Recently Used Queue
+[M]
+Editorial
+Solve
+30.
+Detect Squares
+[M]
+Editorial
+Solve
+31.
+Stock Price Fluctuation
+[M]
+Unlock
+Solve
+32.
+Design a Text Editor
+[H]
+Editorial
+Solve
+33.
+Smallest Number in Infinite Set
+[M]
+Unlock
+Solve
+93/93
+Tries
+Theory
+7 problems
+0 attempted
+Problem
+Editorial
+Code
+AI Coach
+External
+1.
+Implement Trie (Prefix Tree)
+[M]
+Editorial
+Solve
+2.
+Design Add and Search Words Data Structure
+[M]
+Editorial
+Solve
+3.
+Longest Word in Dictionary
+[E]
+Unlock
+Solve
+4.
+Replace Words
+[M]
+Unlock
+Solve
+5.
+Word Squares
+[H]
+Unlock
+Solve
+6.
+Design Search Autocomplete System
+[H]
+Editorial
+Solve
+7.
+Prefix and Suffix Search
+[H]
+Unlock
+Solve

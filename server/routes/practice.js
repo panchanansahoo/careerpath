@@ -2,6 +2,7 @@ import express from 'express';
 import { supabaseAdmin } from '../db/supabaseClient.js';
 import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import { all425Problems, getAllPatterns, getAllCompanies, getStatistics } from '../data/allProblems.js';
+import { getThitaPatterns } from '../data/thitaPatterns.js';
 
 const router = express.Router();
 
@@ -280,6 +281,16 @@ router.get('/companies-list', optionalAuth, (req, res) => {
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ error: 'Failed to fetch companies' });
+  }
+});
+
+router.get('/thita-structure', optionalAuth, (req, res) => {
+  try {
+    const structure = getThitaPatterns();
+    res.json({ structure });
+  } catch (error) {
+    console.error('Error fetching thita structure:', error);
+    res.status(500).json({ error: 'Failed to fetch thita structure' });
   }
 });
 

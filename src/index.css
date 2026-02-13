@@ -31,4 +31,20 @@
   .glass-panel {
     @apply bg-bg-card backdrop-blur-xl border border-white/10;
   }
+
+  .navbar {
+    @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out border-b border-transparent;
+  }
+
+  .navbar.scrolled {
+    @apply bg-bg-glass/80 backdrop-blur-md border-white/10 shadow-lg;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .navbar:not(.scrolled) {
+    background: transparent;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 }
