@@ -13,7 +13,8 @@ import ProblemSolver from './pages/ProblemSolver';
 import SystemDesign from './pages/SystemDesign';
 import ResumeAnalysis from './pages/ResumeAnalysis';
 import AIInterview from './pages/AIInterview';
-import AICoach from './pages/AICoach';
+import AptitudeMastery from './pages/AptitudeMastery';
+import SQLMastery from './pages/SQLMastery';
 import LearningPath from './pages/LearningPath';
 import LearningPathDetail from './pages/LearningPathDetail';
 import DSALearningPath from './pages/DSALearningPath';
@@ -85,7 +86,7 @@ function AppContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Public pages that don't show sidebar
-  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet', '/privacy', '/terms', '/library'];
+  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
   const isPublicPage = publicPaths.includes(location.pathname);
   const showSidebar = user && !isPublicPage;
 
@@ -130,9 +131,14 @@ function AppContent() {
               element={<PrivateRoute><AIInterview /></PrivateRoute>}
             />
             <Route
-              path="/ai-coach"
-              element={<PrivateRoute><AICoach /></PrivateRoute>}
+              path="/aptitude-mastery"
+              element={<PrivateRoute><AptitudeMastery /></PrivateRoute>}
             />
+            <Route
+              path="/sql-mastery"
+              element={<PrivateRoute><SQLMastery /></PrivateRoute>}
+            />
+
             <Route
               path="/dashboard/learning-path"
               element={<PrivateRoute><LearningPath /></PrivateRoute>}

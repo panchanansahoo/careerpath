@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Check, Play, Code2, AlertCircle, Loader, Lock } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Play, Code2, AlertCircle, Loader, Lock, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import CursorGlow from '../components/CursorGlow';
+import { dsaPatterns } from '../data/dsaPatternsData';
 import axios from 'axios';
 
 const PatternCard = ({ pattern, index }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    
+
     // Calculate progress
     const problems = pattern.problems || [];
     const totalProblems = problems.length;
     const solvedProblems = problems.filter(p => p.status === 'solved' || p.completed).length;
     const progress = totalProblems > 0 ? (solvedProblems / totalProblems) * 100 : 0;
-    
+
     // Determine colors based on index or category
     const colors = [
         "from-purple-500/20 to-blue-500/20 border-purple-500/30 hover:border-purple-500/50",
@@ -26,7 +27,7 @@ const PatternCard = ({ pattern, index }) => {
     return (
         <div className={`rounded-xl border transition-all duration-300 backdrop-blur-md bg-gradient-to-br ${colorClass} mb-4 overflow-hidden group`}>
             {/* Header / Summary */}
-            <div 
+            <div
                 className="p-5 flex items-center justify-between cursor-pointer"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
@@ -48,18 +49,18 @@ const PatternCard = ({ pattern, index }) => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4">
-                     {/* Progress Bar Mini */}
+                    {/* Progress Bar Mini */}
                     <div className="hidden md:block w-32 h-1.5 bg-black/20 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className="h-full bg-white transition-all duration-500"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
-                    
+
                     <button className={`p-2 rounded-full bg-white/5 hover:bg-white/10 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                         <ChevronDown size={18} className="text-white/70" />
+                        <ChevronDown size={18} className="text-white/70" />
                     </button>
                 </div>
             </div>
@@ -67,6 +68,11 @@ const PatternCard = ({ pattern, index }) => {
             {/* Expanded Content: Problem List */}
             <div className={`border-t border-white/5 bg-black/20 transition-all duration-300 ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                 <div className="p-4 space-y-2">
+                    <div className="flex justify-end px-2 pt-2">
+                        <Link to={`/patterns/${pattern.id}`} className="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1.5 transition-colors">
+                            <BookOpen size={14} /> Read Pattern Guide
+                        </Link>
+                    </div>
                     {problems.map((problem, i) => (
                         <div key={problem.id || i} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group/problem border border-transparent hover:border-white/5">
                             <div className="flex items-center gap-3">
@@ -77,18 +83,17 @@ const PatternCard = ({ pattern, index }) => {
                                     {problem.title}
                                 </span>
                                 {problem.difficulty && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                                        problem.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${problem.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                         problem.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                        'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                                    }`}>
+                                            'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                        }`}>
                                         {problem.difficulty}
                                     </span>
                                 )}
                             </div>
-                            
+
                             <div className="flex items-center gap-2 opacity-0 group-hover/problem:opacity-100 transition-opacity">
-                                <Link 
+                                <Link
                                     to={`/problem/${problem.id}`}
                                     className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
                                 >
@@ -97,7 +102,7 @@ const PatternCard = ({ pattern, index }) => {
                             </div>
                         </div>
                     ))}
-                    
+
                     {problems.length === 0 && (
                         <div className="p-4 text-center text-zinc-500 text-sm">
                             No problems available in this category yet.
@@ -114,58 +119,22 @@ export default function DSAPatterns() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPatterns = async () => {
-            try {
-                // Fetch patterns from API
-                const response = await axios.get('/api/dsa/patterns');
-                
-                // If API returns a flat list of patterns (like the sheet), grouping might be needed
-                // But typically the backend should return grouped data or we group it here.
-                // Assuming response.data.patterns is an array of categories with problems
-                
-                // If the API matches the new structure:
-                if (response.data?.patterns) {
-                     setPatterns(response.data.patterns);
-                } else {
-                    // Fallback mock data if API fails or is empty during dev
-                    setPatterns([
-                        {
-                            name: "Arrays & Hashing",
-                            problems: [
-                                { id: "contains-duplicate", title: "Contains Duplicate", difficulty: "Easy", status: "solved" },
-                                { id: "valid-anagram", title: "Valid Anagram", difficulty: "Easy", status: "pending" },
-                                { id: "two-sum", title: "Two Sum", difficulty: "Easy", status: "solved" }
-                            ]
-                        },
-                        {
-                            name: "Two Pointers",
-                            problems: [
-                                { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending" },
-                                { id: "3sum", title: "3Sum", difficulty: "Medium", status: "pending" }
-                            ]
-                        }
-                    ]);
-                }
-            } catch (error) {
-                console.error("Failed to load patterns", error);
-                // Fallback
-                setPatterns([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPatterns();
+        // Simulate loading for effect
+        const timer = setTimeout(() => {
+            setPatterns(dsaPatterns);
+            setLoading(false);
+        }, 800);
+        return () => clearTimeout(timer);
     }, []);
 
     return (
         <div className="min-h-screen bg-[#020305] text-white font-sans pb-20 relative">
             <CursorGlow />
-            
-             {/* Background Effects */}
+
+            {/* Background Effects */}
             <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
             <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none"></div>
-            
+
             <div className="max-w-4xl mx-auto px-6 py-12 relative z-10">
                 <div className="mb-10 text-center">
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-white mb-4">

@@ -4,7 +4,7 @@ import { MessageSquare, Brain, Code2, FileText, Clock, Filter, ChevronRight } fr
 
 const typeConfig = {
   interview: { icon: <MessageSquare size={18} />, label: 'AI Interview', color: '#f472b6', bg: 'rgba(236,72,153,0.15)' },
-  coach: { icon: <Brain size={18} />, label: 'AI Coach', color: '#a78bfa', bg: 'rgba(108,92,231,0.15)' },
+
   practice: { icon: <Code2 size={18} />, label: 'Code Practice', color: '#22d3ee', bg: 'rgba(6,182,212,0.15)' },
   resume: { icon: <FileText size={18} />, label: 'Resume Analysis', color: '#34d399', bg: 'rgba(16,185,129,0.15)' }
 };
@@ -35,12 +35,12 @@ export default function History() {
   // Demo data when API returns empty
   const demoSessions = [
     { id: 1, type: 'interview', title: 'DSA Mock Interview — Arrays & Strings', date: '2026-02-11', score: 85, duration: '25 min' },
-    { id: 2, type: 'coach', title: 'System Design — URL Shortener', date: '2026-02-10', score: null, duration: '18 min' },
+
     { id: 3, type: 'practice', title: 'Two Sum — Optimal Solution', date: '2026-02-10', score: 92, duration: '12 min' },
     { id: 4, type: 'interview', title: 'Behavioral Interview — Leadership', date: '2026-02-09', score: 78, duration: '20 min' },
     { id: 5, type: 'resume', title: 'Resume ATS Analysis', date: '2026-02-09', score: 88, duration: '5 min' },
     { id: 6, type: 'practice', title: 'Binary Search — Rotated Array', date: '2026-02-08', score: 95, duration: '10 min' },
-    { id: 7, type: 'coach', title: 'Dynamic Programming — Knapsack', date: '2026-02-08', score: null, duration: '22 min' },
+
     { id: 8, type: 'interview', title: 'System Design Mock — Chat System', date: '2026-02-07', score: 72, duration: '30 min' }
   ];
 
@@ -63,7 +63,7 @@ export default function History() {
           >
             <option value="all">All Sessions</option>
             <option value="interview">AI Interviews</option>
-            <option value="coach">AI Coach</option>
+
             <option value="practice">Code Practice</option>
             <option value="resume">Resume Analysis</option>
           </select>

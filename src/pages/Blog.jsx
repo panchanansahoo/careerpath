@@ -35,14 +35,7 @@ const blogPosts = [
         category: 'System Design',
         link: '/system-design'
     },
-    {
-        icon: '🧠',
-        readTime: '7 min read',
-        title: 'AI Coach: Your Personal 1:1 Interview Tutor',
-        desc: 'Get personalized tutoring on any interview topic. Our AI coach explains concepts visually, adapts to your level, and generates session notes automatically.',
-        category: 'AI Coach',
-        link: '/ai-coach'
-    },
+
     {
         icon: '🗺️',
         readTime: '6 min read',

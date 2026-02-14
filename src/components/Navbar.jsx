@@ -50,7 +50,7 @@ export default function Navbar({ hasSidebar }) {
   };
 
   // Define public paths that should show the public navbar
-  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/dsa-patterns-sheet', '/library'];
+  const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/library'];
   const isPublicPage = publicPaths.includes(location.pathname);
 
   // Render Public Navbar if not logged in OR if on a public page
@@ -69,7 +69,7 @@ export default function Navbar({ hasSidebar }) {
           <div className="nav-links desktop-only">
             <a href="/#features" className="nav-link">Features</a>
             <Link to="/library" className="nav-link">Library</Link>
-            <Link to="/dsa-patterns-sheet" className="nav-link">DSA Patterns</Link>
+            <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <a href="/#pricing" className="nav-link">Pricing</a>
             <a href="/#faq" className="nav-link">FAQ</a>
             <Link to="/blog" className="nav-link">Blog</Link>
@@ -101,7 +101,7 @@ export default function Navbar({ hasSidebar }) {
           <div className="mobile-menu">
             <a href="/#features" className="mobile-link">Features</a>
             <Link to="/library" className="mobile-link">Library</Link>
-            <Link to="/dsa-patterns-sheet" className="mobile-link">DSA Patterns</Link>
+            <Link to="/dashboard" className="mobile-link">Dashboard</Link>
             <a href="/#pricing" className="mobile-link">Pricing</a>
             <a href="/#faq" className="mobile-link">FAQ</a>
             {user ? (

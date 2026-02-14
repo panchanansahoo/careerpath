@@ -46,7 +46,7 @@ const plans = [
         priceSub: 'Billed monthly · Save 20% annually',
         features: [
             'Everything in Pro, plus:',
-            'AI Coach 1:1 tutoring sessions',
+
             'Extended interview time limits',
             'Behavioral interview coaching',
             'Custom study plan generation',

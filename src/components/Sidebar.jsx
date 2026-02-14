@@ -4,7 +4,8 @@ import {
     LayoutDashboard, MessageSquare, Brain, BookOpen,
     Grid3X3, FileText, Code, Users,
     ChevronLeft, ChevronRight, Sparkles,
-    CalendarDays, BarChart3, Clock, Settings, User
+    CalendarDays, BarChart3, Clock, Settings, User,
+    PanelLeftClose, PanelLeftOpen, Calculator, Database
 } from 'lucide-react';
 
 const navItems = [
@@ -21,11 +22,18 @@ const navItems = [
         icon: MessageSquare
     },
     {
-        path: '/ai-coach',
-        label: 'AI Coach',
-        subtitle: 'Revolutionary AI-powered learning',
-        icon: Brain
+        path: '/aptitude-mastery',
+        label: 'Aptitude Mastery',
+        subtitle: 'Quant, Logical & Verbal',
+        icon: Calculator
     },
+    {
+        path: '/sql-mastery',
+        label: 'SQL Mastery',
+        subtitle: 'Database & Queries',
+        icon: Database
+    },
+
     {
         path: '/dashboard/learning-path',
         label: 'Learning Path',
@@ -94,21 +102,20 @@ export default function Sidebar({ collapsed, onToggle }) {
     return (
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
-                <Link to="/dashboard" className="sidebar-brand">
+                <Link to="/" className="sidebar-brand">
                     <span className="brand-icon">
                         <Sparkles size={18} color="white" />
                     </span>
                     {!collapsed && <span>CareerLoop</span>}
                 </Link>
                 {!collapsed && (
-                    <button className="sidebar-toggle" onClick={onToggle} title="Collapse">
-                        <ChevronLeft size={18} />
-                        <span style={{ fontSize: 11, marginLeft: 2, color: 'var(--text-muted)' }}>collapse</span>
+                    <button className="sidebar-toggle" onClick={onToggle} title="Collapse Sidebar">
+                        <PanelLeftClose size={20} />
                     </button>
                 )}
                 {collapsed && (
-                    <button className="sidebar-toggle" onClick={onToggle} title="Expand" style={{ marginLeft: -4 }}>
-                        <ChevronRight size={18} />
+                    <button className="sidebar-toggle" onClick={onToggle} title="Expand Sidebar" style={{ marginLeft: 0 }}>
+                        <PanelLeftOpen size={20} />
                     </button>
                 )}
             </div>

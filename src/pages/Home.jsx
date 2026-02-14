@@ -3,18 +3,27 @@ import { Link } from 'react-router-dom';
 import {
   Brain, Code2, MessageSquare, FileText, TrendingUp, BookOpen,
   CheckCircle, ChevronDown, ArrowRight, Users, Star, Shield,
-  Zap, Clock, Target, Award, Play, Sparkles
+  Zap, Clock, Target, Award, Play, Sparkles, Calculator, Database
 } from 'lucide-react';
 import CursorGlow from '../components/CursorGlow';
 
 const features = [
+
   {
-    icon: <Brain size={24} />,
-    bg: 'rgba(124, 58, 237, 0.15)',
-    color: '#a78bfa',
-    title: '24/7 AI Mentorship',
-    desc: 'Your personal AI engineer available anytime. Debug complex logic and get instant conceptual clarity.',
-    link: '/ai-coach'
+    icon: <Calculator size={24} />,
+    bg: 'rgba(99, 102, 241, 0.15)',
+    color: '#818cf8',
+    title: 'Aptitude Mastery',
+    desc: 'Master quantitative, logical, and verbal reasoning skills with our comprehensive practice modules.',
+    link: '/aptitude-mastery'
+  },
+  {
+    icon: <Database size={24} />,
+    bg: 'rgba(34, 211, 238, 0.15)',
+    color: '#22d3ee',
+    title: 'SQL Mastery',
+    desc: 'From basic SELECTs to advanced window functions and performance tuning. Master the database layer.',
+    link: '/sql-mastery'
   },
   {
     icon: <Code2 size={24} />,
@@ -102,7 +111,7 @@ const pricingPlans = [
     priceSub: 'Billed monthly · Save 20% annually',
     features: [
       'Everything in Pro, plus:',
-      'AI Coach 1:1 tutoring sessions',
+
       'Extended interview time limits',
       'Behavioral interview coaching',
       'Custom study plan generation',

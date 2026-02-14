@@ -3,30 +3,34 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, BookOpen, CheckCircle2, Circle, Lightbulb, Briefcase } from 'lucide-react';
 
+import { dsaPatterns } from '../data/dsaPatternsData';
+
 export default function PatternDetail() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPattern();
-  }, [id]);
-
-  const fetchPattern = async () => {
-    try {
-      const response = await axios.get(`/api/dsa/patterns/${id}`);
-      setData(response.data);
-    } catch (error) {
-      console.error('Error fetching pattern:', error);
-    } finally {
+    // Simulate fetching
+    const timer = setTimeout(() => {
+      const found = dsaPatterns.find(p => p.id === id);
+      // Transform to match expected structure if needed, or just set it
+      // The existing code expects { pattern: ..., problems: ... }
+      if (found) {
+        setData({
+          pattern: found,
+          problems: found.problems
+        });
+      }
       setLoading(false);
-    }
-  };
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="spinner"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -34,8 +38,8 @@ export default function PatternDetail() {
   if (!data) {
     return (
       <div className="container py-20 text-center">
-        <h2 className="text-2xl font-bold mb-4">Pattern not found</h2>
-        <Link to="/dsa-patterns-sheet" className="btn btn-primary">
+        <h2 className="text-2xl font-bold mb-4 text-white">Pattern not found</h2>
+        <Link to="/dsa-patterns" className="px-4 py-2 bg-primary rounded text-white">
           Back to Patterns
         </Link>
       </div>
@@ -47,7 +51,7 @@ export default function PatternDetail() {
   return (
     <div className="container py-10 px-6 max-w-6xl">
       <Link
-        to="/dsa-patterns-sheet"
+        to="/dsa-patterns"
         className="inline-flex items-center gap-2 text-secondary hover:text-white mb-8 transition-colors"
       >
         <ArrowLeft size={20} />
@@ -59,14 +63,13 @@ export default function PatternDetail() {
         <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
           <BookOpen size={200} />
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex flex-wrap gap-3 mb-6">
-            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-              pattern.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${pattern.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
               pattern.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
-              'bg-red-500/10 text-red-400 border-red-500/20'
-            }`}>
+                'bg-red-500/10 text-red-400 border-red-500/20'
+              }`}>
               {pattern.difficulty}
             </span>
             <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -149,11 +152,10 @@ export default function PatternDetail() {
                             {problem.title}
                           </h4>
                           <div className="flex flex-wrap gap-2">
-                            <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
-                              problem.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400' :
+                            <span className={`text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${problem.difficulty === 'Easy' ? 'bg-green-500/10 text-green-400' :
                               problem.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-400' :
-                              'bg-red-500/10 text-red-400'
-                            }`}>
+                                'bg-red-500/10 text-red-400'
+                              }`}>
                               {problem.difficulty}
                             </span>
                           </div>
@@ -173,11 +175,11 @@ export default function PatternDetail() {
                 </div>
               )}
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-white/10 shrink-0">
-               <Link to="/dsa-patterns-sheet" className="btn btn-outline w-full justify-center text-sm py-3">
-                 View All Patterns
-               </Link>
+              <Link to="/dsa-patterns" className="btn btn-outline w-full justify-center text-sm py-3">
+                View All Patterns
+              </Link>
             </div>
           </div>
         </div>

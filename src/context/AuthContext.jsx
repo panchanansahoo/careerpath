@@ -13,16 +13,25 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('user');
       const refreshToken = localStorage.getItem('refreshToken');
+      const isGuest = localStorage.getItem('isGuest');
 
       if (token && userData) {
         setUser(JSON.parse(userData));
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } else if (isGuest === 'true') {
+        setUser({
+          id: 'guest',
+          fullName: 'Guest User',
+          email: 'guest@careerloop.io',
+          isGuest: true
+        });
       }
     } catch (e) {
       console.error('Failed to restore session:', e);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('isGuest');
     }
     setLoading(false);
   }, []);
@@ -59,8 +68,24 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('isGuest');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+  };
+
+  const loginAsGuest = () => {
+    const guestUser = {
+      id: 'guest',
+      fullName: 'Guest User',
+      email: 'guest@careerloop.io',
+      isGuest: true
+    };
+    setUser(guestUser);
+    localStorage.setItem('isGuest', 'true');
+    // Clear any potential leftover real auth data to avoid confusion
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
   };
 
   const refreshSession = async () => {
@@ -115,7 +140,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, refreshSession }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, refreshSession, loginAsGuest }}>
       {children}
     </AuthContext.Provider>
   );
