@@ -65,6 +65,12 @@ const navItems = [
         icon: Code
     },
     {
+        path: '/coding-playground',
+        label: 'Playground',
+        subtitle: 'Run code in live IDE',
+        icon: Code
+    },
+    {
         path: '/community',
         label: 'Community',
         subtitle: 'Learn from the community',

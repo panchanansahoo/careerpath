@@ -42,6 +42,16 @@ export default function LearningPath() {
 
   const getDefaultPaths = () => [
     {
+      id: 'array',
+      title: 'Array Interview Track',
+      description: 'Master array patterns from basics to interview-ready problem solving with guided IDE practice.',
+      duration: '4-6 weeks',
+      difficulty: 'Beginner',
+      icon: Code,
+      color: 'cyan',
+      modules: Array(7).fill({ unlocked: false }).map((_, i) => ({ id: i + 1 }))
+    },
+    {
       id: 'dsa-basics',
       title: 'DSA Basics',
       description: 'Build a rock-solid foundation in data structures and algorithms from scratch.',
@@ -124,6 +134,7 @@ export default function LearningPath() {
     ).length;
 
     // Mock progress for visuals
+    if (path.id === 'array') return 10;
     if (path.id === 'dsa-basics') return 45;
     if (path.id === 'dsa') return 20;
 

@@ -25,15 +25,15 @@ export default function Dashboard() {
                 {/* Top Section: Welcome & Stats */}
                 <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                     <div className="mb-2">
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-zinc-500 tracking-tighter mb-4">
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400 mb-2">
                             {(() => {
                                 const hour = new Date().getHours();
                                 if (hour < 12) return 'Good morning';
                                 if (hour < 18) return 'Good afternoon';
                                 return 'Good evening';
-                            })()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{userName}</span>
+                            })()}, <span className="text-white font-extrabold">{userName}</span>
                         </h1>
-                        <p className="text-zinc-400 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
+                        <p className="text-zinc-400 text-base md:text-lg font-medium max-w-2xl leading-relaxed">
                             Ready to level up your engineering career today?
                         </p>
                     </div>

@@ -48,6 +48,98 @@ export default function LearningPathDetail() {
 
   const getPathData = (id) => {
     const paths = {
+      'array': {
+        id: 'array',
+        title: 'Array Interview Track',
+        description: 'Master array problem-solving patterns with guided practice and interview-style IDE drills.',
+        duration: '4-6 weeks',
+        difficulty: 'Beginner',
+        prerequisite: 'Basic loops, conditionals, and functions',
+        color: 'cyan',
+        icon: Code,
+        outcomes: [
+          'Apply core array patterns (two pointers, sliding window, prefix sum, hashing)',
+          'Write optimized solutions with clear time and space complexity trade-offs',
+          'Debug edge cases quickly in an interview-like IDE workflow',
+          'Build confidence through progressive hands-on array challenges'
+        ],
+        modules: [
+          {
+            id: 'array-basics',
+            title: 'Array Basics & Complexity',
+            description: 'Learn memory model, indexing, and update/traversal operations',
+            topics: ['Indexing', 'Traversal', 'Insert/Delete', 'Complexity'],
+            lessons: [
+              { title: 'How arrays are stored', duration: '25 min', type: 'video' },
+              { title: 'Cost of array operations', duration: '30 min', type: 'reading' },
+              { title: 'Hands-on drills', duration: '90 min', type: 'practice' }
+            ],
+            problems: 12,
+            estimatedTime: '4 days',
+            unlocked: true,
+            ideProblemId: 'array-two-sum'
+          },
+          {
+            id: 'array-two-pointers',
+            title: 'Two Pointers',
+            description: 'Master paired traversal for sorted and unsorted problems',
+            topics: ['Pair Sum', 'In-place transforms', 'Partitioning'],
+            lessons: [
+              { title: 'Two pointers pattern', duration: '35 min', type: 'video' },
+              { title: 'Choosing pointer strategy', duration: '30 min', type: 'reading' },
+              { title: 'Guided practice', duration: '2 hours', type: 'practice' }
+            ],
+            problems: 14,
+            estimatedTime: '5 days',
+            unlocked: true,
+            ideProblemId: 'array-sorted-two-sum'
+          },
+          {
+            id: 'array-sliding-window',
+            title: 'Sliding Window',
+            description: 'Solve subarray optimization problems in linear time',
+            topics: ['Fixed window', 'Variable window', 'Frequency map'],
+            lessons: [
+              { title: 'Sliding window templates', duration: '35 min', type: 'video' },
+              { title: 'Window expansion and shrink rules', duration: '30 min', type: 'reading' },
+              { title: 'Practice set', duration: '2.5 hours', type: 'practice' }
+            ],
+            problems: 15,
+            estimatedTime: '1 week',
+            unlocked: true,
+            ideProblemId: 'array-max-subarray'
+          },
+          {
+            id: 'array-prefix-sum',
+            title: 'Prefix Sum & Difference Array',
+            description: 'Precompute cumulative data to optimize repeated range queries',
+            topics: ['Prefix sums', 'Range queries', 'Difference array'],
+            lessons: [
+              { title: 'Prefix sum intuition', duration: '30 min', type: 'video' },
+              { title: 'Range query patterns', duration: '25 min', type: 'reading' },
+              { title: 'Challenge problems', duration: '2 hours', type: 'practice' }
+            ],
+            problems: 10,
+            estimatedTime: '4 days',
+            unlocked: true,
+            ideProblemId: 'array-prefix-range'
+          },
+          {
+            id: 'array-interview-sim',
+            title: 'Interview Simulation',
+            description: 'Timed mixed array set with IDE + playground refinement workflow',
+            topics: ['Time-boxed solving', 'Edge cases', 'Optimization'],
+            lessons: [
+              { title: 'Mock interview set', duration: '90 min', type: 'practice' },
+              { title: 'Post-solve optimization', duration: '45 min', type: 'practice' }
+            ],
+            problems: 8,
+            estimatedTime: '3 days',
+            unlocked: true,
+            ideProblemId: 'array-rotate'
+          }
+        ]
+      },
       'dsa-basics': {
         id: 'dsa-basics',
         title: 'DSA Basics',
@@ -194,7 +286,9 @@ export default function LearningPathDetail() {
     if (!module.unlocked) {
       return;
     }
-    if (pathData.id === 'ai') {
+    if (pathData.id === 'array') {
+      navigate(`/dashboard/learning-path/array/problem/${module.ideProblemId || 'array-two-sum'}`);
+    } else if (pathData.id === 'ai') {
       navigate(`/dashboard/learning-path/ai/module/${module.id}`);
     } else if (pathData.id.includes('dsa')) {
       navigate('/dsa-patterns-sheet');

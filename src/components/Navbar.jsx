@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Bell, Menu, X, Code2, ChevronRight } from 'lucide-react';
+import { Search, Bell, Menu, X, Code2, ChevronRight, User, LogOut, BookOpen, Settings } from 'lucide-react';
 
 export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   const { user, logout } = useAuth();
@@ -9,6 +9,8 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +23,21 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setIsDropdownOpen(false);
   }, [location.pathname]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -149,11 +165,51 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
             <Bell size={20} />
           </button>
 
-          <div
-            className="user-avatar"
-            title={user.fullName}
-          >
-            {getInitials()}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              className="user-avatar cursor-pointer hover:ring-2 ring-primary/50 transition-all duration-300"
+              title={user.fullName}
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              {getInitials()}
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl glass-panel border border-white/10 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="p-4 border-b border-white/5 bg-white/5">
+                  <p className="font-medium text-white truncate">{user.fullName}</p>
+                  <p className="text-xs text-muted truncate">{user.email}</p>
+                </div>
+
+                <div className="p-2">
+                  <Link
+                    to="/dashboard/learning-path"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                  >
+                    <BookOpen size={16} className="text-primary" />
+                    Continue Learning
+                  </Link>
+
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                  >
+                    <User size={16} className="text-purple-400" />
+                    My Profile
+                  </Link>
+
+                  <div className="h-px bg-white/5 my-1" />
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
+                  >
+                    <LogOut size={16} />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

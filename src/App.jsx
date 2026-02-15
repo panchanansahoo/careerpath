@@ -44,6 +44,8 @@ import DataScienceLearningPath from './pages/DataScienceLearningPath';
 import PMLearningPath from './pages/PMLearningPath';
 import DSABasicsLearningPath from './pages/DSABasicsLearningPath';
 import HLDLearningPath from './pages/HLDLearningPath';
+import LearningPathIDE from './pages/LearningPathIDE';
+import CodingPlayground from './pages/CodingPlayground';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Code2 } from 'lucide-react';
 
@@ -96,6 +98,10 @@ function AppContent() {
   const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
   const isPublicPage = publicPaths.includes(location.pathname);
   const showSidebar = user && !isPublicPage;
+  const hideNavbar = location.pathname === '/coding-playground';
+  const isFullBleedCodingRoute =
+    location.pathname === '/coding-playground' ||
+    location.pathname.startsWith('/dashboard/learning-path/array/problem/');
 
   return (
     <div className="app-layout">
@@ -109,12 +115,14 @@ function AppContent() {
       )}
 
       <div className={`main-content ${showSidebar ? (sidebarCollapsed ? 'sidebar-collapsed' : '') : 'no-sidebar'}`}>
-        <Navbar
-          hasSidebar={showSidebar}
-          onMobileMenuToggle={() => setMobileSidebarOpen(prev => !prev)}
-        />
+        {!hideNavbar && (
+          <Navbar
+            hasSidebar={showSidebar}
+            onMobileMenuToggle={() => setMobileSidebarOpen(prev => !prev)}
+          />
+        )}
 
-        <div className={showSidebar ? 'page-content' : ''}>
+        <div className={showSidebar && !isFullBleedCodingRoute ? 'page-content' : ''}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -170,11 +178,16 @@ function AppContent() {
             <Route path="/dashboard/learning-path/dsa-basics" element={<DSABasicsLearningPath />} />
             <Route path="/dashboard/learning-path/hld" element={<HLDLearningPath />} />
             <Route
+              path="/dashboard/learning-path/array/problem/:problemId"
+              element={<PrivateRoute><LearningPathIDE /></PrivateRoute>}
+            />
+            <Route
               path="/dashboard/learning-path/ai/module/:moduleId"
               element={<PrivateRoute><AIModuleDetail /></PrivateRoute>}
             />
             <Route path="/dsa-patterns-sheet" element={<DSAPatternsSheet />} />
             <Route path="/code-practice" element={<CodePractice />} />
+            <Route path="/coding-playground" element={<PrivateRoute><CodingPlayground /></PrivateRoute>} />
             <Route path="/community" element={<Community />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/library" element={<Library />} />

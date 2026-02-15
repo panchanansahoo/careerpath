@@ -24,7 +24,7 @@ export default function DSAPatternsSheet() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [expandedPattern, setExpandedPattern] = useState(null);
   const [selectedProblems, setSelectedProblems] = useState(new Set());
-  const [groupByPattern, setGroupByPattern] = useState(false);
+  const [groupByPattern] = useState(true); // Always true for Thita.ai style
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,10 +76,12 @@ export default function DSAPatternsSheet() {
   });
 
   const groupedProblems = {};
+  const patternKeys = [];
   if (groupByPattern) {
     sortedProblems.forEach(problem => {
       if (!groupedProblems[problem.pattern]) {
         groupedProblems[problem.pattern] = [];
+        patternKeys.push(problem.pattern);
       }
       groupedProblems[problem.pattern].push(problem);
     });
@@ -179,108 +181,41 @@ export default function DSAPatternsSheet() {
   }
 
   return (
-    <div className="container max-w-[1600px] py-10 px-6">
-      {/* Header */}
-      <div className="text-center mb-12 animate-fade-up">
-        <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-text-secondary">
-          DSA Master Sheet
-        </h1>
-        <p className="text-xl text-text-muted max-w-2xl mx-auto mb-6">
-          Complete collection of 425 curated problems for interview preparation
-        </p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {allPatterns.slice(0, 5).map(pattern => (
-            <span key={pattern} className="px-3 py-1 rounded-full text-xs font-semibold bg-accent-secondary/10 text-accent-secondary border border-accent-secondary/20">
-              {pattern}
-            </span>
-          ))}
-          {allPatterns.length > 5 && (
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent-primary/10 text-accent-primary border border-accent-primary/20">
-              +{allPatterns.length - 5} more patterns
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-up delay-100">
-        <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-accent-primary to-accent-violet text-white shadow-lg shadow-accent-primary/20">
-          <div className="flex justify-between items-center mb-2">
-            <BarChart3 size={24} />
-            <Star size={20} className="text-yellow-300" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        {/* Top Navigation */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">D</div>
+            <div>
+              <h1 className="text-xl font-bold text-white">DSA Pattern Mastery</h1>
+              <p className="text-xs text-slate-400">Systematic approach to Data Structures & Algorithms</p>
+            </div>
           </div>
-          <div className="text-4xl font-bold mb-1">
-            {stats.solved}/{stats.total}
-          </div>
-          <div className="text-sm opacity-90">Problems Solved</div>
-          <div className="w-full h-2 bg-white/30 rounded-full mt-4 overflow-hidden">
-            <div 
-              className="h-full bg-white transition-all duration-500 ease-out"
-              style={{ width: `${(stats.solved / stats.total) * 100}%` }} 
-            />
-          </div>
+          <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
+            Sign In
+          </button>
         </div>
 
-        <StatCard 
-          label="Easy Problems" 
-          count={stats.easy} 
-          solved={problems.filter(p => p.difficulty === 'Easy' && userProgress[`problem_${p.id}`]?.solved).length}
-          color="emerald"
-        />
-        <StatCard 
-          label="Medium Problems" 
-          count={stats.medium} 
-          solved={problems.filter(p => p.difficulty === 'Medium' && userProgress[`problem_${p.id}`]?.solved).length}
-          color="amber"
-        />
-        <StatCard 
-          label="Hard Problems" 
-          count={stats.hard} 
-          solved={problems.filter(p => p.difficulty === 'Hard' && userProgress[`problem_${p.id}`]?.solved).length}
-          color="rose"
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="glass-panel p-6 rounded-2xl mb-8 animate-fade-up delay-200">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="relative col-span-1 md:col-span-2">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        {/* Search and Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Search problems..."
+              placeholder="Search problems, patterns..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full bg-bg-secondary/50 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-text-muted focus:outline-none focus:border-accent-primary transition-colors"
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 pl-10 pr-4 text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm"
             />
           </div>
-
-          <Select 
-            value={filters.difficulty}
-            onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
-            options={[
-              { value: 'all', label: 'All Difficulties' },
-              { value: 'Easy', label: '✅ Easy' },
-              { value: 'Medium', label: '⚠️ Medium' },
-              { value: 'Hard', label: '🔥 Hard' }
-            ]}
-          />
-
+          
           <Select 
             value={filters.pattern}
             onChange={(e) => setFilters({ ...filters, pattern: e.target.value })}
             options={[
-              { value: 'all', label: 'All Patterns' },
-              ...allPatterns.map(p => ({ value: p, label: `${p} (${patternStats[p]?.total || 0})` }))
-            ]}
-          />
-
-          <Select 
-            value={filters.company}
-            onChange={(e) => setFilters({ ...filters, company: e.target.value })}
-            options={[
-              { value: 'all', label: 'All Companies' },
-              ...allCompanies.slice(0, 15).map(c => ({ value: c, label: c }))
+              { value: 'all', label: 'All' },
+              ...allPatterns.map(p => ({ value: p, label: p }))
             ]}
           />
 
@@ -295,292 +230,157 @@ export default function DSAPatternsSheet() {
           />
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-white/5">
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer text-sm text-text-secondary hover:text-white transition-colors select-none">
-              <input
-                type="checkbox"
-                checked={groupByPattern}
-                onChange={(e) => setGroupByPattern(e.target.checked)}
-                className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent-primary focus:ring-accent-primary/50"
-              />
-              <span className="flex items-center gap-2"><Layers size={14}/> Group by Pattern</span>
-            </label>
-            
-            {selectedProblems.size > 0 && (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent-primary/20 text-accent-primary border border-accent-primary/20">
-                {selectedProblems.size} selected
-              </span>
-            )}
-          </div>
-
-          <div className="flex gap-2 w-full md:w-auto">
-            <button
-              onClick={() => setFilters({ difficulty: 'all', status: 'all', pattern: 'all', company: 'all', search: '' })}
-              className="px-4 py-2 rounded-xl bg-white/5 text-text-secondary hover:text-white hover:bg-white/10 transition-colors flex items-center gap-2 text-sm font-medium"
-            >
-              <Filter size={16} /> Reset
-            </button>
-            
-            <button
-              onClick={exportProgress}
-              className="px-4 py-2 rounded-xl bg-accent-primary hover:bg-accent-violet text-white shadow-lg shadow-accent-primary/20 transition-all flex items-center gap-2 text-sm font-medium"
-            >
-              <Download size={16} /> Export CSV
-            </button>
-          </div>
+        {/* Value Proposition Banner */}
+        <div className="mb-8 p-6 border border-slate-700/50 rounded-lg bg-gradient-to-r from-slate-800/50 to-slate-800/30 backdrop-blur">
+          <h2 className="text-2xl font-bold text-white mb-3">Solving Problems Alone Won't Get You Hired</h2>
+          <p className="text-slate-300 mb-4 text-sm">
+            Pair this sheet with AI mock interviews, instant code feedback, and a structured 90-day roadmap. See what plan fits your prep.
+          </p>
+          <button className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors text-sm flex items-center gap-2">
+            See Plans & Pricing <ChevronDown size={16} className="rotate-[-90deg]" />
+          </button>
         </div>
-      </div>
 
-      {/* Content */}
-      {groupByPattern ? (
-        <div className="space-y-4">
-          {Object.keys(groupedProblems).sort().map(pattern => (
-            <div key={pattern} className="glass-panel overflow-hidden rounded-xl border border-white/10">
-              <div
-                onClick={() => setExpandedPattern(expandedPattern === pattern ? null : pattern)}
-                className="p-4 bg-white/5 border-b border-white/5 cursor-pointer flex justify-between items-center hover:bg-white/10 transition-colors"
-               >
-                 <div>
-                   <h3 className="text-lg font-bold text-white m-0 flex items-center gap-2">
-                     <Layers size={18} className="text-accent-primary"/>
-                     {pattern}
-                   </h3>
-                   <p className="text-text-secondary text-sm m-0 mt-1 pl-7">
-                     {groupedProblems[pattern].length} problems • {
-                       groupedProblems[pattern].filter(p => userProgress[`problem_${p.id}`]?.solved).length
-                     } solved
-                   </p>
-                 </div>
-                 {expandedPattern === pattern ? <ChevronUp size={20} className="text-text-secondary" /> : <ChevronDown size={20} className="text-text-secondary" />}
-               </div>
-               
-               {expandedPattern === pattern && (
-                 <div className="p-0">
-                   {groupedProblems[pattern].map(problem => (
-                     <ProblemRow
-                       key={problem.id}
-                       problem={problem}
-                       isSolved={userProgress[`problem_${problem.id}`]?.solved}
-                       isSelected={selectedProblems.has(problem.id)}
-                       onToggleSelect={toggleProblemSelection}
-                       getDifficultyColor={getDifficultyColor}
-                       navigate={navigate}
-                     />
-                   ))}
-                 </div>
-               )}
-            </div>
-          ))}
+        {/* DSA Pattern Mastery Section */}
+        <div className="border border-slate-700/50 rounded-lg bg-slate-800/30 backdrop-blur p-6 mb-8">
+          <h2 className="text-xl font-bold text-white">DSA Pattern Mastery</h2>
+          <p className="text-slate-400 text-sm">Systematic approach to Data Structures & Algorithms</p>
         </div>
-      ) : (
-        <div className="glass-panel overflow-hidden rounded-xl border border-white/10">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-white/5 border-b border-white/10 text-left">
-                  <th className="p-4 w-12 text-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedProblems.size === sortedProblems.length && sortedProblems.length > 0}
-                      onChange={toggleAllSelection}
-                      className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent-primary focus:ring-accent-primary/50 cursor-pointer"
+
+        {/* Patterns Grid */}
+        <div className="space-y-3">
+          {Object.keys(groupedProblems).sort().map((pattern, patternIndex) => {
+            const patternProblems = groupedProblems[pattern];
+            const solved = patternProblems.filter(p => userProgress[`problem_${p.id}`]?.solved).length;
+            
+            return (
+              <div key={pattern} className="border border-slate-700 rounded-xl bg-slate-900/40 overflow-hidden hover:border-slate-600 transition-colors">
+                {/* Pattern Header */}
+                <div
+                  onClick={() => setExpandedPattern(expandedPattern === pattern ? null : pattern)}
+                  className="p-5 cursor-pointer flex items-center justify-between hover:bg-slate-800/50 transition-colors group"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <ChevronDown 
+                      size={18} 
+                      className={`text-slate-400 transition-transform ${expandedPattern === pattern ? 'rotate-180' : ''}`}
                     />
-                  </th>
-                  <th className="p-4 w-16 text-center text-text-secondary font-semibold text-sm uppercase tracking-wider">Status</th>
-                  <SortableHeader label="#" column="id" currentSort={sortBy} sortOrder={sortOrder} onSort={handleSort} />
-                  <SortableHeader label="Title" column="title" currentSort={sortBy} sortOrder={sortOrder} onSort={handleSort} />
-                  <SortableHeader label="Pattern" column="pattern" currentSort={sortBy} sortOrder={sortOrder} onSort={handleSort} />
-                  <SortableHeader label="Difficulty" column="difficulty" currentSort={sortBy} sortOrder={sortOrder} onSort={handleSort} />
-                  <th className="p-4 text-text-secondary font-semibold text-sm uppercase tracking-wider">Companies</th>
-                  <th className="p-4 text-right text-text-secondary font-semibold text-sm uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedProblems.map((problem) => (
-                  <ProblemRow
-                    key={problem.id}
-                    problem={problem}
-                    isSolved={userProgress[`problem_${problem.id}`]?.solved}
-                    isSelected={selectedProblems.has(problem.id)}
-                    onToggleSelect={toggleProblemSelection}
-                    getDifficultyColor={getDifficultyColor}
-                    navigate={navigate}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    <div className="w-7 h-7 flex items-center justify-center rounded bg-blue-600/30 text-blue-400 font-bold text-xs border border-blue-500/30">
+                      ⓘ
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold text-base">{pattern}</h3>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-8 ml-4">
+                    <div className="text-center">
+                      <div className="text-white font-bold text-sm">{patternIndex + 1}/{Object.keys(groupedProblems).length}</div>
+                      <div className="text-slate-400 text-xs">pattern</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-white font-bold text-sm">{patternProblems.length}</div>
+                      <div className="text-slate-400 text-xs">problems</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-emerald-400 font-bold text-sm">{solved}</div>
+                      <div className="text-slate-400 text-xs">attempted</div>
+                    </div>
+                  </div>
+                </div>
 
-          {sortedProblems.length === 0 && (
-            <div className="p-12 text-center text-text-muted">
-              <Filter size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="text-lg font-medium mb-1">No problems found</p>
-              <p className="text-sm">Try adjusting your filters</p>
-            </div>
-          )}
-        </div>
-      )}
+                {/* Expanded Problems */}
+                {expandedPattern === pattern && (
+                  <div className="border-t border-slate-700/50 divide-y divide-slate-700/50">
+                    {patternProblems.map((problem, idx) => {
+                      const isSolved = userProgress[`problem_${problem.id}`]?.solved;
+                      return (
+                        <div
+                          key={problem.id}
+                          className="p-4 hover:bg-slate-800/50 transition-colors cursor-pointer group"
+                          onClick={() => navigate(`/problems/${problem.id}`)}
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="text-slate-500 text-sm font-medium min-w-fit">{idx + 1}/{patternProblems.length}</span>
+                              <div className="flex-1">
+                                <p className="text-white font-medium text-sm group-hover:text-blue-400 transition-colors">
+                                  {problem.title}
+                                </p>
+                              </div>
+                            </div>
 
-      {/* Footer Stats */}
-      <div className="mt-8 p-6 glass-panel rounded-xl text-center border-t border-white/10">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <TrendingUp size={24} className="text-accent-primary" />
-          <span className="font-bold text-lg text-white">
-            Keep pushing! Consistency is key 🚀
-          </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="px-2 py-1 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                Theory
+                              </span>
+                              <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
+                                ▶ Watch
+                              </span>
+                              <span className="text-slate-400 text-xs font-medium px-1">
+                                {problem.companies?.length || 0} problems
+                              </span>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${
+                                isSolved 
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                  : 'bg-slate-700/50 text-slate-400 border border-slate-600'
+                              }`}>
+                                {isSolved ? '✓ attempted' : '0 attempted'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <p className="text-text-secondary text-sm m-0">
-          Showing {sortedProblems.length} of 425 problems • {
-            ((stats.solved / 425) * 100).toFixed(1)
-          }% complete
-        </p>
+
+        {/* Right Filter Bar */}
+        <div className="fixed right-4 top-1/2 -translate-y-1/2 bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 backdrop-blur hidden lg:flex flex-col gap-3">
+          <button 
+            onClick={() => setFilters({ difficulty: 'all', status: 'all', pattern: 'all', company: 'all', search: '' })}
+            className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
+            title="Reset Filters"
+          >
+            <Filter size={18} />
+          </button>
+          <div className="w-6 h-px bg-slate-700/50"></div>
+          <button className="p-2 rounded text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors" title="Theme">
+            <Star size={18} />
+          </button>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-slate-700/50 text-center">
+          <p className="text-slate-400 text-sm">
+            {sortedProblems.length} problems • {((stats.solved / stats.total) * 100).toFixed(1)}% complete
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 // Subcomponents
-function StatCard({ label, count, solved, color }) {
-  const colors = {
-    emerald: 'text-emerald-400 border-emerald-500/20',
-    amber: 'text-amber-400 border-amber-500/20',
-    rose: 'text-rose-400 border-rose-500/20'
-  };
-
-  return (
-    <div className={`glass-panel p-6 rounded-2xl border-l-4 ${colors[color]} hover:translate-y-[-2px] transition-transform duration-300`}>
-      <div className={`text-4xl font-bold mb-1 ${colors[color].split(' ')[0]}`}>
-        {count}
-      </div>
-      <div className="text-text-secondary text-sm">{label}</div>
-      <div className={`mt-2 text-xs font-medium ${colors[color].split(' ')[0]}`}>
-        {solved} solved
-      </div>
-    </div>
-  );
-}
-
 function Select({ value, onChange, options }) {
   return (
     <div className="relative">
       <select
         value={value}
         onChange={onChange}
-        className="w-full appearance-none bg-bg-secondary/50 border border-white/10 rounded-xl py-3 pl-4 pr-10 text-text-secondary focus:outline-none focus:border-accent-primary transition-colors cursor-pointer hover:bg-white/5"
+        className="w-full appearance-none bg-slate-800/50 border border-slate-700/50 rounded-lg py-2.5 pl-4 pr-10 text-slate-300 focus:outline-none focus:border-blue-500/50 transition-colors cursor-pointer hover:border-slate-600/50 text-sm"
       >
         {options.map(opt => (
-          <option key={opt.value} value={opt.value} className="bg-bg-tertiary text-white">
+          <option key={opt.value} value={opt.value} className="bg-slate-900 text-white">
             {opt.label}
           </option>
         ))}
       </select>
-      <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+      <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
     </div>
-  );
-}
-
-function SortableHeader({ label, column, currentSort, sortOrder, onSort }) {
-  return (
-    <th 
-      onClick={() => onSort(column)}
-      className="p-4 cursor-pointer text-text-secondary font-semibold hover:text-white transition-colors text-sm uppercase tracking-wider text-left"
-    >
-      <div className="flex items-center gap-1"> 
-        {label} 
-        {currentSort === column && (
-          sortOrder === 'asc' ? <ChevronUp size={14} className="text-accent-primary"/> : <ChevronDown size={14} className="text-accent-primary"/>
-        )}
-      </div>
-    </th>
-  );
-}
-
-function ProblemRow({ problem, isSolved, isSelected, onToggleSelect, getDifficultyColor, navigate }) {
-  return (
-    <tr
-      className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
-      onClick={() => navigate(`/problems/${problem.id}`)}
-    >
-      <td 
-        className="p-4 text-center"
-        onClick={(e) => { e.stopPropagation(); onToggleSelect(problem.id); }}
-      >
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => {}}
-          className="w-4 h-4 rounded border-white/20 bg-white/5 text-accent-primary focus:ring-accent-primary/50 cursor-pointer"
-        />
-      </td>
-      <td className="p-4 text-center">
-        {isSolved ? (
-          <CheckCircle size={20} className="text-emerald-400 mx-auto" />
-        ) : (
-          <Circle size={20} className="text-text-muted mx-auto group-hover:text-white transition-colors" />
-        )}
-      </td>
-      <td className="p-4 text-sm text-text-secondary font-mono">
-        {problem.id}
-      </td>
-      <td className="p-4">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-white group-hover:text-accent-primary transition-colors">{problem.title}</span>
-          {problem.leetcode && (
-            <a
-              href={`https://leetcode.com/problems/${problem.title.toLowerCase().replace(/ /g, '-')}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              <ExternalLink size={14} />
-            </a>
-          )}
-        </div>
-      </td>
-      <td className="p-4">
-        <span className="px-3 py-1 bg-white/5 rounded-md text-xs font-medium text-text-secondary border border-white/5">
-          {problem.pattern}
-        </span>
-      </td>
-      <td className="p-4">
-        <span className={`px-3 py-1 rounded-md text-xs font-semibold border ${getDifficultyColor(problem.difficulty)}`}>
-          {problem.difficulty}
-        </span>
-      </td>
-      <td className="p-4">
-        <div className="flex flex-wrap gap-1">
-          {problem.companies?.slice(0, 3).map((company, i) => (
-            <span
-              key={i}
-              className="px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[10px] font-medium"
-            >
-              {company}
-            </span>
-          ))}
-          {problem.companies?.length > 3 && (
-            <span className="px-2 py-0.5 text-text-muted text-[10px]">
-              +{problem.companies.length - 3}
-            </span>
-          )}
-        </div>
-      </td>
-      <td className="p-4 text-right">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/problems/${problem.id}`);
-          }}
-          className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            isSolved 
-              ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' 
-              : 'bg-accent-primary text-white hover:bg-accent-violet hover:shadow-[0_0_15px_rgba(99,102,241,0.4)]'
-          }`}
-        >
-          {isSolved ? '✓ Review' : 'Solve'}
-        </button>
-      </td>
-    </tr>
   );
 }

@@ -300,47 +300,47 @@ const roadmapData = [
 const ConnectionPath = ({ start, end }) => {
     // We are using a viewBox of 0 0 100 1200
     // x is 0-100, y is pixels (0-1200)
-    
+
     // Orthogonal Path Logic:
     // 1. Move to Start (x1, y1)
     // 2. Line to vertical midpoint (x1, midY)
     // 3. Line to horizontal target (x2, midY)
     // 4. Line to End (x2, y2)
-    
+
     const x1 = start.x;
     const y1 = start.y;
     const x2 = end.x;
     const y2 = end.y;
-    
+
     // Calculate midpoint for the bend
     const midY = y1 + (y2 - y1) / 2;
-    
+
     // path d attribute
     const pathD = `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
 
     return (
-       <g>
-         {/* Glow effect */}
-         <path 
-            d={pathD}
-            stroke="rgba(99, 102, 241, 0.5)" // Indigo-500 optimized for glow
-            strokeWidth="3"     // Thicker for glow
-            fill="none"
-            className="blur-[3px]"
-            vectorEffect="non-scaling-stroke" // Keep stroke width constant despite scaling
-         />
-         {/* Main Line */}
-         <path 
-            d={pathD}
-            stroke="url(#lineGradient)"
-            strokeWidth="2"
-            fill="none"
-            strokeLinejoin="round" // Rounded corners
-            strokeLinecap="round"
-            className="opacity-90"
-            vectorEffect="non-scaling-stroke"
-        />
-       </g>
+        <g>
+            {/* Glow effect */}
+            <path
+                d={pathD}
+                stroke="rgba(99, 102, 241, 0.5)" // Indigo-500 optimized for glow
+                strokeWidth="3"     // Thicker for glow
+                fill="none"
+                className="blur-[3px]"
+                vectorEffect="non-scaling-stroke" // Keep stroke width constant despite scaling
+            />
+            {/* Main Line */}
+            <path
+                d={pathD}
+                stroke="url(#lineGradient)"
+                strokeWidth="2"
+                fill="none"
+                strokeLinejoin="round" // Rounded corners
+                strokeLinecap="round"
+                className="opacity-90"
+                vectorEffect="non-scaling-stroke"
+            />
+        </g>
     );
 };
 
@@ -358,7 +358,7 @@ export default function Roadmap() {
 
     return (
         <div className="min-h-screen bg-[#020203] overflow-x-hidden text-white pt-24 pb-20 font-sans selection:bg-purple-500/30">
-             <header className="mb-12 text-center px-4">
+            <header className="mb-12 text-center px-4">
                 <h1 className="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
                         LeetCode Roadmap
@@ -373,20 +373,20 @@ export default function Roadmap() {
 
             <div className="relative w-full max-w-7xl mx-auto px-4 overflow-auto custom-scrollbar pb-20" style={{ height: '1200px' }}>
                 <div className="relative w-full h-full min-w-[1000px] pl-10 pr-10">
-                    
+
                     {/* SVG Layer */}
-                    <svg 
+                    <svg
                         className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"
                         viewBox="0 0 100 1200"
                         preserveAspectRatio="none"
                     >
-                         <defs>
+                        <defs>
                             <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                                 <stop offset="0%" stopColor="#818cf8" />    {/* Indigo-400 */}
                                 <stop offset="100%" stopColor="#c084fc" />   {/* Purple-400 */}
                             </linearGradient>
                         </defs>
-                        {roadmapData.map(node => 
+                        {roadmapData.map(node =>
                             node.next.map(nextId => {
                                 const nextNode = roadmapData.find(n => n.id === nextId);
                                 if (!nextNode) return null;
@@ -399,9 +399,9 @@ export default function Roadmap() {
                     {roadmapData.map((topic) => {
                         const completedCount = topic.problems.filter(p => completedProblems.includes(p.id)).length;
                         const isCompleted = completedCount === topic.problems.length && topic.problems.length > 0;
-                        
+
                         return (
-                            <div 
+                            <div
                                 key={topic.id}
                                 className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10"
                                 style={{ left: `${topic.x}%`, top: `${topic.y}px`, width: '180px' }}
@@ -426,88 +426,149 @@ export default function Roadmap() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* Backdrop */}
             {selectedTopic && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div
-                        className="bg-[#0a0a0c] border border-white/10 rounded-xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col scale-100 animate-in zoom-in-95 duration-200"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="p-5 border-b border-white/10 flex justify-between items-center bg-[#121216]">
-                            <div>
-                                <h2 className="text-xl font-bold text-white">
-                                    {selectedTopic.title}
-                                </h2>
-                                <p className="text-xs text-gray-500 mt-0.5 font-medium">
-                                    {selectedTopic.problems.length} Challenges
-                                </p>
-                            </div>
-                            <button
+                <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px] transition-opacity duration-300"
+                    onClick={() => setSelectedTopic(null)}
+                />
+            )}
+
+            {/* Slide-over Panel */}
+            <div
+                className={`fixed inset-y-0 right-0 z-50 w-1/2 min-w-[375px] bg-[#0a0a0c] border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-in-out ${selectedTopic ? 'translate-x-0' : 'translate-x-full'}`}
+            >
+                {selectedTopic && (
+                    <div className="h-full flex flex-col">
+                        {/* Header */}
+                        <div className="p-8 border-b border-white/10 relative">
+                            <button 
                                 onClick={() => setSelectedTopic(null)}
-                                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                                className="absolute top-6 left-6 p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-2 group border border-white/5"
                             >
-                                <X size={20} className="text-gray-400 hover:text-white" />
+                                <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+                                <span className="text-xs font-bold uppercase tracking-wider pr-1">Close</span>
                             </button>
-                        </div>
 
-                        <div className="p-0 overflow-y-auto custom-scrollbar flex-1 bg-[#0a0a0c]">
-                            <div className="divide-y divide-white/5">
-                                {selectedTopic.problems.map((problem) => (
+                            <button 
+                                onClick={() => setSelectedTopic(null)}
+                                className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-red-500/20 hover:text-red-400 rounded-lg text-gray-400 transition-colors border border-white/5"
+                            >
+                                <X size={20} />
+                            </button>
+
+                            <div className="text-center mt-4">
+                                <h2 className="text-3xl font-bold text-white mb-2">{selectedTopic.title}</h2>
+                                <p className="text-gray-400 mb-6">
+                                    ({selectedTopic.problems.filter(p => completedProblems.includes(p.id)).length} / {selectedTopic.problems.length})
+                                </p>
+
+                                <div className="w-full max-w-md mx-auto h-2 bg-white/10 rounded-full overflow-hidden">
                                     <div
-                                        key={problem.id}
-                                        className="flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors group"
-                                    >
-                                        <div className="flex items-center gap-3 flex-1">
-                                            <button
-                                                onClick={() => toggleProblem(problem.id)}
-                                                className={`transition-colors ${completedProblems.includes(problem.id) ? 'text-green-500' : 'text-gray-600 hover:text-gray-400'}`}
-                                            >
-                                                {completedProblems.includes(problem.id) ? (
-                                                    <CheckCircle2 size={20} className="fill-green-500/10" />
-                                                ) : (
-                                                    <Circle size={20} />
-                                                )}
-                                            </button>
-                                            <a
-                                                href={problem.link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={`text-sm font-medium transition-colors hover:underline underline-offset-4 decoration-white/20 ${completedProblems.includes(problem.id) ? 'text-gray-500' : 'text-gray-200 group-hover:text-white'}`}
-                                            >
-                                                {problem.title}
-                                            </a>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 pl-4">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wide ${problem.difficulty === 'Easy' ? 'border-green-500/20 text-green-500 bg-green-500/5' :
-                                                    problem.difficulty === 'Medium' ? 'border-yellow-500/20 text-yellow-500 bg-yellow-500/5' :
-                                                        'border-red-500/20 text-red-500 bg-red-500/5'
-                                                }`}>
-                                                {problem.difficulty}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                        className="h-full bg-white rounded-full transition-all duration-300"
+                                        style={{
+                                            width: `${(selectedTopic.problems.filter(p => completedProblems.includes(p.id)).length / selectedTopic.problems.length) * 100}%`
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-white/10 bg-[#121216]">
-                            <div className="flex justify-between items-center text-xs text-gray-400 font-medium mb-2">
-                                <span>Progress</span>
-                                <span>{Math.round((selectedTopic.problems.filter(p => completedProblems.includes(p.id)).length / selectedTopic.problems.length) * 100)}%</span>
+                        {/* Prerequisites (Mock data for now as we calculate parents dynamically or just show generic) */}
+                        <div className="p-8 pb-4">
+                            <h3 className="text-center text-gray-400 mb-4 font-medium">Prerequisites</h3>
+                            <div className="flex justify-center gap-4">
+                                {roadmapData.filter(n => n.next.includes(selectedTopic.id)).length > 0 ? (
+                                    roadmapData.filter(n => n.next.includes(selectedTopic.id)).map(parent => (
+                                        <div key={parent.id} className="bg-[#121216] border border-white/10 p-4 rounded-xl w-64">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <span className="font-bold">{parent.title}</span>
+                                                <div className="w-4 h-4 border border-gray-600 rounded"></div>
+                                            </div>
+                                            <p className="text-xs text-blue-400">Data Structures & Algorithms for Beginners</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-gray-600 italic">None</div>
+                                )}
                             </div>
-                            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-green-500 transition-all duration-300"
-                                    style={{
-                                        width: `${(selectedTopic.problems.filter(p => completedProblems.includes(p.id)).length / selectedTopic.problems.length) * 100}%`
-                                    }}
-                                />
+                        </div>
+
+                        {/* Table */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+                            <div className="bg-[#121216] border border-white/10 rounded-xl overflow-hidden">
+                                {/* Table Header */}
+                                <div className="grid grid-cols-12 gap-4 p-4 border-b border-white/10 text-sm font-semibold text-gray-400">
+                                    <div className="col-span-1 text-center">Status</div>
+                                    <div className="col-span-1 text-center">Star</div>
+                                    <div className="col-span-6">Problem</div>
+                                    <div className="col-span-2 text-center">Difficulty</div>
+                                    <div className="col-span-2 text-center">Solution</div>
+                                </div>
+
+                                {/* Table Body */}
+                                <div className="divide-y divide-white/5">
+                                    {selectedTopic.problems.map((problem) => (
+                                        <div
+                                            key={problem.id}
+                                            className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-white/[0.02] transition-colors"
+                                        >
+                                            <div className="col-span-1 flex justify-center">
+                                                <button
+                                                    onClick={() => toggleProblem(problem.id)}
+                                                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${completedProblems.includes(problem.id)
+                                                        ? 'bg-green-500 border-green-500 text-white'
+                                                        : 'border-gray-600 hover:border-gray-400'
+                                                        }`}
+                                                >
+                                                    {completedProblems.includes(problem.id) && <CheckCircle2 size={14} />}
+                                                </button>
+                                            </div>
+                                            <div className="col-span-1 flex justify-center">
+                                                <button className="text-gray-600 hover:text-yellow-500 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div className="col-span-6">
+                                                <a
+                                                    href={problem.link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="font-medium text-gray-200 hover:text-white transition-colors flex items-center gap-2 group"
+                                                >
+                                                    {problem.title}
+                                                    <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500" />
+                                                </a>
+                                            </div>
+                                            <div className="col-span-2 text-center">
+                                                <span className={`text-xs font-semibold ${problem.difficulty === 'Easy' ? 'text-green-500' :
+                                                    problem.difficulty === 'Medium' ? 'text-yellow-500' :
+                                                        'text-red-500'
+                                                    }`}>
+                                                    {problem.difficulty}
+                                                </span>
+                                            </div>
+                                            <div className="col-span-2 flex justify-center">
+                                                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
