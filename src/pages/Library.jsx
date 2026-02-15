@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, BookOpen, Star, ArrowRight, Library as LibraryIcon } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 
 import { books } from '../data/books';
 
@@ -22,7 +22,7 @@ export default function Library() {
             position: 'relative',
             overflow: 'hidden'
         }}>
-            <CursorGlow />
+
 
             {/* Background Gradient */}
             <div style={{

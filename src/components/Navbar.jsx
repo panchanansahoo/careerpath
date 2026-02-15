@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Search, Bell, Menu, X, Code2, ChevronRight } from 'lucide-react';
 
-export default function Navbar({ hasSidebar }) {
+export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,12 +122,21 @@ export default function Navbar({ hasSidebar }) {
   return (
     <div className="navbar navbar-dashboard glass-panel">
       <div className="container nav-content w-full px-6">
-        <div className="nav-brand opacity-0">
-          {/* Hidden spacer */}
+        <div className="nav-brand flex items-center gap-4">
+          <button
+            className="icon-btn mobile-only"
+            onClick={onMobileMenuToggle}
+          >
+            <Menu size={24} />
+          </button>
+
+          <div className="opacity-0 desktop-only">
+            {/* Hidden spacer or logo if needed */}
+          </div>
         </div>
 
         <div className="topbar-right flex items-center gap-6 ml-auto">
-          <div className="search-bar">
+          <div className="search-bar desktop-only">
             <Search size={16} className="search-icon text-muted" />
             <input
               type="text"

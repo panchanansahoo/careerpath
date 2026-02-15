@@ -24,30 +24,34 @@ const DailyChallenge = () => {
             <div className={`absolute -top-48 -right-48 w-96 h-96 ${challenge.color.replace('text-', 'bg-')}/20 rounded-full blur-[100px] pointer-events-none`}></div>
             <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
 
-            <div className="relative p-6 md:p-8">
+            <div className="relative p-8 md:p-10">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl bg-white/5 border border-white/10 ${challenge.color}`}>
-                            <Icon size={32} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-2xl font-bold text-white tracking-tight">{challenge.name}</h3>
-                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/10 bg-white/5 ${challenge.type === 'Product' ? 'text-emerald-400' : 'text-blue-400'
-                                    }`}>
-                                    {challenge.type}
-                                </span>
-                            </div>
-                            <p className="text-zinc-400 text-sm flex items-center gap-1">
-                                <Sparkles size={14} className="text-yellow-500" />
-                                Daily Interview Challenge
-                            </p>
-                        </div>
+                {/* Header */}
+                <div className="relative flex flex-col items-center justify-center text-center mb-10">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/5 mb-6 backdrop-blur-sm shadow-md">
+                        <Sparkles size={12} className="text-yellow-500" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Daily Challenge</span>
                     </div>
-                    <div className="text-right hidden sm:block">
-                        <p className="text-xs text-zinc-500 font-mono mb-1">DATE</p>
-                        <p className="text-sm font-medium text-white">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+
+                    {/* Date - Absolute positioned within safe area */}
+                    <div className="absolute top-6 right-6 hidden sm:flex flex-col items-end">
+                        <span className="text-[10px] font-bold tracking-widest text-zinc-600 uppercase mb-0.5">Today</span>
+                        <span className="text-xs font-semibold text-zinc-300 font-mono bg-white/5 px-2 py-1 rounded-md border border-white/5">
+                            {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-3">
+                        <div className={`p-2 rounded-xl bg-white/5 border border-white/10 ${challenge.color} shadow-lg`}>
+                            <Icon size={20} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-xl font-semibold text-white tracking-tight">{challenge.name}</h3>
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/5 border border-white/5 ${challenge.type === 'Product' ? 'text-emerald-400 border-emerald-500/20' : 'text-blue-400 border-blue-500/20'
+                                }`}>
+                                {challenge.type}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -75,8 +79,8 @@ const DailyChallenge = () => {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${q.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                q.difficulty === 'Medium' ? 'bg-orange-500/10 text-orange-400' :
-                                                    'bg-rose-500/10 text-rose-400'
+                                            q.difficulty === 'Medium' ? 'bg-orange-500/10 text-orange-400' :
+                                                'bg-rose-500/10 text-rose-400'
                                             }`}>
                                             {q.difficulty}
                                         </span>
@@ -110,8 +114,8 @@ const DailyChallenge = () => {
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${q.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                q.difficulty === 'Medium' ? 'bg-orange-500/10 text-orange-400' :
-                                                    'bg-rose-500/10 text-rose-400'
+                                            q.difficulty === 'Medium' ? 'bg-orange-500/10 text-orange-400' :
+                                                'bg-rose-500/10 text-rose-400'
                                             }`}>
                                             {q.difficulty}
                                         </span>

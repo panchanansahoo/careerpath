@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Clock, User, ArrowLeft, Share2, Bookmark } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 
 export default function BlogPost() {
     const { slug } = useParams();
@@ -33,7 +33,7 @@ export default function BlogPost() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#030303', color: 'white', position: 'relative' }}>
-            <CursorGlow />
+
 
             {/* Navbar Placeholder/Spacer since we have a fixed navbar */}
             <div style={{ height: '80px' }}></div>

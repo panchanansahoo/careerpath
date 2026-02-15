@@ -1,6 +1,6 @@
 import React from 'react';
 import { Database, Search, Table, Braces, ArrowRight, Sparkles } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 
 const SQLCard = ({ title, description, icon: Icon, color, details }) => (
     <div className="group relative p-8 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 overflow-hidden">
@@ -34,10 +34,73 @@ const SQLCard = ({ title, description, icon: Icon, color, details }) => (
     </div>
 );
 
+const PremiumQuestionCard = () => {
+    const options = [
+        "SELECT department, AVG(salary) FROM employees;",
+        "SELECT department, AVG(salary) FROM employees GROUP BY department;",
+        "SELECT department, salary FROM employees GROUP BY department;",
+        "SELECT AVG(salary) OVER (department) FROM employees;"
+    ];
+
+    return (
+        <div className="relative mt-16 rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-[#0b0f1f] via-[#0a1328] to-[#180f2a] p-8 md:p-10 shadow-[0_0_50px_rgba(34,211,238,0.15)] overflow-hidden">
+            <div className="absolute -top-24 -right-24 w-56 h-56 bg-cyan-400/20 blur-3xl rounded-full"></div>
+            <div className="absolute -bottom-20 -left-16 w-52 h-52 bg-fuchsia-500/20 blur-3xl rounded-full"></div>
+
+            <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-cyan-300 bg-cyan-400/10 border border-cyan-300/30 mb-6">
+                    <Database size={14} />
+                    Premium SQL Challenge
+                </div>
+
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Question of the Day</h2>
+                <p className="text-zinc-300 mb-6 leading-relaxed">
+                    You need the average salary per department from an <span className="text-cyan-300 font-semibold">employees</span> table.
+                    Which query is correct?
+                </p>
+
+                <div className="rounded-2xl bg-black/40 border border-white/10 p-5 mb-6">
+                    <code className="text-sm md:text-base text-cyan-200 whitespace-pre-wrap">
+                        SELECT department, AVG(salary) as avg_salary\nFROM employees\n_____;
+                    </code>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {options.map((option, index) => (
+                        <div
+                            key={index}
+                            className={`group rounded-xl border p-4 transition-all duration-300 ${
+                                index === 1
+                                    ? 'border-emerald-400/50 bg-emerald-500/10 hover:bg-emerald-500/20'
+                                    : 'border-white/10 bg-white/5 hover:bg-white/10'
+                            }`}
+                        >
+                            <div className="flex items-start gap-3">
+                                <span className={`mt-0.5 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${
+                                    index === 1
+                                        ? 'bg-emerald-400 text-black'
+                                        : 'bg-zinc-700 text-zinc-200 group-hover:bg-zinc-600'
+                                }`}>
+                                    {String.fromCharCode(65 + index)}
+                                </span>
+                                <p className="text-sm text-zinc-200 leading-relaxed">{option}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <p className="mt-5 text-sm text-emerald-300 font-medium">
+                    ✓ Correct Answer: B — Use <span className="font-bold">GROUP BY department</span> to aggregate by each department.
+                </p>
+            </div>
+        </div>
+    );
+};
+
 export default function SQLMastery() {
     return (
         <div className="min-h-screen bg-[#050507] text-white selection:bg-cyan-500/30">
-            <CursorGlow />
+
 
             <div className="max-w-7xl mx-auto px-6 py-12 pt-24 relative z-10">
                 <div className="mb-16 max-w-2xl">
@@ -93,6 +156,8 @@ export default function SQLMastery() {
                         ]}
                     />
                 </div>
+
+                <PremiumQuestionCard />
             </div>
         </div>
     );

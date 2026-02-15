@@ -5,6 +5,7 @@ export default function CalendarWidget() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [displayDate, setDisplayDate] = useState(new Date());
     const [timeLeft, setTimeLeft] = useState('');
+    const [streak, setStreak] = useState({ current: 0, best: 0 });
 
     useEffect(() => {
         const updateTimer = () => {
@@ -23,8 +24,79 @@ export default function CalendarWidget() {
             );
         };
 
-        const timer = setInterval(updateTimer, 1000);
-        updateTimer(); // Initial call
+        const calculateStreaks = () => {
+            try {
+                const savedData = localStorage.getItem('guest_activityData');
+                if (!savedData) return;
+
+                const data = JSON.parse(savedData);
+                const activityMap = new Map();
+                data.forEach(d => {
+                    if (d.seconds_active > 0) {
+                        activityMap.set(d.date, d.seconds_active);
+                    }
+                });
+
+                const todayKey = new Date().toISOString().split('T')[0];
+                let current = 0;
+                let checkDate = new Date();
+
+                // Check today
+                if (activityMap.has(todayKey)) {
+                    current = 1;
+                }
+
+                // Check backwards
+                checkDate.setDate(checkDate.getDate() - 1);
+                while (true) {
+                    const key = checkDate.toISOString().split('T')[0];
+                    if (activityMap.has(key)) {
+                        current++;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+
+                // Calculate Best Streak
+                let best = 0;
+                let tempStreak = 0;
+                const sortedDates = [...activityMap.keys()].sort();
+
+                if (sortedDates.length > 0) {
+                    let prevDate = new Date(sortedDates[0]);
+                    tempStreak = 1;
+                    best = 1;
+
+                    for (let i = 1; i < sortedDates.length; i++) {
+                        const currDate = new Date(sortedDates[i]);
+                        const diffTime = Math.abs(currDate - prevDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        if (diffDays === 1) {
+                            tempStreak++;
+                        } else {
+                            tempStreak = 1;
+                        }
+                        best = Math.max(best, tempStreak);
+                        prevDate = currDate;
+                    }
+                }
+
+                setStreak({ current, best });
+
+            } catch (e) {
+                console.error("Streak calculation error", e);
+            }
+        };
+
+        const timer = setInterval(() => {
+            updateTimer();
+            calculateStreaks();
+        }, 1000);
+
+        updateTimer();
+        calculateStreaks();
 
         return () => clearInterval(timer);
     }, []);
@@ -34,10 +106,14 @@ export default function CalendarWidget() {
         const month = date.getMonth();
         const days = new Date(year, month + 1, 0).getDate();
         const firstDay = new Date(year, month, 1).getDay();
-        return { days, firstDay };
+
+        // Previous month days
+        const prevMonthDays = new Date(year, month, 0).getDate();
+
+        return { days, firstDay, prevMonthDays };
     };
 
-    const { days, firstDay } = getDaysInMonth(displayDate);
+    const { days, firstDay, prevMonthDays } = getDaysInMonth(displayDate);
     const months = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -108,22 +184,21 @@ export default function CalendarWidget() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="relative z-10 flex-1 min-h-0 px-4">
-                {/* Weekday Headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2 text-center">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                        <div key={day} className="text-[10px] font-bold text-zinc-600 uppercase">
+            <div className="relative z-10 flex-1 min-h-0 px-4 py-2">
+                <div className="grid grid-cols-7 place-items-center">
+                    {/* Weekday Headers */}
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
+                        <div key={`header-${i}`} className="h-8 flex items-center justify-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
                             {day}
                         </div>
                     ))}
-                </div>
 
-                {/* Days */}
-                <div className="grid grid-cols-7 gap-1 gap-y-1 text-center">
+                    {/* Previous Month Empty Slots */}
                     {Array.from({ length: firstDay }).map((_, i) => (
-                        <div key={`empty-${i}`} />
+                        <div key={`empty-${i}`} className="h-8 w-8" />
                     ))}
 
+                    {/* Current Month Days */}
                     {Array.from({ length: days }).map((_, i) => {
                         const day = i + 1;
                         const today = isToday(day);
@@ -132,15 +207,15 @@ export default function CalendarWidget() {
                             <div
                                 key={day}
                                 className={`
-                                    relative h-7 w-7 mx-auto flex items-center justify-center text-xs font-medium rounded-full transition-all duration-300
+                                    relative h-8 w-8 flex items-center justify-center text-xs font-medium rounded-full transition-all duration-300 group cursor-pointer
                                     ${today
-                                        ? 'bg-indigo-500 text-white font-bold shadow-[0_0_15px_rgba(99,102,241,0.6)] scale-110 z-10'
-                                        : 'text-zinc-400 hover:text-white hover:bg-white/10 cursor-pointer'
+                                        ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold shadow-[0_0_20px_rgba(99,102,241,0.5)] scale-110 z-10'
+                                        : 'text-zinc-400 hover:text-white hover:bg-white/10'
                                     }
                                 `}
                             >
                                 {today && (
-                                    <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-indigo-500"></div>
+                                    <div className="absolute inset-0 rounded-full animate-pulse opacity-30 bg-indigo-400 blur-sm"></div>
                                 )}
                                 {day}
                             </div>
@@ -151,24 +226,29 @@ export default function CalendarWidget() {
 
             {/* Stats Area */}
             <div className="relative z-10 p-3 pt-1">
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="group bg-white/5 border border-white/5 rounded-xl p-2 hover:bg-white/10 transition-all cursor-pointer">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Flame size={14} className="text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]" />
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Current</span>
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors duration-300">
+                    {/* Current */}
+                    <div className="flex items-center gap-3 flex-1 pl-2">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
+                            <Flame size={18} className="text-orange-400" />
                         </div>
-                        <div className="text-lg font-bold text-white group-hover:scale-105 transition-transform origin-left">
-                            0 <span className="text-[10px] font-normal text-zinc-500 ml-1">Days</span>
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mb-0.5">Current</div>
+                            <div className="text-xl font-bold text-white tracking-tight">{streak.current} <span className="text-[10px] text-zinc-600 font-medium">Days</span></div>
                         </div>
                     </div>
 
-                    <div className="group bg-white/5 border border-white/5 rounded-xl p-2 hover:bg-white/10 transition-all cursor-pointer">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Trophy size={14} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Best</span>
+                    {/* Divider */}
+                    <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/10 to-transparent mx-2"></div>
+
+                    {/* Best */}
+                    <div className="flex items-center gap-3 flex-1 pl-4">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500/10 to-transparent border border-yellow-500/10">
+                            <Trophy size={18} className="text-yellow-400" />
                         </div>
-                        <div className="text-lg font-bold text-white group-hover:scale-105 transition-transform origin-left">
-                            0 <span className="text-[10px] font-normal text-zinc-500 ml-1">Days</span>
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold mb-0.5">Best</div>
+                            <div className="text-xl font-bold text-white tracking-tight">{streak.best} <span className="text-[10px] text-zinc-600 font-medium">Days</span></div>
                         </div>
                     </div>
                 </div>

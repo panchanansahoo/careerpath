@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Check, Play, Code2, AlertCircle, Loader, Lock, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import CursorGlow from '../components/CursorGlow';
+
 import { dsaPatterns } from '../data/dsaPatternsData';
 import axios from 'axios';
 
@@ -129,7 +129,7 @@ export default function DSAPatterns() {
 
     return (
         <div className="min-h-screen bg-[#020305] text-white font-sans pb-20 relative">
-            <CursorGlow />
+
 
             {/* Background Effects */}
             <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>

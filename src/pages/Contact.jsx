@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, MessageSquare, MapPin, Send, Linkedin, Github, Twitter, Loader } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 
 export default function Contact() {
     const [formData, setFormData] = useState({
@@ -44,7 +44,7 @@ export default function Contact() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#020203', color: 'white', position: 'relative' }}>
-            <CursorGlow />
+
 
             <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', position: 'relative', zIndex: 10 }}>
 

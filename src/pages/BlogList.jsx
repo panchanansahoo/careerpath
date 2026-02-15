@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, User, ArrowRight, Search, Tag, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import CursorGlow from '../components/CursorGlow';
+
 
 export default function BlogList() {
     const [blogs, setBlogs] = useState([]);
@@ -36,7 +36,7 @@ export default function BlogList() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#030303', color: 'white', position: 'relative' }}>
-            <CursorGlow />
+
 
             {/* Header */}
             <section style={{ paddingTop: '120px', paddingBottom: '60px', textAlign: 'center', position: 'relative', zIndex: 10 }}>

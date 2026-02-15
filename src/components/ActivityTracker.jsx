@@ -9,6 +9,7 @@ const ActivityTracker = () => {
     const [isHovered, setIsHovered] = useState(false);
     const timeRef = useRef(0);
     const unsavedChangesRef = useRef(false);
+    const currentDateRef = useRef(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
         const fetchActivity = async () => {
@@ -67,6 +68,27 @@ const ActivityTracker = () => {
         fetchActivity();
 
         const interval = setInterval(() => {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+
+            if (todayStr !== currentDateRef.current) {
+                // Day changed!
+                const yesterdayStr = currentDateRef.current;
+
+                // 1. Sync yesterday's final data
+                syncData(yesterdayStr);
+
+                // 2. Reset mechanism for new day
+                setTimeSpent(0);
+                timeRef.current = 0;
+                currentDateRef.current = todayStr;
+
+                // 3. Force update is implicit via setTimeSpent, but we must ensure
+                // activityData has the old day's data so it appears in history.
+                // syncData handles logical update, but let's ensure state is refreshed
+                // immediately for the "history" part of the graph.
+            }
+
             setTimeSpent(prev => {
                 const newTime = prev + 1;
                 timeRef.current = newTime;
@@ -75,7 +97,7 @@ const ActivityTracker = () => {
             });
         }, 1000);
 
-        const syncInterval = setInterval(syncData, 5000); // More frequent save for local feeling
+        const syncInterval = setInterval(() => syncData(), 5000); // More frequent save for local feeling
 
         return () => {
             clearInterval(interval);
@@ -84,30 +106,49 @@ const ActivityTracker = () => {
         };
     }, []);
 
-    const syncData = async () => {
-        if (!unsavedChangesRef.current) return;
+    const syncData = async (dateOverride = null) => {
+        // If we are forced to sync (e.g. day change), we might not have 'unsavedChanges' flag set 
+        // if we just reset, but here we want to save the *accumulated* time.
+        // So we check if we have data to save.
+
+        // Use the overridden date (yesterday) or current tracking date
+        const targetDate = dateOverride || currentDateRef.current;
+        const timeToSave = timeRef.current;
+
+        if (!unsavedChangesRef.current && !dateOverride) return;
 
         const isGuest = localStorage.getItem('isGuest') === 'true';
 
+        // Update local activityData state for immediate UI reflection (Graph history)
+        setActivityData(prevData => {
+            const newData = [...prevData];
+            const existingIndex = newData.findIndex(d => d.date === targetDate);
+            if (existingIndex >= 0) {
+                newData[existingIndex] = { ...newData[existingIndex], seconds_active: timeToSave };
+            } else {
+                newData.push({ date: targetDate, seconds_active: timeToSave });
+            }
+            return newData;
+        });
+
         if (isGuest) {
             // Guest Logic: Save to localStorage
-            localStorage.setItem('guest_timeSpent', timeRef.current.toString());
-            // Optionally update activityData array for the chart
-            // For now just saving total time, graph logic might need a refresh to show live updates effectively from local
+            if (!dateOverride) {
+                // Only update "current" counter if we are syncing today's ongoing time
+                localStorage.setItem('guest_timeSpent', timeToSave.toString());
+            }
+
             try {
-                // Simple local update for the chart's data source if we want it to reflect immediately
-                const todayStr = new Date().toISOString().split('T')[0];
                 const storedData = localStorage.getItem('guest_activityData');
                 let data = storedData ? JSON.parse(storedData) : [];
 
-                const existingIndex = data.findIndex(d => d.date === todayStr);
+                const existingIndex = data.findIndex(d => d.date === targetDate);
                 if (existingIndex >= 0) {
-                    data[existingIndex].seconds_active = timeRef.current;
+                    data[existingIndex].seconds_active = timeToSave;
                 } else {
-                    data.push({ date: todayStr, seconds_active: timeRef.current });
+                    data.push({ date: targetDate, seconds_active: timeToSave });
                 }
                 localStorage.setItem('guest_activityData', JSON.stringify(data));
-                setActivityData(data); // Update state to reflect in chart
             } catch (e) {
                 console.error("Error saving guest activity", e);
             }
@@ -127,8 +168,8 @@ const ActivityTracker = () => {
                     'Authorization': `Bearer ${session.access_token}`
                 },
                 body: JSON.stringify({
-                    date: new Date().toISOString().split('T')[0],
-                    seconds: timeRef.current
+                    date: targetDate,
+                    seconds: timeToSave
                 })
             });
             unsavedChangesRef.current = false;
@@ -224,7 +265,7 @@ const ActivityTracker = () => {
 
     return (
         <div
-            className="group w-full h-full [perspective:1000px]"
+            className="group w-full h-full min-h-[420px] [perspective:1000px]"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -376,7 +417,7 @@ const ActivityTracker = () => {
                                         </div>
                                         <span className={`text-[10px] font-medium transition-colors uppercase tracking-wider ${isSelected ? 'text-white' : 'text-zinc-600 group-hover/bar:text-zinc-400'
                                             }`}>
-                                            {d.day.charAt(0)}
+                                            {d.day}
                                         </span>
                                     </div>
                                 );

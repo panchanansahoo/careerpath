@@ -1,11 +1,11 @@
 import React from 'react';
 import { FileText, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 
 export default function TermsOfService() {
     return (
         <div style={{ minHeight: '100vh', background: '#020203', color: 'white', position: 'relative' }}>
-            <CursorGlow />
+
 
             <div className="container" style={{ paddingTop: '120px', paddingBottom: '80px', position: 'relative', zIndex: 10, maxWidth: '800px' }}>
 

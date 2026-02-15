@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState, Component, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -39,6 +39,7 @@ import History from './pages/History';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import StudyPlan from './pages/StudyPlan';
+import Roadmap from './pages/Roadmap';
 import DataScienceLearningPath from './pages/DataScienceLearningPath';
 import PMLearningPath from './pages/PMLearningPath';
 import DSABasicsLearningPath from './pages/DSABasicsLearningPath';
@@ -84,6 +85,12 @@ function AppContent() {
   const { user } = useAuth();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
 
   // Public pages that don't show sidebar
   const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
@@ -96,11 +103,16 @@ function AppContent() {
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(prev => !prev)}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
         />
       )}
 
       <div className={`main-content ${showSidebar ? (sidebarCollapsed ? 'sidebar-collapsed' : '') : 'no-sidebar'}`}>
-        <Navbar hasSidebar={showSidebar} />
+        <Navbar
+          hasSidebar={showSidebar}
+          onMobileMenuToggle={() => setMobileSidebarOpen(prev => !prev)}
+        />
 
         <div className={showSidebar ? 'page-content' : ''}>
           <Routes>
@@ -129,6 +141,10 @@ function AppContent() {
             <Route
               path="/ai-interview"
               element={<PrivateRoute><AIInterview /></PrivateRoute>}
+            />
+            <Route
+              path="/roadmap"
+              element={<PrivateRoute><Roadmap /></PrivateRoute>}
             />
             <Route
               path="/aptitude-mastery"

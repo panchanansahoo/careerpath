@@ -61,7 +61,7 @@ export default function TodoList() {
     };
 
     return (
-        <div className="relative h-full flex flex-col group/container">
+        <div className="relative h-full flex flex-col group/container m-4">
             {/* Main Glass Container */}
             <div className="absolute inset-0 bg-[#050505]/80 backdrop-blur-3xl border border-white/5 rounded-[32px] shadow-2xl overflow-hidden ring-1 ring-white/5">
                 {/* Ambient Glows */}
@@ -74,31 +74,25 @@ export default function TodoList() {
             <div className="relative z-10 flex flex-col h-full p-8">
 
                 {/* Header */}
-                <div className="relative flex items-center justify-between mb-8">
-                    {/* Placeholder for balance */}
-                    <div className="w-10"></div>
-
-                    <div className="flex flex-col items-center">
-                        <h2 className="text-2xl font-bold tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 uppercase drop-shadow-sm">
-                            Tasks
+                <div className="relative flex items-center justify-center mb-12 mt-2">
+                    <div className="flex flex-col items-center justify-center z-10">
+                        <h2 className="text-xl font-black text-white tracking-[0.2em] uppercase drop-shadow-md mb-2">
+                            MY DAY
                         </h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <div className="h-[1px] w-4 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-                            <span className="text-[10px] font-medium text-zinc-500 tracking-wider uppercase">
-                                {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
-                            </span>
-                            <div className="h-[1px] w-4 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
-                        </div>
+                        <div className="h-px w-16 bg-white/20 mb-2"></div>
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em]">
+                            {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                        </span>
                     </div>
 
-                    {/* Completion Ring */}
-                    <div className="relative group/ring w-10 flex justify-end">
+                    {/* Completion Ring - Absolute Right */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 group/ring">
                         <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full opacity-0 group-hover/ring:opacity-100 transition-opacity"></div>
-                        <svg className="w-10 h-10 -rotate-90 text-indigo-500">
-                            <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-white/5" />
-                            <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent"
-                                strokeDasharray={2 * Math.PI * 16}
-                                strokeDashoffset={2 * Math.PI * 16 - (tasks.length ? (tasks.filter(t => t.completed).length / tasks.length) : 0) * 2 * Math.PI * 16}
+                        <svg className="w-12 h-12 -rotate-90 text-indigo-500">
+                            <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-zinc-800" />
+                            <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent"
+                                strokeDasharray={2 * Math.PI * 20}
+                                strokeDashoffset={2 * Math.PI * 20 - (tasks.length ? (tasks.filter(t => t.completed).length / tasks.length) : 0) * 2 * Math.PI * 20}
                                 strokeLinecap="round"
                                 className="transition-all duration-1000 ease-out drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]"
                             />
