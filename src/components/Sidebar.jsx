@@ -5,7 +5,7 @@ import {
     Grid3X3, FileText, Code, Users,
     ChevronLeft, ChevronRight, Sparkles,
     CalendarDays, BarChart3, Clock, Settings, User,
-    PanelLeftClose, PanelLeftOpen, Calculator, Database, Map
+    PanelLeftClose, PanelLeftOpen, Calculator, Database, Map, Server
 } from 'lucide-react';
 
 const navItems = [
@@ -39,6 +39,13 @@ const navItems = [
         subtitle: 'Database & Queries',
         icon: Database
     },
+    {
+        path: '/system-design',
+        label: 'System Design',
+        subtitle: 'Architecture Simulator',
+        icon: Server
+    },
+
 
     {
         path: '/dashboard/learning-path',

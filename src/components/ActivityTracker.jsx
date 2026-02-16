@@ -3,16 +3,24 @@ import { Activity, Clock, BarChart3, ChevronDown, Trophy, Zap } from 'lucide-rea
 import { supabase } from '../lib/supabase';
 
 const ActivityTracker = () => {
+    // Helper to get local date string YYYY-MM-DD
+    const getLocalDate = (date = new Date()) => {
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60000));
+        return localDate.toISOString().split('T')[0];
+    };
+
     const [timeSpent, setTimeSpent] = useState(0);
     const [activityData, setActivityData] = useState([]);
     const [selectedDateIndex, setSelectedDateIndex] = useState(6);
     const [isHovered, setIsHovered] = useState(false);
     const timeRef = useRef(0);
     const unsavedChangesRef = useRef(false);
-    const currentDateRef = useRef(new Date().toISOString().split('T')[0]);
+    const currentDateRef = useRef(getLocalDate());
 
     useEffect(() => {
         const fetchActivity = async () => {
+            if (!supabase) return;
             const { data: { session } } = await supabase.auth.getSession();
 
             // Check for guest mode
@@ -23,20 +31,17 @@ const ActivityTracker = () => {
             if (isGuest) {
                 // Guest Logic: Load from localStorage
                 try {
-                    const savedTime = localStorage.getItem('guest_timeSpent');
-                    const savedData = localStorage.getItem('guest_activityData');
+                    const savedDataStr = localStorage.getItem('guest_activityData');
+                    const savedData = savedDataStr ? JSON.parse(savedDataStr) : [];
 
-                    if (savedTime) {
-                        setTimeSpent(parseInt(savedTime, 10));
-                        timeRef.current = parseInt(savedTime, 10);
-                    }
+                    setActivityData(savedData);
 
-                    if (savedData) {
-                        setActivityData(JSON.parse(savedData));
-                    } else {
-                        // Initialize empty structure if needed or just let it build up
-                        setActivityData([]);
-                    }
+                    const todayStr = getLocalDate();
+                    const todayEntry = savedData.find(d => d.date === todayStr);
+                    const initialTime = todayEntry ? todayEntry.seconds_active : 0;
+
+                    setTimeSpent(initialTime);
+                    timeRef.current = initialTime;
                 } catch (e) {
                     console.error("Failed to load guest data", e);
                 }
@@ -53,7 +58,7 @@ const ActivityTracker = () => {
                     const data = await response.json();
                     setActivityData(data);
 
-                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayStr = getLocalDate();
                     const todayData = data.find(d => d.date === todayStr);
                     const initialTime = todayData ? todayData.seconds_active : 0;
 
@@ -69,7 +74,7 @@ const ActivityTracker = () => {
 
         const interval = setInterval(() => {
             const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
+            const todayStr = getLocalDate(now);
 
             if (todayStr !== currentDateRef.current) {
                 // Day changed!
@@ -157,6 +162,7 @@ const ActivityTracker = () => {
             return;
         }
 
+        if (!supabase) return;
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
@@ -191,7 +197,7 @@ const ActivityTracker = () => {
         for (let i = 6; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(today.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = getLocalDate(d);
             const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
             const fullDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
@@ -237,7 +243,7 @@ const ActivityTracker = () => {
                 const saved = localStorage.getItem('todo_list_v2');
                 if (saved) {
                     const tasks = JSON.parse(saved);
-                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayStr = getLocalDate();
 
                     const todayCount = tasks.filter(t => t.dueDate === todayStr).length;
                     const pendingCount = tasks.filter(t => !t.completed).length;

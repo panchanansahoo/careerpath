@@ -58,7 +58,7 @@ const DailyChallenge = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
                     {/* DSA Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-white/90 font-semibold mb-2">
+                        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-2">
                             <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">
                                 <Code2 size={18} />
                             </div>
@@ -93,7 +93,7 @@ const DailyChallenge = () => {
 
                     {/* SQL Section */}
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-white/90 font-semibold mb-2">
+                        <div className="flex items-center justify-center gap-2 text-white/90 font-semibold mb-2">
                             <div className="p-1.5 rounded-lg bg-pink-500/20 text-pink-400">
                                 <Database size={18} />
                             </div>

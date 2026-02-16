@@ -11,6 +11,7 @@ import DSAPatterns from './pages/DSAPatterns';
 import PatternDetail from './pages/PatternDetail';
 import ProblemSolver from './pages/ProblemSolver';
 import SystemDesign from './pages/SystemDesign';
+import SystemDesignSimulator from './pages/SystemDesignSimulator';
 import ResumeAnalysis from './pages/ResumeAnalysis';
 import AIInterview from './pages/AIInterview';
 import AptitudeMastery from './pages/AptitudeMastery';
@@ -142,6 +143,7 @@ function AppContent() {
               element={<PrivateRoute><ProblemSolver /></PrivateRoute>}
             />
             <Route path="/system-design" element={<SystemDesign />} />
+            <Route path="/system-design/simulator" element={<PrivateRoute><SystemDesignSimulator /></PrivateRoute>} />
             <Route
               path="/resume-analysis"
               element={<PrivateRoute><ResumeAnalysis /></PrivateRoute>}
