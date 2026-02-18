@@ -1,0 +1,312 @@
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import Editor from '@monaco-editor/react';
+import { ArrowLeft, Play, Send, Clock, Lightbulb, Database, ChevronDown, X, Maximize2, Minimize2 } from 'lucide-react';
+import { getSQLProblemById, SQL_CATEGORIES } from '../data/sqlProblemsDatabase';
+import { getSchemaById } from '../data/sqlSchemas';
+import SchemaViewer from '../components/sql/SchemaViewer';
+import SQLResultsPanel from '../components/sql/SQLResultsPanel';
+
+const diffColors = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' };
+
+const MOCK_RESULTS = {
+  columns: ['Result'],
+  rows: [['Query executed successfully. In Phase 2, results will come from a real database.']],
+};
+
+export default function SQLCodeEditor() {
+  const { problemId } = useParams();
+  const navigate = useNavigate();
+  const editorRef = useRef(null);
+  const [problem, setProblem] = useState(null);
+  const [schema, setSchema] = useState(null);
+  const [code, setCode] = useState('');
+  const [dialect, setDialect] = useState('mysql');
+  const [running, setRunning] = useState(false);
+  const [results, setResults] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [execTime, setExecTime] = useState(null);
+  const [showHints, setShowHints] = useState(false);
+  const [hintLevel, setHintLevel] = useState(0);
+  const [focusMode, setFocusMode] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(22);
+  const [bottomHeight, setBottomHeight] = useState(250);
+  const [timer, setTimer] = useState(0);
+  const timerRef = useRef(null);
+  const resizing = useRef(null);
+
+  // Load problem
+  useEffect(() => {
+    const p = getSQLProblemById(problemId);
+    if (p) {
+      setProblem(p);
+      setSchema(getSchemaById(p.schemaId));
+      const saved = localStorage.getItem(`sql-code-${problemId}`);
+      setCode(saved || `-- ${p.title}\n-- Write your SQL query below\n\nSELECT \n`);
+    }
+  }, [problemId]);
+
+  // Timer
+  useEffect(() => {
+    timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  // Auto-save
+  useEffect(() => {
+    if (code && problemId) localStorage.setItem(`sql-code-${problemId}`, code);
+  }, [code, problemId]);
+
+  const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+
+  // Mock run
+  const handleRun = useCallback(() => {
+    if (running) return;
+    setRunning(true);
+    setStatus('running');
+    setResults(null);
+    setTimeout(() => {
+      const trimmed = code.trim().replace(/;$/, '').toLowerCase();
+      const expected = problem?.expectedQuery?.trim().replace(/;$/, '').toLowerCase();
+      // Simple mock check
+      const isCorrect = trimmed && expected && (trimmed === expected || trimmed.includes('select'));
+      setResults(MOCK_RESULTS);
+      setExecTime(Math.floor(Math.random() * 50) + 10);
+      setStatus(isCorrect ? 'accepted' : 'accepted'); // Always accept in mock mode
+      setRunning(false);
+    }, 800);
+  }, [code, running, problem]);
+
+  const handleSubmit = useCallback(() => {
+    handleRun();
+  }, [handleRun]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (e.shiftKey) handleSubmit();
+        else handleRun();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleRun, handleSubmit]);
+
+  // Resize handlers
+  const handleMouseDown = (type) => (e) => {
+    e.preventDefault();
+    resizing.current = type;
+    const onMove = (ev) => {
+      if (resizing.current === 'left') {
+        setLeftWidth(Math.max(12, Math.min(40, (ev.clientX / window.innerWidth) * 100)));
+      } else if (resizing.current === 'bottom') {
+        const container = document.getElementById('sql-editor-center');
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          setBottomHeight(Math.max(100, Math.min(400, rect.bottom - ev.clientY)));
+        }
+      }
+    };
+    const onUp = () => { resizing.current = null; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const handleEditorMount = (editor, monaco) => {
+    editorRef.current = editor;
+    monaco.editor.defineTheme('sql-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'keyword', foreground: 'c084fc', fontStyle: 'bold' },
+        { token: 'string', foreground: '6ee7b7' },
+        { token: 'number', foreground: 'fbbf24' },
+        { token: 'comment', foreground: '4b5563', fontStyle: 'italic' },
+        { token: 'operator', foreground: '60a5fa' },
+        { token: 'type', foreground: '38bdf8' },
+      ],
+      colors: {
+        'editor.background': '#0a0a1a',
+        'editor.foreground': '#e2e8f0',
+        'editor.lineHighlightBackground': '#ffffff08',
+        'editor.selectionBackground': '#8b5cf640',
+        'editorCursor.foreground': '#8b5cf6',
+        'editorLineNumber.foreground': '#333350',
+        'editorLineNumber.activeForeground': '#8b5cf6',
+      },
+    });
+    monaco.editor.setTheme('sql-dark');
+    editor.addAction({
+      id: 'format-sql', label: 'Format SQL', keybindings: [monaco.KeyMod.Shift | monaco.KeyMod.Alt | monaco.KeyCode.KeyF],
+      run: (ed) => ed.getAction('editor.action.formatDocument').run(),
+    });
+  };
+
+  const cat = problem ? SQL_CATEGORIES.find(c => c.id === problem.category) : null;
+
+  if (!problem) {
+    return (
+      <div style={{ height: '100vh', background: '#0a0a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.4)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Database size={48} style={{ marginBottom: 16, opacity: 0.3 }} />
+          <div>Problem not found</div>
+          <button onClick={() => navigate('/sql-problems')} style={{ marginTop: 16, padding: '8px 20px', background: '#8b5cf6', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>Back to Problems</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a1a', overflow: 'hidden' }}>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(10,10,26,0.98)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 4px', height: 48, flexShrink: 0 }}>
+        <button onClick={() => navigate('/sql-problems')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: '100%', cursor: 'pointer', background: 'none', border: 'none', borderRight: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 600 }}>
+          <ArrowLeft size={14} /> Problems
+        </button>
+        <div style={{ padding: '0 14px', display: 'flex', alignItems: 'center', gap: 8, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          <span style={{ fontSize: 14 }}>{cat?.icon}</span>
+          <span style={{ fontWeight: 700, fontSize: 13, color: '#e2e8f0' }}>{problem.title}</span>
+          <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 10, fontWeight: 700, background: diffColors[problem.difficulty] + '18', color: diffColors[problem.difficulty] }}>{problem.difficulty}</span>
+        </div>
+        {/* Dialect */}
+        <div style={{ padding: '0 12px', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <select value={dialect} onChange={e => setDialect(e.target.value)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '4px 8px', color: '#e2e8f0', fontSize: 11, outline: 'none', cursor: 'pointer' }}>
+            <option value="mysql">MySQL</option>
+            <option value="postgresql">PostgreSQL</option>
+            <option value="sqlite">SQLite</option>
+          </select>
+        </div>
+        {/* Timer */}
+        <div style={{ padding: '0 12px', display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'monospace', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          <Clock size={12} /> {formatTime(timer)}
+        </div>
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+        {/* Actions */}
+        <button onClick={() => setFocusMode(f => !f)} style={{ padding: '0 10px', height: '100%', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }} title="Toggle focus mode">
+          {focusMode ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
+        <button onClick={() => setShowHints(!showHints)} style={{ padding: '0 10px', height: '100%', background: 'none', border: 'none', cursor: 'pointer', color: showHints ? '#f59e0b' : 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center' }} title="Hints">
+          <Lightbulb size={16} />
+        </button>
+        <button onClick={handleRun} disabled={running} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', margin: '0 4px', background: running ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, color: '#10b981', fontSize: 12, fontWeight: 700, cursor: running ? 'default' : 'pointer' }}>
+          <Play size={14} /> {running ? 'Running...' : 'Run'} <span style={{ fontSize: 10, opacity: 0.6 }}>Ctrl+↵</span>
+        </button>
+        <button onClick={handleSubmit} disabled={running} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', margin: '0 8px 0 4px', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 8, color: '#a78bfa', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+          <Send size={14} /> Submit
+        </button>
+      </div>
+
+      {/* Main layout */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* LEFT: Schema + Description */}
+        {!focusMode && (
+          <>
+            <div style={{ width: `${leftWidth}%`, minWidth: 200, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+              {/* Problem description */}
+              <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)', overflow: 'auto', maxHeight: '30%' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Problem</div>
+                <p style={{ fontSize: 13, lineHeight: 1.6, color: '#e2e8f0', margin: 0, whiteSpace: 'pre-wrap' }}>{problem.description}</p>
+                <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {problem.topics.map(t => (
+                    <span key={t} style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, background: 'rgba(139,92,246,0.1)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.15)' }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              {/* Schema viewer */}
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <SchemaViewer schema={schema} />
+              </div>
+            </div>
+            {/* Left resize */}
+            <div onMouseDown={handleMouseDown('left')} style={{ width: 5, cursor: 'col-resize', zIndex: 10, background: 'transparent', flexShrink: 0 }} />
+          </>
+        )}
+
+        {/* CENTER: Editor + Results */}
+        <div id="sql-editor-center" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 400 }}>
+          {/* Editor */}
+          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            <Editor
+              height="100%"
+              language="sql"
+              value={code}
+              onChange={val => setCode(val || '')}
+              onMount={handleEditorMount}
+              theme="sql-dark"
+              options={{
+                fontSize: 14, fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace", lineHeight: 22,
+                minimap: { enabled: false }, scrollBeyondLastLine: false, automaticLayout: true,
+                padding: { top: 16 }, tabSize: 2, wordWrap: 'on',
+                suggestOnTriggerCharacters: true, quickSuggestions: true,
+                renderLineHighlight: 'gutter', folding: true, bracketPairColorization: { enabled: true },
+              }}
+            />
+          </div>
+
+          {/* Bottom resize */}
+          <div onMouseDown={handleMouseDown('bottom')} style={{ height: 5, cursor: 'row-resize', zIndex: 10, background: 'transparent', flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }} />
+
+          {/* Results */}
+          <div style={{ height: bottomHeight, flexShrink: 0, overflow: 'hidden' }}>
+            <SQLResultsPanel
+              results={results}
+              expectedOutput={problem?.expectedQuery ? { columns: ['Expected Query'], rows: [[problem.expectedQuery]] } : null}
+              status={status}
+              executionTime={execTime}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Hints overlay */}
+      {showHints && (
+        <div style={{ position: 'fixed', right: 0, top: 48, bottom: 0, width: 340, background: 'rgba(13,13,31,0.98)', borderLeft: '1px solid rgba(255,255,255,0.08)', zIndex: 100, display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 30px rgba(0,0,0,0.5)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 6 }}><Lightbulb size={16} /> Hints</span>
+            <button onClick={() => setShowHints(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.4)' }}><X size={16} /></button>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+            {problem.hints.map((hint, i) => (
+              <div key={i} style={{ marginBottom: 12 }}>
+                {i <= hintLevel ? (
+                  <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', fontSize: 13, color: '#e2e8f0', lineHeight: 1.5 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b' }}>Hint {i + 1}:</span> {hint}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setHintLevel(i)}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    🔒 Reveal Hint {i + 1}
+                  </button>
+                )}
+              </div>
+            ))}
+            {/* Solution */}
+            <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>SOLUTION</div>
+              {hintLevel >= problem.hints.length ? (
+                <>
+                  <pre style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 8, padding: 12, fontSize: 12, color: '#c084fc', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{problem.expectedQuery}</pre>
+                  {problem.explanation && (
+                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginTop: 10 }}>{problem.explanation}</p>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={() => setHintLevel(problem.hints.length)}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', fontSize: 13, cursor: 'pointer' }}
+                >
+                  🔒 Reveal all hints first, then view solution
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

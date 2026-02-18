@@ -1,0 +1,1380 @@
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import {
+    Mic, MicOff, Video, VideoOff, MessageSquare, Phone,
+    Send, Clock, Users, Sparkles, ChevronRight, ChevronLeft,
+    Star, TrendingUp, CheckCircle, AlertCircle, BarChart3,
+    RefreshCw, ArrowLeft, Volume2, X, Monitor, MoreVertical,
+    Hand, SmilePlus, Settings, Copy, Maximize2, Minimize2,
+    Lightbulb, Target, Brain, Award, Zap, Timer
+} from 'lucide-react';
+import { COMPANIES, STAGES, ROLES, DIFFICULTIES } from '../data/companyPrepData';
+import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+// ─── AI Avatar Canvas Component ───
+function AIAvatar({ speaking, companyColor, companyLogo, size = 'large' }) {
+    const canvasRef = useRef(null);
+    const animRef = useRef(null);
+    const phaseRef = useRef(0);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width = size === 'large' ? 280 : 140;
+        const h = canvas.height = size === 'large' ? 280 : 140;
+        const cx = w / 2, cy = h / 2;
+
+        const draw = () => {
+            phaseRef.current += 0.03;
+            ctx.clearRect(0, 0, w, h);
+
+            // Background gradient
+            const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, w / 2);
+            bg.addColorStop(0, 'rgba(15, 15, 25, 1)');
+            bg.addColorStop(1, 'rgba(5, 5, 12, 1)');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, w, h);
+
+            const baseRadius = size === 'large' ? 60 : 32;
+            const ringCount = speaking ? 5 : 3;
+
+            // Animated rings
+            for (let i = ringCount; i >= 0; i--) {
+                const pulse = speaking
+                    ? Math.sin(phaseRef.current * 2 + i * 0.8) * (8 + i * 3)
+                    : Math.sin(phaseRef.current + i * 0.6) * 3;
+                const r = baseRadius + i * (size === 'large' ? 18 : 10) + pulse;
+                const alpha = speaking
+                    ? 0.12 - i * 0.02
+                    : 0.06 - i * 0.015;
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, Math.max(r, 1), 0, Math.PI * 2);
+                ctx.strokeStyle = `${companyColor}${Math.round(Math.max(alpha, 0.01) * 255).toString(16).padStart(2, '0')}`;
+                ctx.lineWidth = speaking ? 2.5 : 1.5;
+                ctx.stroke();
+            }
+
+            // Inner glow circle
+            const innerGlow = ctx.createRadialGradient(cx, cy, baseRadius * 0.3, cx, cy, baseRadius);
+            innerGlow.addColorStop(0, `${companyColor}30`);
+            innerGlow.addColorStop(1, `${companyColor}08`);
+            ctx.beginPath();
+            ctx.arc(cx, cy, baseRadius, 0, Math.PI * 2);
+            ctx.fillStyle = innerGlow;
+            ctx.fill();
+            ctx.strokeStyle = `${companyColor}40`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Speaking wave bars
+            if (speaking) {
+                const barCount = 5;
+                const barWidth = size === 'large' ? 4 : 2.5;
+                const gap = size === 'large' ? 6 : 4;
+                const totalW = barCount * barWidth + (barCount - 1) * gap;
+                const startX = cx - totalW / 2;
+                const barY = cy + baseRadius + (size === 'large' ? 24 : 14);
+
+                for (let b = 0; b < barCount; b++) {
+                    const barH = (Math.sin(phaseRef.current * 4 + b * 1.2) + 1) * (size === 'large' ? 10 : 6) + 4;
+                    const x = startX + b * (barWidth + gap);
+                    ctx.fillStyle = companyColor;
+                    ctx.globalAlpha = 0.7;
+                    ctx.beginPath();
+                    ctx.roundRect(x, barY - barH / 2, barWidth, barH, 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // Company logo emoji
+            const fontSize = size === 'large' ? 38 : 22;
+            ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(companyLogo, cx, cy);
+
+            animRef.current = requestAnimationFrame(draw);
+        };
+
+        draw();
+        return () => cancelAnimationFrame(animRef.current);
+    }, [speaking, companyColor, companyLogo, size]);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            className="ti-avatar-canvas"
+            style={{ width: size === 'large' ? 280 : 140, height: size === 'large' ? 280 : 140 }}
+        />
+    );
+}
+
+// ─── Mic Level Indicator ───
+function MicLevel({ stream }) {
+    const [level, setLevel] = useState(0);
+    const analyserRef = useRef(null);
+    const rafRef = useRef(null);
+
+    useEffect(() => {
+        if (!stream) return;
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const tick = () => {
+                analyser.getByteFrequencyData(dataArray);
+                const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+                setLevel(Math.min(avg / 128, 1));
+                rafRef.current = requestAnimationFrame(tick);
+            };
+            tick();
+
+            return () => {
+                cancelAnimationFrame(rafRef.current);
+                audioCtx.close();
+            };
+        } catch (e) { /* AudioContext not available */ }
+    }, [stream]);
+
+    return (
+        <div className="ti-mic-level">
+            {[...Array(5)].map((_, i) => (
+                <div
+                    key={i}
+                    className={`ti-mic-bar ${level > (i + 1) * 0.2 ? 'active' : ''}`}
+                />
+            ))}
+        </div>
+    );
+}
+
+
+export default function CompanyInterview() {
+    const { user } = useAuth();
+
+    // ── State ──
+    const [phase, setPhase] = useState('lobby'); // lobby | interview | summary
+    const [config, setConfig] = useState({
+        company: 'google', role: 'SDE', stage: 'Technical',
+        difficulty: 'Medium', format: 'voice'
+    });
+    const [conversation, setConversation] = useState([]);
+    const [userInput, setUserInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [currentQuestion, setCurrentQuestion] = useState('');
+    const [sessionScores, setSessionScores] = useState([]);
+    const [summaryData, setSummaryData] = useState(null);
+    const [questionCount, setQuestionCount] = useState(0);
+    const totalQuestions = 8;
+
+    // Realism features
+    const [hintData, setHintData] = useState(null);
+    const [hintLoading, setHintLoading] = useState(false);
+    const [interviewerReaction, setInterviewerReaction] = useState(null);
+    const [thinkTimeLeft, setThinkTimeLeft] = useState(0);
+    const thinkTimerRef = useRef(null);
+
+    // Media
+    const [cameraOn, setCameraOn] = useState(true);
+    const [micOn, setMicOn] = useState(true);
+    const [stream, setStream] = useState(null);
+    const [chatOpen, setChatOpen] = useState(true);
+    const [fullscreen, setFullscreen] = useState(false);
+
+    // Voice
+    const [isListening, setIsListening] = useState(false);
+    const [transcript, setTranscript] = useState('');
+    const [interimText, setInterimText] = useState('');
+    const [speechFeedback, setSpeechFeedback] = useState(null);
+    const [speechStartTime, setSpeechStartTime] = useState(null);
+    const [aiSpeaking, setAiSpeaking] = useState(false);
+    const [autoSendCountdown, setAutoSendCountdown] = useState(0);
+    const autoSendTimerRef = useRef(null);
+    const autoSendCountdownRef = useRef(null);
+
+    // Timer
+    const [elapsed, setElapsed] = useState(0);
+    const timerRef = useRef(null);
+
+    // Refs
+    const videoRef = useRef(null);
+    const chatEndRef = useRef(null);
+    const recognitionRef = useRef(null);
+    const streamRef = useRef(null);
+
+    // ── Helpers ──
+    const companyObj = COMPANIES.find(c => c.id === config.company) || COMPANIES[0];
+    const companyName = companyObj.name;
+    const companyLogo = companyObj.logo;
+    const companyColor = companyObj.color;
+
+    const getAuthHeaders = () => {
+        const token = user?.access_token || localStorage.getItem('access_token');
+        return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    };
+
+    const formatTime = (secs) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
+    // ── Media controls ──
+    const startMedia = async () => {
+        try {
+            const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            streamRef.current = s;
+            setStream(s);
+            if (videoRef.current) videoRef.current.srcObject = s;
+            return true;
+        } catch {
+            // Allow text-only if no camera
+            setStream(null);
+            setCameraOn(false);
+            return false;
+        }
+    };
+
+    const stopMedia = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+            setStream(null);
+        }
+    };
+
+    const toggleCamera = () => {
+        if (stream) {
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                setCameraOn(videoTrack.enabled);
+            }
+        }
+    };
+
+    const toggleMic = () => {
+        if (stream) {
+            const audioTrack = stream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                setMicOn(audioTrack.enabled);
+            }
+        }
+    };
+
+    // ── Timer ──
+    useEffect(() => {
+        if (phase === 'interview') {
+            timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+        }
+        return () => clearInterval(timerRef.current);
+    }, [phase]);
+
+    // Scroll chat
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [conversation]);
+
+    // Connect video element when stream changes
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [stream, phase]);
+
+    // Cleanup
+    useEffect(() => {
+        return () => {
+            stopMedia();
+            clearInterval(timerRef.current);
+            window.speechSynthesis?.cancel();
+        };
+    }, []);
+
+    // ── TTS — pick the most natural voice available ──
+    const getBestVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices.length) return null;
+
+        // Preferred voices ranked by naturalness (tested across browsers)
+        const preferred = [
+            'Google UK English Female',       // Chrome — very natural
+            'Google US English',              // Chrome — natural
+            'Microsoft Zira',                 // Edge/Windows — clear & warm
+            'Microsoft Aria Online',          // Edge — neural, very human
+            'Microsoft Jenny Online',         // Edge — neural
+            'Samantha',                       // macOS/Safari — excellent
+            'Karen',                          // macOS — good Australian
+            'Daniel',                         // macOS — British male
+            'Moira',                          // macOS — Irish
+            'Google UK English Male',         // Chrome fallback
+        ];
+
+        // Try exact match first
+        for (const name of preferred) {
+            const match = voices.find(v => v.name === name);
+            if (match) return match;
+        }
+
+        // Fallback: pick any English voice that's marked as natural/premium
+        const naturalEn = voices.find(v =>
+            v.lang.startsWith('en') && (v.name.toLowerCase().includes('natural') || v.name.toLowerCase().includes('neural') || v.name.toLowerCase().includes('online'))
+        );
+        if (naturalEn) return naturalEn;
+
+        // Fallback: any female English voice (tend to sound clearer on TTS)
+        const femaleEn = voices.find(v =>
+            v.lang.startsWith('en') && (/female|zira|samantha|jenny|aria|fiona|karen/i.test(v.name))
+        );
+        if (femaleEn) return femaleEn;
+
+        // Fallback: any English voice
+        const anyEn = voices.find(v => v.lang.startsWith('en'));
+        return anyEn || voices[0];
+    };
+
+    const speakText = (text) => {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+
+        const speak = () => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = getBestVoice();
+            if (voice) utterance.voice = voice;
+
+            // Natural conversational parameters
+            utterance.rate = 0.92;     // slightly slower than normal — sounds deliberate
+            utterance.pitch = 1.05;    // tiny pitch lift — warmer tone
+            utterance.volume = 0.95;   // not blasting, feels natural
+
+            utterance.onstart = () => setAiSpeaking(true);
+            utterance.onend = () => setAiSpeaking(false);
+            utterance.onerror = () => setAiSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // Voices may load async — wait if needed
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = () => { speak(); window.speechSynthesis.onvoiceschanged = null; };
+        } else {
+            speak();
+        }
+    };
+
+    // ── Speech Recognition (robust) ──
+    const isListeningRef = useRef(false);
+    const accumulatedTranscriptRef = useRef('');
+
+    const initSpeechRecognition = useCallback(() => {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            console.warn('Speech Recognition API not supported in this browser');
+            return null;
+        }
+        const recognition = new SR();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const t = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += t + ' ';
+                } else {
+                    interimTranscript += t;
+                }
+            }
+
+            if (finalTranscript) {
+                accumulatedTranscriptRef.current += finalTranscript;
+                setTranscript(accumulatedTranscriptRef.current);
+                setUserInput(accumulatedTranscriptRef.current);
+                setInterimText('');
+
+                // Reset auto-send timer — user just finished a sentence
+                clearTimeout(autoSendTimerRef.current);
+                clearInterval(autoSendCountdownRef.current);
+                setAutoSendCountdown(4);
+                // Start 4-second countdown to auto-send
+                let countdown = 4;
+                autoSendCountdownRef.current = setInterval(() => {
+                    countdown--;
+                    setAutoSendCountdown(countdown);
+                    if (countdown <= 0) {
+                        clearInterval(autoSendCountdownRef.current);
+                    }
+                }, 1000);
+                autoSendTimerRef.current = setTimeout(() => {
+                    // Auto-send if we still have text and are still listening
+                    if (accumulatedTranscriptRef.current.trim()) {
+                        // Trigger send via a custom event since we can't call sendAnswer directly
+                        document.dispatchEvent(new CustomEvent('interview-auto-send'));
+                    }
+                }, 4000);
+            } else if (interimTranscript) {
+                // Show interim (live) text so user sees words appearing in real-time
+                setInterimText(interimTranscript);
+                setUserInput(accumulatedTranscriptRef.current + interimTranscript);
+                // Cancel auto-send — user is still speaking
+                clearTimeout(autoSendTimerRef.current);
+                clearInterval(autoSendCountdownRef.current);
+                setAutoSendCountdown(0);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.warn('Speech recognition error:', event.error);
+            // Don't stop for 'no-speech' — user just hasn't spoken yet
+            if (event.error === 'no-speech' || event.error === 'aborted') return;
+            // For other errors (not-allowed, network), stop listening
+            isListeningRef.current = false;
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            // Auto-restart if we're supposed to still be listening
+            // (recognition can timeout after silence, browser can stop it)
+            if (isListeningRef.current) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.warn('Could not restart recognition:', e);
+                    isListeningRef.current = false;
+                    setIsListening(false);
+                }
+            }
+        };
+
+        return recognition;
+    }, []);
+
+    const toggleListening = useCallback(async () => {
+        if (isListeningRef.current) {
+            // ── Stop listening ──
+            isListeningRef.current = false;
+            setIsListening(false);
+            recognitionRef.current?.stop();
+
+            // Send speech feedback with accumulated transcript
+            const finalText = accumulatedTranscriptRef.current.trim();
+            if (finalText && speechStartTime) {
+                const duration = (Date.now() - speechStartTime) / 1000;
+                fetchSpeechFeedback(finalText, duration);
+            }
+        } else {
+            // ── Start listening ──
+            // Ensure microphone permission is granted (getUserMedia may have been denied)
+            try {
+                const testStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                testStream.getTracks().forEach(t => t.stop()); // release immediately
+            } catch (e) {
+                console.error('Microphone permission denied:', e);
+                return;
+            }
+
+            // Create fresh recognition instance each time to avoid stale state
+            recognitionRef.current = initSpeechRecognition();
+            if (!recognitionRef.current) return;
+
+            accumulatedTranscriptRef.current = '';
+            setTranscript('');
+            setInterimText('');
+            setSpeechStartTime(Date.now());
+            setAutoSendCountdown(0);
+            clearTimeout(autoSendTimerRef.current);
+            clearInterval(autoSendCountdownRef.current);
+
+            try {
+                recognitionRef.current.start();
+                isListeningRef.current = true;
+                setIsListening(true);
+            } catch (e) {
+                console.error('Failed to start speech recognition:', e);
+                isListeningRef.current = false;
+                setIsListening(false);
+            }
+        }
+    }, [initSpeechRecognition, speechStartTime]);
+
+    // ── API Calls ──
+    // Start think-time countdown
+    const startThinkTimer = (seconds) => {
+        clearInterval(thinkTimerRef.current);
+        setThinkTimeLeft(seconds);
+        thinkTimerRef.current = setInterval(() => {
+            setThinkTimeLeft(prev => {
+                if (prev <= 1) { clearInterval(thinkTimerRef.current); return 0; }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // Request a hint from AI
+    const requestHint = async () => {
+        setHintLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/hint`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    company: config.company, role: config.role, stage: config.stage,
+                    currentQuestion, conversationHistory: conversation
+                })
+            });
+            const data = await res.json();
+            setHintData(data);
+        } catch {
+            setHintData({
+                hint: 'Try breaking this problem into smaller, manageable parts.',
+                approach: 'Start with the simplest case and build up from there.',
+                keyTopics: ['Core concepts', 'Edge cases', 'Optimization']
+            });
+        }
+        setHintLoading(false);
+    };
+
+    const startInterview = async () => {
+        setLoading(true);
+        await startMedia();
+        setPhase('interview');
+        setConversation([]);
+        setSessionScores([]);
+        setQuestionCount(0);
+        setElapsed(0);
+        setHintData(null);
+        setInterviewerReaction(null);
+
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/start`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({ ...config, totalQuestions })
+            });
+            const data = await res.json();
+            const q = data.question || `Hi! Great to have you here today. I'm excited to learn more about your experience as a ${config.role}. Let's start with something fundamental — can you tell me about a challenging technical problem you solved recently?`;
+            setCurrentQuestion(q);
+            setQuestionCount(1);
+            setInterviewerReaction(data.interviewerReaction || 'greeting');
+            if (data.thinkTime) startThinkTimer(data.thinkTime);
+            const msg = { role: 'interviewer', content: q, tips: data.tips || [], reaction: 'greeting', timestamp: new Date().toISOString() };
+            setConversation([msg]);
+            speakText(q);
+        } catch {
+            const fallback = `Hi! Welcome to your ${companyName} interview. I'm looking forward to our conversation today. Let's dive in — tell me about a challenging project you worked on recently and what made it interesting.`;
+            setCurrentQuestion(fallback);
+            setQuestionCount(1);
+            setInterviewerReaction('greeting');
+            startThinkTimer(30);
+            setConversation([{ role: 'interviewer', content: fallback, tips: [], reaction: 'greeting', timestamp: new Date().toISOString() }]);
+            speakText(fallback);
+        }
+        setLoading(false);
+    };
+
+    const sendAnswer = async () => {
+        if (!userInput.trim()) return;
+        const answer = userInput.trim();
+
+        // Stop voice recognition if active
+        if (isListeningRef.current) {
+            isListeningRef.current = false;
+            setIsListening(false);
+            recognitionRef.current?.stop();
+        }
+
+        // Clear auto-send timers
+        clearTimeout(autoSendTimerRef.current);
+        clearInterval(autoSendCountdownRef.current);
+        setAutoSendCountdown(0);
+
+        setUserInput('');
+        setTranscript('');
+        setInterimText('');
+        accumulatedTranscriptRef.current = '';
+        clearInterval(thinkTimerRef.current);
+        setThinkTimeLeft(0);
+
+        setConversation(prev => [...prev, { role: 'candidate', content: answer, timestamp: new Date().toISOString() }]);
+        setLoading(true);
+
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/follow-up`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    company: config.company, role: config.role, stage: config.stage,
+                    difficulty: config.difficulty,
+                    previousQuestion: currentQuestion, userAnswer: answer,
+                    conversationHistory: conversation,
+                    questionNumber: questionCount + 1, totalQuestions
+                })
+            });
+            const data = await res.json();
+            setSessionScores(prev => [...prev, data.score || 70]);
+            setInterviewerReaction(data.interviewerReaction || 'neutral');
+            setHintData(null);
+
+            setConversation(prev => [...prev, {
+                role: 'feedback', content: data.feedback || 'Good response.',
+                score: data.score || 70,
+                strengths: data.strengths || [],
+                improvements: data.improvements || [],
+                reaction: data.interviewerReaction,
+                timestamp: new Date().toISOString()
+            }]);
+
+            if (questionCount < totalQuestions) {
+                const followUp = data.followUpQuestion || 'Can you elaborate on that approach?';
+                setCurrentQuestion(followUp);
+                setQuestionCount(prev => prev + 1);
+                if (data.thinkTime) startThinkTimer(data.thinkTime);
+                setConversation(prev => [...prev, {
+                    role: 'interviewer', content: followUp, tips: [],
+                    reaction: data.interviewerReaction,
+                    timestamp: new Date().toISOString()
+                }]);
+                speakText(followUp);
+            }
+        } catch {
+            setConversation(prev => [...prev, {
+                role: 'feedback', content: "That's a solid start! I like where you're going with that. Let me dig into one more aspect.", score: 72,
+                strengths: ['Clear communication'], improvements: ['Add more specifics'],
+                reaction: 'encouraging',
+                timestamp: new Date().toISOString()
+            }, {
+                role: 'interviewer',
+                content: 'Interesting — can you walk me through how you would approach optimizing that solution? What trade-offs would you consider?',
+                tips: [], reaction: 'probing', timestamp: new Date().toISOString()
+            }]);
+            setQuestionCount(prev => prev + 1);
+            startThinkTimer(45);
+            speakText('Interesting — can you walk me through how you would approach optimizing that solution? What trade-offs would you consider?');
+        }
+        setLoading(false);
+    };
+
+    const fetchSpeechFeedback = async (text, duration) => {
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/speech-feedback`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({ transcript: text, duration })
+            });
+            const data = await res.json();
+            setSpeechFeedback(data);
+        } catch {
+            setSpeechFeedback({
+                wpm: Math.round((text.split(/\s+/).length / duration) * 60),
+                paceAssessment: 'Analysis unavailable', totalFillers: 0, clarityScore: 75,
+                tips: ['Keep practicing']
+            });
+        }
+    };
+
+    const endInterview = async () => {
+        setLoading(true);
+        window.speechSynthesis?.cancel();
+        clearInterval(timerRef.current);
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/evaluate`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({ company: config.company, role: config.role, stage: config.stage, conversation })
+            });
+            const data = await res.json();
+            setSummaryData(data);
+        } catch {
+            const avg = sessionScores.length > 0 ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length) : 70;
+            setSummaryData({
+                overallScore: avg,
+                summary: 'Great effort today! You showed solid fundamentals and communicated your ideas clearly.',
+                strengths: ['Consistent responses', 'Good communication', 'Structured thinking'],
+                improvements: ['Add more technical depth', 'Use concrete examples and metrics', 'Consider edge cases proactively'],
+                recommendation: 'Focus on practicing system design and optimization questions to level up your performance.',
+                verdict: avg >= 80 ? 'Would Advance' : avg >= 60 ? 'Borderline' : 'Would Not Advance',
+                verdictEmoji: avg >= 80 ? '👍' : avg >= 60 ? '🤔' : '👎',
+                detailedBreakdown: {
+                    technicalSkills: avg - 5 + Math.floor(Math.random() * 10),
+                    communication: avg + Math.floor(Math.random() * 10),
+                    problemSolving: avg - 3 + Math.floor(Math.random() * 10),
+                    cultureFit: avg + 5 + Math.floor(Math.random() * 5)
+                }
+            });
+        }
+        stopMedia();
+        clearInterval(thinkTimerRef.current);
+        setPhase('summary');
+        setLoading(false);
+    };
+
+    const resetInterview = () => {
+        setPhase('lobby');
+        setConversation([]);
+        setSummaryData(null);
+        setSpeechFeedback(null);
+        setSessionScores([]);
+        setQuestionCount(0);
+        setElapsed(0);
+        setHintData(null);
+        setInterviewerReaction(null);
+        clearInterval(thinkTimerRef.current);
+        setThinkTimeLeft(0);
+        // Stop voice
+        window.speechSynthesis?.cancel();
+        setAiSpeaking(false);
+        isListeningRef.current = false;
+        setIsListening(false);
+        recognitionRef.current?.stop();
+        accumulatedTranscriptRef.current = '';
+        stopMedia();
+    };
+
+    const avgScore = sessionScores.length > 0
+        ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length)
+        : null;
+
+    // Auto-send event listener
+    useEffect(() => {
+        const handleAutoSend = () => {
+            if (accumulatedTranscriptRef.current.trim() && isListeningRef.current) {
+                // Stop listening first
+                isListeningRef.current = false;
+                setIsListening(false);
+                recognitionRef.current?.stop();
+                setAutoSendCountdown(0);
+                // Trigger send
+                sendAnswer();
+            }
+        };
+        document.addEventListener('interview-auto-send', handleAutoSend);
+        return () => document.removeEventListener('interview-auto-send', handleAutoSend);
+    }, [sendAnswer]);
+
+    // Elapsed timer
+    useEffect(() => {
+        if (phase === 'interview') {
+            timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+        }
+        return () => clearInterval(timerRef.current);
+    }, [phase]);
+
+    // Scroll chat to bottom
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [conversation, loading]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            clearTimeout(autoSendTimerRef.current);
+            clearInterval(autoSendCountdownRef.current);
+            clearInterval(thinkTimerRef.current);
+            clearInterval(timerRef.current);
+            window.speechSynthesis?.cancel();
+            recognitionRef.current?.stop();
+        };
+    }, []);
+
+    // ═══════════════════════════════════════════
+    //  LOBBY PHASE
+    // ═══════════════════════════════════════════
+    if (phase === 'lobby') {
+        return (
+            <div className="ti-lobby-page">
+                <div className="ti-lobby">
+                    {/* Left — Preview */}
+                    <div className="ti-lobby-preview">
+                        <div className="ti-lobby-video-wrap">
+                            <video
+                                ref={videoRef}
+                                autoPlay muted playsInline
+                                className="ti-lobby-video"
+                                style={{ display: cameraOn && stream ? 'block' : 'none' }}
+                            />
+                            {(!cameraOn || !stream) && (
+                                <div className="ti-lobby-no-cam">
+                                    <div className="ti-lobby-avatar-circle">
+                                        <span>{user?.user_metadata?.full_name?.[0] || '👤'}</span>
+                                    </div>
+                                    <p>Camera is off</p>
+                                </div>
+                            )}
+                            {/* Preview controls */}
+                            <div className="ti-lobby-preview-controls">
+                                <button
+                                    className={`ti-lobby-ctrl-btn ${!micOn ? 'off' : ''}`}
+                                    onClick={toggleMic}
+                                    title={micOn ? 'Mute' : 'Unmute'}
+                                >
+                                    {micOn ? <Mic size={18} /> : <MicOff size={18} />}
+                                </button>
+                                <button
+                                    className={`ti-lobby-ctrl-btn ${!cameraOn ? 'off' : ''}`}
+                                    onClick={toggleCamera}
+                                    title={cameraOn ? 'Turn off camera' : 'Turn on camera'}
+                                >
+                                    {cameraOn ? <Video size={18} /> : <VideoOff size={18} />}
+                                </button>
+                                {stream && <MicLevel stream={stream} />}
+                            </div>
+                        </div>
+                        <button className="ti-check-btn" onClick={startMedia}>
+                            <Settings size={14} /> Check devices
+                        </button>
+                    </div>
+
+                    {/* Right — Config */}
+                    <div className="ti-lobby-config">
+                        <div className="ti-lobby-header">
+                            <Link to="/company-prep" className="ti-lobby-back">
+                                <ArrowLeft size={16} /> Back
+                            </Link>
+                            <h1>AI Mock Interview</h1>
+                            <p>Simulate a real interview experience with our AI interviewer</p>
+                        </div>
+
+                        <div className="ti-lobby-form">
+                            {/* Company */}
+                            <div className="ti-form-section">
+                                <label>Company</label>
+                                <div className="ti-company-chips">
+                                    {COMPANIES.map(c => (
+                                        <button
+                                            key={c.id}
+                                            className={`ti-company-chip ${config.company === c.id ? 'active' : ''}`}
+                                            onClick={() => setConfig(prev => ({ ...prev, company: c.id }))}
+                                            style={config.company === c.id ? { borderColor: c.color, background: `${c.color}15`, color: c.color } : {}}
+                                        >
+                                            <span>{c.logo}</span> {c.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Role, Stage, Difficulty row */}
+                            <div className="ti-form-row">
+                                <div className="ti-form-section">
+                                    <label>Role</label>
+                                    <select value={config.role} onChange={e => setConfig(prev => ({ ...prev, role: e.target.value }))}>
+                                        {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                                    </select>
+                                </div>
+                                <div className="ti-form-section">
+                                    <label>Stage</label>
+                                    <select value={config.stage} onChange={e => setConfig(prev => ({ ...prev, stage: e.target.value }))}>
+                                        {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div className="ti-form-section">
+                                    <label>Difficulty</label>
+                                    <select value={config.difficulty} onChange={e => setConfig(prev => ({ ...prev, difficulty: e.target.value }))}>
+                                        {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Format */}
+                            <div className="ti-form-section">
+                                <label>Format</label>
+                                <div className="ti-format-toggle">
+                                    <button
+                                        className={`ti-format-btn ${config.format === 'voice' ? 'active' : ''}`}
+                                        onClick={() => setConfig(prev => ({ ...prev, format: 'voice' }))}
+                                    >
+                                        <Mic size={16} /> Voice Interview
+                                    </button>
+                                    <button
+                                        className={`ti-format-btn ${config.format === 'text' ? 'active' : ''}`}
+                                        onClick={() => setConfig(prev => ({ ...prev, format: 'text' }))}
+                                    >
+                                        <MessageSquare size={16} /> Text Only
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Join button */}
+                        <button className="ti-join-btn" onClick={startInterview} disabled={loading}>
+                            <Video size={20} />
+                            {loading ? 'Connecting...' : 'Join Interview'}
+                        </button>
+
+                        <div className="ti-lobby-footnote">
+                            <span>🔒 Your camera feed stays local — nothing is recorded or sent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ═══════════════════════════════════════════
+    //  SUMMARY PHASE
+    // ═══════════════════════════════════════════
+    if (phase === 'summary' && summaryData) {
+        const scoreColor = summaryData.overallScore >= 80 ? '#22c55e' : summaryData.overallScore >= 60 ? '#f59e0b' : '#ef4444';
+        const bd = summaryData.detailedBreakdown || {};
+        return (
+            <div className="ti-summary-page">
+                <div className="ti-summary">
+                    <div className="ti-summary-header">
+                        <h1>Interview Complete 🎉</h1>
+                        <p>{companyLogo} {companyName} · {config.role} · {config.stage} · {formatTime(elapsed)}</p>
+                    </div>
+
+                    {/* Verdict badge */}
+                    {summaryData.verdict && (
+                        <div className="ti-verdict-badge" style={{ borderColor: scoreColor, color: scoreColor }}>
+                            <span className="ti-verdict-emoji">{summaryData.verdictEmoji || '📋'}</span>
+                            <span className="ti-verdict-text">{summaryData.verdict}</span>
+                        </div>
+                    )}
+
+                    <div className="ti-score-ring" style={{ '--score-color': scoreColor }}>
+                        <svg viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke={scoreColor} strokeWidth="8"
+                                strokeDasharray={`${summaryData.overallScore * 3.14} 314`}
+                                strokeLinecap="round" transform="rotate(-90 60 60)"
+                                style={{ transition: 'stroke-dasharray 1s ease' }}
+                            />
+                        </svg>
+                        <div className="ti-score-text">
+                            <span className="ti-score-num">{summaryData.overallScore}</span>
+                            <span className="ti-score-label">Score</span>
+                        </div>
+                    </div>
+
+                    <p className="ti-summary-desc">{summaryData.summary}</p>
+
+                    {/* Detailed Breakdown Bars */}
+                    {Object.keys(bd).length > 0 && (
+                        <div className="ti-breakdown-section">
+                            <h3><BarChart3 size={16} /> Detailed Breakdown</h3>
+                            <div className="ti-breakdown-bars">
+                                {[{ key: 'technicalSkills', label: 'Technical Skills', icon: <Brain size={14} /> },
+                                { key: 'communication', label: 'Communication', icon: <Volume2 size={14} /> },
+                                { key: 'problemSolving', label: 'Problem Solving', icon: <Target size={14} /> },
+                                { key: 'cultureFit', label: 'Culture Fit', icon: <Users size={14} /> }]
+                                    .filter(item => bd[item.key] != null)
+                                    .map(item => (
+                                        <div key={item.key} className="ti-breakdown-bar">
+                                            <div className="ti-breakdown-label">
+                                                {item.icon} <span>{item.label}</span>
+                                                <strong>{Math.min(100, Math.max(0, bd[item.key]))}%</strong>
+                                            </div>
+                                            <div className="ti-breakdown-track">
+                                                <div className="ti-breakdown-fill" style={{
+                                                    width: `${Math.min(100, Math.max(0, bd[item.key]))}%`,
+                                                    background: bd[item.key] >= 80 ? '#22c55e' : bd[item.key] >= 60 ? '#f59e0b' : '#ef4444'
+                                                }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="ti-summary-grid">
+                        <div className="ti-summary-card strengths">
+                            <h3><CheckCircle size={16} /> Strengths</h3>
+                            <ul>{(summaryData.strengths || []).map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        </div>
+                        <div className="ti-summary-card improvements">
+                            <h3><TrendingUp size={16} /> Areas to Improve</h3>
+                            <ul>{(summaryData.improvements || []).map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        </div>
+                    </div>
+
+                    {summaryData.recommendation && (
+                        <div className="ti-recommendation">
+                            <Sparkles size={16} /> <span>{summaryData.recommendation}</span>
+                        </div>
+                    )}
+
+                    {speechFeedback && (
+                        <div className="ti-speech-card">
+                            <h3><Volume2 size={16} /> Voice Analysis</h3>
+                            <div className="ti-speech-stats">
+                                <div className="ti-speech-stat"><strong>{speechFeedback.wpm}</strong><span>WPM</span></div>
+                                <div className="ti-speech-stat"><strong>{speechFeedback.totalFillers}</strong><span>Fillers</span></div>
+                                <div className="ti-speech-stat"><strong>{speechFeedback.clarityScore}%</strong><span>Clarity</span></div>
+                            </div>
+                            <p>{speechFeedback.paceAssessment}</p>
+                        </div>
+                    )}
+
+                    <div className="ti-summary-actions">
+                        <button className="ti-retry-btn" onClick={resetInterview}>
+                            <RefreshCw size={16} /> Try Again
+                        </button>
+                        <Link to="/company-prep" className="ti-back-btn">
+                            <ArrowLeft size={16} /> Back to Prep
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ═══════════════════════════════════════════
+    //  INTERVIEW PHASE — Teams-Style Layout
+    // ═══════════════════════════════════════════
+    return (
+        <div className={`ti-interview-page ${fullscreen ? 'ti-fullscreen' : ''}`}>
+            {/* ── Header Bar ── */}
+            <header className="ti-header">
+                <div className="ti-header-left">
+                    <div className="ti-header-logo" style={{ color: companyColor }}>{companyLogo}</div>
+                    <div className="ti-header-info">
+                        <strong>{companyName} Interview</strong>
+                        <span>{config.role} · {config.stage} · {config.difficulty}</span>
+                    </div>
+                </div>
+                <div className="ti-header-center">
+                    <div className="ti-header-timer">
+                        <Clock size={14} />
+                        <span>{formatTime(elapsed)}</span>
+                    </div>
+                    {questionCount > 0 && (
+                        <div className="ti-header-progress">
+                            Q{questionCount}/{totalQuestions}
+                        </div>
+                    )}
+                    {avgScore !== null && (
+                        <div className="ti-header-score" style={{ color: avgScore >= 80 ? '#22c55e' : avgScore >= 60 ? '#f59e0b' : '#ef4444' }}>
+                            <Star size={12} /> {avgScore}%
+                        </div>
+                    )}
+                </div>
+                <div className="ti-header-right">
+                    <div className="ti-header-participants">
+                        <Users size={14} /> <span>2</span>
+                    </div>
+                    <button
+                        className="ti-header-btn"
+                        onClick={() => setFullscreen(f => !f)}
+                        title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                    >
+                        {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                    </button>
+                </div>
+            </header>
+
+            {/* ── Main Content ── */}
+            <div className="ti-main">
+                {/* Video Grid */}
+                <div className={`ti-video-grid ${chatOpen ? 'with-chat' : 'full'}`}>
+                    {/* AI Interviewer Tile */}
+                    <div className="ti-tile ti-tile-ai">
+                        <AIAvatar
+                            speaking={aiSpeaking || loading}
+                            companyColor={companyColor}
+                            companyLogo={companyLogo}
+                            size="large"
+                        />
+                        <div className="ti-tile-nameplate">
+                            <div className="ti-tile-name">
+                                {aiSpeaking && <span className="ti-speaking-dot" />}
+                                AI Interviewer · {companyName}
+                            </div>
+                        </div>
+                        {aiSpeaking && (
+                            <div className="ti-tile-speaking-badge">Speaking</div>
+                        )}
+                    </div>
+
+                    {/* User Webcam Tile */}
+                    <div className="ti-tile ti-tile-user">
+                        {cameraOn && stream ? (
+                            <video
+                                ref={videoRef}
+                                autoPlay muted playsInline
+                                className="ti-user-video"
+                            />
+                        ) : (
+                            <div className="ti-tile-no-cam">
+                                <div className="ti-user-avatar">
+                                    {user?.user_metadata?.full_name?.[0] || '👤'}
+                                </div>
+                            </div>
+                        )}
+                        <div className="ti-tile-nameplate">
+                            <div className="ti-tile-name">
+                                {isListening && <span className="ti-speaking-dot" />}
+                                {user?.user_metadata?.full_name || 'You'}
+                                {!micOn && <MicOff size={12} className="ti-muted-icon" />}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Live Captions Overlay */}
+                    {isListening && (transcript || interimText) && (
+                        <div className="ti-captions-overlay">
+                            <div className="ti-captions-bar">
+                                <div className="ti-captions-indicator">
+                                    <span className="ti-captions-dot" />
+                                    <span>LIVE</span>
+                                </div>
+                                <p className="ti-captions-text">
+                                    {transcript && <span className="ti-captions-final">{transcript}</span>}
+                                    {interimText && <span className="ti-captions-interim">{interimText}</span>}
+                                </p>
+                                {autoSendCountdown > 0 && (
+                                    <div className="ti-captions-autosend">
+                                        Sending in {autoSendCountdown}s...
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Chat Sidebar */}
+                {chatOpen && (
+                    <aside className="ti-chat-sidebar">
+                        <div className="ti-chat-header">
+                            <h3><MessageSquare size={16} /> Interview Chat</h3>
+                            <button className="ti-chat-close" onClick={() => setChatOpen(false)}>
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="ti-chat-messages">
+                            {conversation.map((msg, idx) => (
+                                <div key={idx} className={`ti-chat-msg ti-chat-${msg.role}`}>
+                                    {msg.role === 'interviewer' && (
+                                        <>
+                                            <div className="ti-chat-msg-header">
+                                                <span className="ti-chat-sender" style={{ color: companyColor }}>
+                                                    {companyLogo} AI Interviewer
+                                                </span>
+                                                <span className="ti-chat-time">
+                                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="ti-chat-text">{msg.content}</p>
+                                            {msg.tips?.length > 0 && (
+                                                <div className="ti-chat-tips">
+                                                    {msg.tips.map((t, i) => <span key={i} className="ti-chat-tip">💡 {t}</span>)}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                    {msg.role === 'candidate' && (
+                                        <>
+                                            <div className="ti-chat-msg-header">
+                                                <span className="ti-chat-sender you">You</span>
+                                                <span className="ti-chat-time">
+                                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="ti-chat-text">{msg.content}</p>
+                                        </>
+                                    )}
+                                    {msg.role === 'feedback' && (
+                                        <div className="ti-chat-feedback">
+                                            {msg.reaction && (
+                                                <div className={`ti-reaction-badge ti-reaction-${msg.reaction}`}>
+                                                    {msg.reaction === 'impressed' && '🌟 Impressed'}
+                                                    {msg.reaction === 'encouraging' && '👏 Encouraging'}
+                                                    {msg.reaction === 'probing' && '🔍 Digging Deeper'}
+                                                    {msg.reaction === 'challenging' && '💪 Challenging'}
+                                                    {msg.reaction === 'neutral' && '📋 Evaluating'}
+                                                    {msg.reaction === 'greeting' && '👋 Welcome'}
+                                                </div>
+                                            )}
+                                            <div className="ti-chat-fb-score" style={{
+                                                color: msg.score >= 80 ? '#22c55e' : msg.score >= 60 ? '#f59e0b' : '#ef4444'
+                                            }}>
+                                                {msg.score}% — {msg.content}
+                                            </div>
+                                            {msg.strengths?.length > 0 && (
+                                                <div className="ti-chat-fb-list">
+                                                    {msg.strengths.map((s, i) => <span key={i} className="ti-fb-good">✅ {s}</span>)}
+                                                </div>
+                                            )}
+                                            {msg.improvements?.length > 0 && (
+                                                <div className="ti-chat-fb-list">
+                                                    {msg.improvements.map((s, i) => <span key={i} className="ti-fb-improve">📝 {s}</span>)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            {loading && (
+                                <div className="ti-chat-msg ti-chat-interviewer">
+                                    <div className="ti-chat-msg-header">
+                                        <span className="ti-chat-sender" style={{ color: companyColor }}>
+                                            {companyLogo} AI Interviewer
+                                        </span>
+                                    </div>
+                                    <div className="ti-chat-typing">
+                                        <span /><span /><span />
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={chatEndRef} />
+                        </div>
+
+                        {/* Chat Input */}
+                        {questionCount <= totalQuestions && (
+                            <div className="ti-chat-input-area">
+                                {/* Think time countdown */}
+                                {thinkTimeLeft > 0 && (
+                                    <div className="ti-think-timer">
+                                        <Timer size={14} />
+                                        <span>Take your time — {thinkTimeLeft}s suggested think time</span>
+                                        <div className="ti-think-bar">
+                                            <div className="ti-think-fill" style={{ width: `${Math.min(100, (thinkTimeLeft / 60) * 100)}%` }} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {speechFeedback && config.format === 'voice' && (
+                                    <div className="ti-chat-speech-bar">
+                                        <span>🎤 {speechFeedback.wpm} WPM</span>
+                                        <span>📝 {speechFeedback.totalFillers} fillers</span>
+                                        <span>✨ {speechFeedback.clarityScore}%</span>
+                                        {speechFeedback.confidenceScore && <span>💪 {speechFeedback.confidenceScore}% confidence</span>}
+                                    </div>
+                                )}
+
+                                {/* Hint system */}
+                                {!hintData && !loading && (
+                                    <button className="ti-hint-btn" onClick={requestHint} disabled={hintLoading}>
+                                        <Lightbulb size={14} />
+                                        {hintLoading ? 'Getting hint...' : 'Need a hint?'}
+                                    </button>
+                                )}
+                                {hintData && (
+                                    <div className="ti-hint-card">
+                                        <div className="ti-hint-header">
+                                            <Lightbulb size={14} /> <strong>Hint</strong>
+                                            <button className="ti-hint-close" onClick={() => setHintData(null)}><X size={12} /></button>
+                                        </div>
+                                        <p className="ti-hint-text">{hintData.hint}</p>
+                                        {hintData.approach && <p className="ti-hint-approach">💡 {hintData.approach}</p>}
+                                        {hintData.keyTopics?.length > 0 && (
+                                            <div className="ti-hint-topics">
+                                                {hintData.keyTopics.map((t, i) => <span key={i} className="ti-hint-topic">{t}</span>)}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="ti-chat-input-row">
+                                    <button
+                                        className={`ti-chat-mic-btn ${isListening ? 'active' : ''}`}
+                                        onClick={toggleListening}
+                                        title={isListening ? 'Stop & send' : 'Start speaking'}
+                                    >
+                                        {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+                                    </button>
+                                    <textarea
+                                        value={userInput}
+                                        onChange={e => setUserInput(e.target.value)}
+                                        placeholder={isListening ? '🔴 Listening...' : 'Type your answer...'}
+                                        rows={2}
+                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAnswer(); } }}
+                                    />
+                                    <button
+                                        className="ti-chat-send-btn"
+                                        onClick={sendAnswer}
+                                        disabled={!userInput.trim() || loading}
+                                    >
+                                        <Send size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {questionCount > totalQuestions && !loading && (
+                            <div className="ti-chat-complete">
+                                <p>🎉 All {totalQuestions} questions answered!</p>
+                                <button onClick={endInterview} className="ti-chat-end-btn">
+                                    <BarChart3 size={14} /> View Results
+                                </button>
+                            </div>
+                        )}
+                    </aside>
+                )}
+            </div>
+
+            {/* ── Controls Bar ── */}
+            <div className="ti-controls">
+                <div className="ti-controls-left">
+                    <span className="ti-controls-time">
+                        <Clock size={14} /> {formatTime(elapsed)}
+                    </span>
+                </div>
+
+                <div className="ti-controls-center">
+                    <button
+                        className={`ti-ctrl-btn ${!micOn ? 'off' : ''}`}
+                        onClick={toggleMic}
+                        title={micOn ? 'Mute (Ctrl+M)' : 'Unmute'}
+                    >
+                        {micOn ? <Mic size={20} /> : <MicOff size={20} />}
+                        <span>{micOn ? 'Mute' : 'Unmute'}</span>
+                    </button>
+
+                    <button
+                        className={`ti-ctrl-btn ${!cameraOn ? 'off' : ''}`}
+                        onClick={toggleCamera}
+                        title={cameraOn ? 'Turn off camera' : 'Turn on camera'}
+                    >
+                        {cameraOn ? <Video size={20} /> : <VideoOff size={20} />}
+                        <span>Camera</span>
+                    </button>
+
+                    <button
+                        className={`ti-ctrl-btn ${chatOpen ? 'active' : ''}`}
+                        onClick={() => setChatOpen(c => !c)}
+                        title="Toggle chat"
+                    >
+                        <MessageSquare size={20} />
+                        <span>Chat</span>
+                    </button>
+
+                    <button className="ti-ctrl-btn" title="Raise hand">
+                        <Hand size={20} />
+                        <span>Raise</span>
+                    </button>
+
+                    <button className="ti-ctrl-btn" title="Reactions">
+                        <SmilePlus size={20} />
+                        <span>React</span>
+                    </button>
+
+                    <button className="ti-ctrl-btn ti-ctrl-leave" onClick={endInterview} disabled={loading}>
+                        <Phone size={20} />
+                        <span>Leave</span>
+                    </button>
+                </div>
+
+                <div className="ti-controls-right">
+                    {avgScore !== null && (
+                        <div className="ti-controls-score" style={{
+                            color: avgScore >= 80 ? '#22c55e' : avgScore >= 60 ? '#f59e0b' : '#ef4444'
+                        }}>
+                            <Star size={14} /> {avgScore}%
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
