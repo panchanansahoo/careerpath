@@ -81,6 +81,24 @@ const navItems = [
         icon: Mic
     },
     {
+        path: '/multi-round-interview',
+        label: 'Full Interview Loop',
+        subtitle: 'Multi-round simulation',
+        icon: Play
+    },
+    {
+        path: '/interview-analytics',
+        label: 'Interview Analytics',
+        subtitle: 'Performance trends & insights',
+        icon: BarChart3
+    },
+    {
+        path: '/interview-history',
+        label: 'Interview History',
+        subtitle: 'Past sessions & replays',
+        icon: Clock
+    },
+    {
         path: '/personalized-feed',
         label: 'Smart Feed',
         subtitle: 'Personalized recommendations',

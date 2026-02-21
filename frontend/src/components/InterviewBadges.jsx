@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Award, Flame, Target, Star, Zap, Trophy, Medal, TrendingUp } from 'lucide-react';
+import './InterviewBadges.css';
 
 /**
  * InterviewBadges — Gamification system for mock interviews
@@ -59,7 +60,7 @@ export default function InterviewBadges({ sessionStats, compact = false }) {
         highestScore: Math.max(sessionStats?.score || 0, parseInt(localStorage.getItem('preploop_best_score') || '0', 10)),
         currentStreak,
         hadZeroFillers: sessionStats?.totalFillers === 0,
-        bestEyeContact: Math.max(sessionStats?.eyeContactPct || 0, parseInt(localStorage.getItem('preploop_best_eye') || '0', 10)),
+        bestEyeContact: Math.max(sessionStats?.eyeContact || 0, parseInt(localStorage.getItem('preploop_best_eye') || '0', 10)),
         bestImprovement: sessionStats?.improvement || 0,
         bestConfidence: Math.max(sessionStats?.confidenceScore || 0, parseInt(localStorage.getItem('preploop_best_conf') || '0', 10)),
     };

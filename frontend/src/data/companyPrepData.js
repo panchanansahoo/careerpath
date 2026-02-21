@@ -16,7 +16,7 @@ export const COMPANIES = [
   { id: 'paytm', name: 'Paytm', logo: '💙', color: '#00baf2', tagline: 'One97 Communications' },
 ];
 
-export const STAGES = ['OA', 'Technical', 'HR', 'Managerial'];
+export const STAGES = ['OA', 'Technical', 'DSA / Coding', 'System Design', 'HR', 'Behavioral', 'Managerial'];
 export const ROLES = ['SDE', 'Frontend', 'Backend', 'Data Analyst', 'DevOps', 'QA'];
 export const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 

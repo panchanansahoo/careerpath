@@ -1,15 +1,21 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
     Mic, MicOff, Video, VideoOff, MessageSquare, Phone,
     Send, Clock, Users, Sparkles, ChevronRight, ChevronLeft,
     Star, TrendingUp, CheckCircle, AlertCircle, BarChart3,
     RefreshCw, ArrowLeft, Volume2, X, Monitor, MoreVertical,
     Hand, SmilePlus, Settings, Copy, Maximize2, Minimize2,
-    Lightbulb, Target, Brain, Award, Zap, Timer
+    Lightbulb, Target, Brain, Award, Zap, Timer, Eye, Code2, Shield
 } from 'lucide-react';
 import { COMPANIES, STAGES, ROLES, DIFFICULTIES } from '../data/companyPrepData';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import SpeechAnalyzer from '../utils/speechAnalyzer';
+import EmotionDetector from '../components/EmotionDetector';
+import AICopilot from '../components/AICopilot';
+import InterviewBadges from '../components/InterviewBadges';
+import CodeEditorPanel from '../components/CodeEditorPanel';
+import ProctoringManager from '../components/ProctoringManager';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -164,6 +170,9 @@ export default function CompanyInterview() {
 
     // ── State ──
     const [phase, setPhase] = useState('lobby'); // lobby | interview | summary
+    const phaseRef = useRef(phase);
+    useEffect(() => { phaseRef.current = phase; }, [phase]);
+
     const [config, setConfig] = useState({
         company: 'google', role: 'SDE', stage: 'Technical',
         difficulty: 'Medium', format: 'voice'
@@ -208,9 +217,42 @@ export default function CompanyInterview() {
 
     // Refs
     const videoRef = useRef(null);
+    const handleVideoRef = useCallback((node) => {
+        videoRef.current = node;
+        if (node && streamRef.current) {
+            node.srcObject = streamRef.current;
+        }
+    }, []);
     const chatEndRef = useRef(null);
     const recognitionRef = useRef(null);
     const streamRef = useRef(null);
+    const speechAnalyzerRef = useRef(new SpeechAnalyzer());
+    const speakingStartRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const captionsEndRef = useRef(null);
+    const [isTranscribing, setIsTranscribing] = useState(false);
+
+    // Advanced features state
+    const [speechMetrics, setSpeechMetrics] = useState(null);
+    const [emotionEnabled, setEmotionEnabled] = useState(false);
+    const [emotionMetrics, setEmotionMetrics] = useState(null);
+    const [copilotOpen, setCopilotOpen] = useState(false);
+    const [speechHistory, setSpeechHistory] = useState([]); // per-answer speech data
+
+    // Adaptive difficulty
+    const [difficultyLevel, setDifficultyLevel] = useState('medium');
+    const [adaptiveNote, setAdaptiveNote] = useState(null);
+    const [codeFeedback, setCodeFeedback] = useState(null);
+
+    // Code editor (for DSA/OA stages)
+    const [codeEditorOpen, setCodeEditorOpen] = useState(false);
+    const [editorCode, setEditorCode] = useState('');
+    const [editorLanguage, setEditorLanguage] = useState('python');
+
+    // Proctoring
+    const [proctoringEnabled, setProctoringEnabled] = useState(true);
+    const [proctoringViolations, setProctoringViolations] = useState([]);
 
     // ── Helpers ──
     const companyObj = COMPANIES.find(c => c.id === config.company) || COMPANIES[0];
@@ -246,11 +288,21 @@ export default function CompanyInterview() {
     };
 
     const stopMedia = () => {
+        // Stop camera & mic tracks
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
             setStream(null);
         }
+        // Stop speech recognition
+        if (recognitionRef.current) {
+            recognitionRef.current.onend = null;
+            recognitionRef.current.stop();
+        }
+        isListeningRef.current = false;
+        setIsListening(false);
+        setCameraOn(false);
+        setMicOn(false);
     };
 
     const toggleCamera = () => {
@@ -286,6 +338,11 @@ export default function CompanyInterview() {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [conversation]);
 
+    // Scroll captions
+    useEffect(() => {
+        captionsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [interimText, transcript]);
+
     // Connect video element when stream changes
     useEffect(() => {
         if (videoRef.current && stream) {
@@ -293,12 +350,24 @@ export default function CompanyInterview() {
         }
     }, [stream, phase]);
 
-    // Cleanup
+    const isMountedRef = useRef(true);
+
+    // Cleanup on component unmount
     useEffect(() => {
+        isMountedRef.current = true;
         return () => {
+            isMountedRef.current = false;
             stopMedia();
             clearInterval(timerRef.current);
+            clearInterval(thinkTimerRef.current);
+            clearTimeout(autoSendTimerRef.current);
+            clearTimeout(inactivityTimerRef.current);
+            clearInterval(autoSendCountdownRef.current);
             window.speechSynthesis?.cancel();
+            if (audioPlayerRef.current) {
+                audioPlayerRef.current.pause();
+                audioPlayerRef.current.src = '';
+            }
         };
     }, []);
 
@@ -344,8 +413,65 @@ export default function CompanyInterview() {
         return anyEn || voices[0];
     };
 
-    const speakText = (text) => {
-        if (!window.speechSynthesis) return;
+    // Keep utterance in a ref to prevent garbage collection in Chrome which causes onend to not fire
+    const utteranceRef = useRef(null);
+    const audioPlayerRef = useRef(null);
+
+    const speakText = async (text, onComplete) => {
+        setAiSpeaking(true);
+
+        // Try high-quality backend TTS first
+        try {
+            const res = await fetch(`${API_URL}/api/company-interview/tts`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ text })
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const audioUrl = URL.createObjectURL(blob);
+
+                if (audioPlayerRef.current) {
+                    audioPlayerRef.current.pause();
+                    URL.revokeObjectURL(audioPlayerRef.current.src);
+                }
+
+                const audio = new Audio(audioUrl);
+                audioPlayerRef.current = audio;
+
+                audio.onended = () => {
+                    if (!isMountedRef.current || phaseRef.current !== 'interview') return;
+                    setAiSpeaking(false);
+                    URL.revokeObjectURL(audioUrl);
+                    if (onComplete) setTimeout(() => onComplete(), 100);
+                };
+
+                audio.onerror = (e) => {
+                    if (!isMountedRef.current || phaseRef.current !== 'interview') return;
+                    console.warn('Audio playback error, falling back to browser TTS', e);
+                    fallbackSpeakText(text, onComplete);
+                };
+
+                if (!isMountedRef.current || phaseRef.current !== 'interview') return;
+                await audio.play();
+                return; // Success, exit early
+            } else {
+                console.warn('Backend TTS failed, falling back to browser TTS');
+            }
+        } catch (err) {
+            console.warn('Error fetching backend TTS, falling back to browser', err);
+        }
+
+        // Fast Fallback: built-in browser TTS
+        fallbackSpeakText(text, onComplete);
+    };
+
+    const fallbackSpeakText = (text, onComplete) => {
+        if (!window.speechSynthesis) {
+            if (onComplete) onComplete();
+            return;
+        }
         window.speechSynthesis.cancel();
 
         const speak = () => {
@@ -358,10 +484,27 @@ export default function CompanyInterview() {
             utterance.pitch = 1.05;    // tiny pitch lift — warmer tone
             utterance.volume = 0.95;   // not blasting, feels natural
 
-            utterance.onstart = () => setAiSpeaking(true);
-            utterance.onend = () => setAiSpeaking(false);
-            utterance.onerror = () => setAiSpeaking(false);
-            window.speechSynthesis.speak(utterance);
+            utterance.onstart = () => {
+                if (isMountedRef.current && phaseRef.current === 'interview') setAiSpeaking(true);
+            };
+            utterance.onend = () => {
+                if (!isMountedRef.current || phaseRef.current !== 'interview') return;
+                setAiSpeaking(false);
+                utteranceRef.current = null;
+                if (onComplete) setTimeout(() => onComplete(), 100);
+            };
+            utterance.onerror = (e) => {
+                if (!isMountedRef.current || phaseRef.current !== 'interview') return;
+                console.warn('SpeechSynthesis error:', e);
+                setAiSpeaking(false);
+                utteranceRef.current = null;
+                if (onComplete) setTimeout(() => onComplete(), 100);
+            };
+
+            utteranceRef.current = utterance; // Prevent GC
+            if (isMountedRef.current && phaseRef.current === 'interview') {
+                window.speechSynthesis.speak(utterance);
+            }
         };
 
         // Voices may load async — wait if needed
@@ -375,6 +518,7 @@ export default function CompanyInterview() {
     // ── Speech Recognition (robust) ──
     const isListeningRef = useRef(false);
     const accumulatedTranscriptRef = useRef('');
+    const inactivityTimerRef = useRef(null);
 
     const initSpeechRecognition = useCallback(() => {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -401,11 +545,24 @@ export default function CompanyInterview() {
                 }
             }
 
+            if (finalTranscript || interimTranscript) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+
             if (finalTranscript) {
                 accumulatedTranscriptRef.current += finalTranscript;
                 setTranscript(accumulatedTranscriptRef.current);
                 setUserInput(accumulatedTranscriptRef.current);
                 setInterimText('');
+
+                // Real-time speech analysis
+                if (speakingStartRef.current) {
+                    const dur = (Date.now() - speakingStartRef.current) / 1000;
+                    const metrics = speechAnalyzerRef.current.analyze(accumulatedTranscriptRef.current, dur);
+                    setSpeechMetrics(metrics);
+                } else {
+                    speakingStartRef.current = Date.now();
+                }
 
                 // Reset auto-send timer — user just finished a sentence
                 clearTimeout(autoSendTimerRef.current);
@@ -464,12 +621,19 @@ export default function CompanyInterview() {
         return recognition;
     }, []);
 
-    const toggleListening = useCallback(async () => {
-        if (isListeningRef.current) {
+    const toggleListening = useCallback(async (forceStart = false) => {
+        if (config.format !== 'voice') return; // Don't auto-listen in text mode
+
+        if (isListeningRef.current && !forceStart) {
             // ── Stop listening ──
             isListeningRef.current = false;
             setIsListening(false);
             recognitionRef.current?.stop();
+            
+            // Stop outstanding MediaRecorder if user mutes or aborts
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                try { mediaRecorderRef.current.stop(); } catch (e) {}
+            }
 
             // Send speech feedback with accumulated transcript
             const finalText = accumulatedTranscriptRef.current.trim();
@@ -478,15 +642,8 @@ export default function CompanyInterview() {
                 fetchSpeechFeedback(finalText, duration);
             }
         } else {
-            // ── Start listening ──
-            // Ensure microphone permission is granted (getUserMedia may have been denied)
-            try {
-                const testStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                testStream.getTracks().forEach(t => t.stop()); // release immediately
-            } catch (e) {
-                console.error('Microphone permission denied:', e);
-                return;
-            }
+            // If we are already listening and forceStart is requested, just return to keep it running
+            if (isListeningRef.current && forceStart) return;
 
             // Create fresh recognition instance each time to avoid stale state
             recognitionRef.current = initSpeechRecognition();
@@ -504,6 +661,35 @@ export default function CompanyInterview() {
                 recognitionRef.current.start();
                 isListeningRef.current = true;
                 setIsListening(true);
+
+                // --- STT RECORDING START ---
+                if (streamRef.current) {
+                    const hasLiveAudio = streamRef.current.getAudioTracks().some(t => t.readyState === 'live');
+                    if (hasLiveAudio) {
+                        // Clean up any lingering recorder
+                        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                            try { mediaRecorderRef.current.stop(); } catch (e) {}
+                        }
+                        
+                        audioChunksRef.current = [];
+                        // Create a stream with ONLY the audio track so we don't accidentally record video
+                        const audioStream = new MediaStream(streamRef.current.getAudioTracks());
+                        const mr = new MediaRecorder(audioStream);
+                        mr.ondataavailable = (e) => {
+                            if (e.data.size > 0) audioChunksRef.current.push(e.data);
+                        };
+                        mediaRecorderRef.current = mr;
+                        mr.start();
+                    }
+                }
+
+                // Start 15-second inactivity timeout
+                clearTimeout(inactivityTimerRef.current);
+                inactivityTimerRef.current = setTimeout(() => {
+                    if (isListeningRef.current && !accumulatedTranscriptRef.current.trim()) {
+                        document.dispatchEvent(new CustomEvent('interview-auto-send', { detail: { autoSkip: true } }));
+                    }
+                }, 15000);
             } catch (e) {
                 console.error('Failed to start speech recognition:', e);
                 isListeningRef.current = false;
@@ -550,7 +736,9 @@ export default function CompanyInterview() {
 
     const startInterview = async () => {
         setLoading(true);
-        await startMedia();
+        if (!streamRef.current) {
+            await startMedia();
+        }
         setPhase('interview');
         setConversation([]);
         setSessionScores([]);
@@ -572,7 +760,7 @@ export default function CompanyInterview() {
             if (data.thinkTime) startThinkTimer(data.thinkTime);
             const msg = { role: 'interviewer', content: q, tips: data.tips || [], reaction: 'greeting', timestamp: new Date().toISOString() };
             setConversation([msg]);
-            speakText(q);
+            speakText(q, () => toggleListening(true));
         } catch {
             const fallback = `Hi! Welcome to your ${companyName} interview. I'm looking forward to our conversation today. Let's dive in — tell me about a challenging project you worked on recently and what made it interesting.`;
             setCurrentQuestion(fallback);
@@ -580,14 +768,13 @@ export default function CompanyInterview() {
             setInterviewerReaction('greeting');
             startThinkTimer(30);
             setConversation([{ role: 'interviewer', content: fallback, tips: [], reaction: 'greeting', timestamp: new Date().toISOString() }]);
-            speakText(fallback);
+            speakText(fallback, () => toggleListening(true));
         }
         setLoading(false);
     };
 
-    const sendAnswer = async () => {
-        if (!userInput.trim()) return;
-        const answer = userInput.trim();
+    const sendAnswer = async (isAutoSkip = false) => {
+        if (!userInput.trim() && !isAutoSkip) return;
 
         // Stop voice recognition if active
         if (isListeningRef.current) {
@@ -596,9 +783,65 @@ export default function CompanyInterview() {
             recognitionRef.current?.stop();
         }
 
+        // --- STT RECORDING STOP ---
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.onstop = () => {
+                processFinalAudioAndSend(isAutoSkip);
+            };
+            mediaRecorderRef.current.stop();
+            return; // Exit here. The onstop callback handles the rest.
+        } else {
+            processFinalAudioAndSend(isAutoSkip);
+        }
+    };
+
+    const processFinalAudioAndSend = async (isAutoSkip) => {
+        let answerText = userInput.trim();
+
+        // Call STT backend if we have audio chunks
+        if (audioChunksRef.current.length > 0) {
+            setIsTranscribing(true);
+            try {
+                const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
+                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+                const formData = new FormData();
+
+                // Keep the extension generic or derive from mime type
+                const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+                formData.append('audio', audioBlob, `recording.${ext}`);
+
+                const headers = getAuthHeaders();
+                delete headers['Content-Type']; // Let browser set boundary automatically
+
+                const res = await fetch(`${API_URL}/api/company-interview/stt`, {
+                    method: 'POST',
+                    headers,
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const sttData = await res.json();
+                    if (sttData.text?.trim()) {
+                        answerText = sttData.text.trim();
+                    }
+                }
+            } catch (err) {
+                console.error('Whisper STT failed, using fallback transcript', err);
+            }
+            setIsTranscribing(false);
+            audioChunksRef.current = [];
+        }
+
+        // Bail out if user clicked "End Interview" while STT was processing
+        if (phaseRef.current !== 'interview') return;
+
+        if (!answerText && !isAutoSkip) return;
+        const answer = isAutoSkip && !answerText ? "I do not have a response to this question." : answerText;
+
         // Clear auto-send timers
         clearTimeout(autoSendTimerRef.current);
         clearInterval(autoSendCountdownRef.current);
+        clearTimeout(inactivityTimerRef.current);
         setAutoSendCountdown(0);
 
         setUserInput('');
@@ -612,6 +855,9 @@ export default function CompanyInterview() {
         setLoading(true);
 
         try {
+            const lastScoreVal = sessionScores.length > 0 ? sessionScores[sessionScores.length - 1] : null;
+            const avgScoreVal = sessionScores.length > 0 ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length) : null;
+
             const res = await fetch(`${API_URL}/api/company-interview/follow-up`, {
                 method: 'POST', headers: getAuthHeaders(),
                 body: JSON.stringify({
@@ -619,13 +865,26 @@ export default function CompanyInterview() {
                     difficulty: config.difficulty,
                     previousQuestion: currentQuestion, userAnswer: answer,
                     conversationHistory: conversation,
-                    questionNumber: questionCount + 1, totalQuestions
+                    questionNumber: questionCount + 1, totalQuestions,
+                    lastScore: lastScoreVal,
+                    averageScore: avgScoreVal,
+                    cumulativeScores: sessionScores,
+                    code: editorCode || undefined,
+                    codeLanguage: editorLanguage || undefined
                 })
             });
             const data = await res.json();
+
+            // Bail out if the user clicked "End Interview" while follow-up generation was in flight
+            if (phaseRef.current !== 'interview') return;
+
             setSessionScores(prev => [...prev, data.score || 70]);
             setInterviewerReaction(data.interviewerReaction || 'neutral');
             setHintData(null);
+            setDifficultyLevel(data.difficultyLevel || 'medium');
+            setAdaptiveNote(data.adaptiveNote || null);
+            setCodeFeedback(data.codeFeedback || null);
+            if (editorCode) setEditorCode(''); // reset code editor after submission
 
             setConversation(prev => [...prev, {
                 role: 'feedback', content: data.feedback || 'Good response.',
@@ -646,22 +905,51 @@ export default function CompanyInterview() {
                     reaction: data.interviewerReaction,
                     timestamp: new Date().toISOString()
                 }]);
-                speakText(followUp);
+                speakText(followUp, () => toggleListening(true));
+            } else {
+                // All questions done — closing compliment and auto-end
+                const closingMsg = data.closingRemark || `Thank you so much for your time today! You did a great job discussing these topics. I really appreciated your thoughtful answers. Let me compile your results now.`;
+                setConversation(prev => [...prev, {
+                    role: 'interviewer', content: closingMsg, tips: [],
+                    reaction: 'positive',
+                    timestamp: new Date().toISOString()
+                }]);
+                speakText(closingMsg);
+                setTimeout(() => { endInterview(); }, 6000);
             }
         } catch {
+            if (phaseRef.current !== 'interview') return;
+
+            const fallbacks = [
+                'Tell me about a recent project you worked on. What was your specific contribution?',
+                'How would you approach debugging a complex issue in production? Walk me through your process.',
+                'What design patterns have you used recently? Can you describe one in detail?',
+                'How do you approach testing your code? What kinds of tests do you write?',
+                'Tell me about a time you had to make a technical trade-off. What did you consider?',
+                'How would you explain a complex technical concept to a non-technical stakeholder?',
+                'What is something new you learned recently that changed how you write code?',
+                'Describe how you would refactor a large, messy codebase. Where would you start?',
+            ];
+            const fallbackQ = fallbacks[(questionCount - 1) % fallbacks.length];
+            const fallbackFeedbacks = [
+                "That's a solid start! I like where you're going with that.",
+                "Good thinking. Let me explore another area with you.",
+                "I can see your reasoning there. Let's shift gears a bit.",
+                "Nice approach! Let me ask you something different now.",
+            ];
             setConversation(prev => [...prev, {
-                role: 'feedback', content: "That's a solid start! I like where you're going with that. Let me dig into one more aspect.", score: 72,
+                role: 'feedback', content: fallbackFeedbacks[Math.floor(Math.random() * fallbackFeedbacks.length)], score: 70 + Math.floor(Math.random() * 15),
                 strengths: ['Clear communication'], improvements: ['Add more specifics'],
                 reaction: 'encouraging',
                 timestamp: new Date().toISOString()
             }, {
                 role: 'interviewer',
-                content: 'Interesting — can you walk me through how you would approach optimizing that solution? What trade-offs would you consider?',
+                content: fallbackQ,
                 tips: [], reaction: 'probing', timestamp: new Date().toISOString()
             }]);
             setQuestionCount(prev => prev + 1);
             startThinkTimer(45);
-            speakText('Interesting — can you walk me through how you would approach optimizing that solution? What trade-offs would you consider?');
+            speakText(fallbackQ, () => toggleListening(true));
         }
         setLoading(false);
     };
@@ -685,8 +973,41 @@ export default function CompanyInterview() {
 
     const endInterview = async () => {
         setLoading(true);
+        setPhase('summary'); // Immediately show loading summary UI
+        phaseRef.current = 'summary'; // Immediately lock phase to prevent async bleeding
+
+        // Stop ALL voice, timers, and media immediately
         window.speechSynthesis?.cancel();
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current.currentTime = 0;
+        }
+        setAiSpeaking(false);
         clearInterval(timerRef.current);
+        clearInterval(thinkTimerRef.current);
+        clearTimeout(autoSendTimerRef.current);
+        clearTimeout(inactivityTimerRef.current);
+        clearInterval(autoSendCountdownRef.current);
+        setAutoSendCountdown(0);
+        setThinkTimeLeft(0);
+
+        // Stop voice playback entirely
+        window.speechSynthesis?.cancel();
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current.currentTime = 0;
+        }
+        setAiSpeaking(false);
+        setIsTranscribing(false);
+
+        // Stop speech recognition
+        if (recognitionRef.current) {
+            recognitionRef.current.onend = null;
+            recognitionRef.current.stop();
+        }
+        isListeningRef.current = false;
+        setIsListening(false);
+
         try {
             const res = await fetch(`${API_URL}/api/company-interview/evaluate`, {
                 method: 'POST', headers: getAuthHeaders(),
@@ -712,10 +1033,31 @@ export default function CompanyInterview() {
                 }
             });
         }
+
+        // Release camera and microphone
         stopMedia();
-        clearInterval(thinkTimerRef.current);
         setPhase('summary');
         setLoading(false);
+
+        // Auto-save session to backend (non-blocking)
+        try {
+            const avg = sessionScores.length > 0 ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length) : 70;
+            fetch(`${API_URL}/api/company-interview/save-session`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    type: 'single',
+                    company: config.company, role: config.role,
+                    stage: config.stage, difficulty: config.difficulty,
+                    conversation, scores: sessionScores,
+                    overallScore: summaryData?.overallScore || avg,
+                    summaryData: summaryData || {},
+                    speechMetrics: speechMetrics || null,
+                    emotionData: emotionMetrics || null,
+                    proctoringViolations: proctoringViolations || [],
+                    completedAt: new Date().toISOString()
+                })
+            }).catch(e => console.warn('Session save failed (non-critical):', e.message));
+        } catch { } // silently fail — session save is best-effort
     };
 
     const resetInterview = () => {
@@ -732,6 +1074,10 @@ export default function CompanyInterview() {
         setThinkTimeLeft(0);
         // Stop voice
         window.speechSynthesis?.cancel();
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current.currentTime = 0;
+        }
         setAiSpeaking(false);
         isListeningRef.current = false;
         setIsListening(false);
@@ -746,15 +1092,16 @@ export default function CompanyInterview() {
 
     // Auto-send event listener
     useEffect(() => {
-        const handleAutoSend = () => {
-            if (accumulatedTranscriptRef.current.trim() && isListeningRef.current) {
+        const handleAutoSend = (e) => {
+            const isAutoSkip = e.detail?.autoSkip;
+            if ((accumulatedTranscriptRef.current.trim() || isAutoSkip) && isListeningRef.current) {
                 // Stop listening first
                 isListeningRef.current = false;
                 setIsListening(false);
                 recognitionRef.current?.stop();
                 setAutoSendCountdown(0);
                 // Trigger send
-                sendAnswer();
+                sendAnswer(isAutoSkip);
             }
         };
         document.addEventListener('interview-auto-send', handleAutoSend);
@@ -774,6 +1121,13 @@ export default function CompanyInterview() {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [conversation, loading]);
 
+    // Bind video stream across phase changes
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = streamRef.current;
+        }
+    }, [phase, stream, cameraOn]);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
@@ -782,6 +1136,10 @@ export default function CompanyInterview() {
             clearInterval(thinkTimerRef.current);
             clearInterval(timerRef.current);
             window.speechSynthesis?.cancel();
+            if (audioPlayerRef.current) {
+                audioPlayerRef.current.pause();
+                audioPlayerRef.current.src = "";
+            }
             recognitionRef.current?.stop();
         };
     }, []);
@@ -797,7 +1155,7 @@ export default function CompanyInterview() {
                     <div className="ti-lobby-preview">
                         <div className="ti-lobby-video-wrap">
                             <video
-                                ref={videoRef}
+                                ref={handleVideoRef}
                                 autoPlay muted playsInline
                                 className="ti-lobby-video"
                                 style={{ display: cameraOn && stream ? 'block' : 'none' }}
@@ -902,13 +1260,35 @@ export default function CompanyInterview() {
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Setup Summary Card */}
+                            <div className="ti-setup-summary">
+                                <div className="ti-setup-row">
+                                    <span className="ti-setup-icon">💼</span> <span>Role:</span> <strong>{config.role}</strong>
+                                </div>
+                                <div className="ti-setup-row">
+                                    <span className="ti-setup-icon">⏱️</span> <span>Duration:</span> <strong>30 mins</strong>
+                                    <span className={`ti-diff-chip ${config.difficulty}`}>
+                                        {config.difficulty}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Join button */}
                         <button className="ti-join-btn" onClick={startInterview} disabled={loading}>
                             <Video size={20} />
-                            {loading ? 'Connecting...' : 'Join Interview'}
+                            {loading ? 'Connecting...' : 'Join Interview Room'}
                         </button>
+
+                        <div className="ti-device-status">
+                            <span className={`ti-device-chip ${micOn ? 'ok' : 'off'}`}>
+                                <span className="ti-device-chip-dot"></span> Mic {micOn ? 'Ready' : 'Off'}
+                            </span>
+                            <span className={`ti-device-chip ${cameraOn && stream ? 'ok' : 'off'}`}>
+                                <span className="ti-device-chip-dot"></span> Cam {cameraOn && stream ? 'Ready' : 'Off'}
+                            </span>
+                        </div>
 
                         <div className="ti-lobby-footnote">
                             <span>🔒 Your camera feed stays local — nothing is recorded or sent</span>
@@ -927,7 +1307,24 @@ export default function CompanyInterview() {
         const bd = summaryData.detailedBreakdown || {};
         return (
             <div className="ti-summary-page">
-                <div className="ti-summary">
+                {/* Confetti Animation Layer */}
+                {summaryData.overallScore >= 70 && (
+                    <div className="ti-confetti-container">
+                        {Array.from({ length: 30 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="ti-confetti"
+                                style={{
+                                    left: `${Math.random() * 100}%`,
+                                    animationDelay: `${Math.random() * 2}s`,
+                                    backgroundColor: ['#6366f1', '#8b5cf6', '#22c55e', '#f59e0b'][Math.floor(Math.random() * 4)]
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                <div className="ti-summary" style={{ position: 'relative', zIndex: 1 }}>
                     <div className="ti-summary-header">
                         <h1>Interview Complete 🎉</h1>
                         <p>{companyLogo} {companyName} · {config.role} · {config.stage} · {formatTime(elapsed)}</p>
@@ -994,6 +1391,11 @@ export default function CompanyInterview() {
                         <div className="ti-summary-card improvements">
                             <h3><TrendingUp size={16} /> Areas to Improve</h3>
                             <ul>{(summaryData.improvements || []).map((s, i) => <li key={i}>{s}</li>)}</ul>
+
+                            <div className="ti-topic-links">
+                                <Link to="/learning-path" className="ti-topic-link">DSA Topics</Link>
+                                <Link to="/system-design" className="ti-topic-link">System Design</Link>
+                            </div>
                         </div>
                     </div>
 
@@ -1023,6 +1425,17 @@ export default function CompanyInterview() {
                             <ArrowLeft size={16} /> Back to Prep
                         </Link>
                     </div>
+
+                    {/* Gamification Badges */}
+                    <InterviewBadges
+                        sessionStats={{
+                            score: summaryData.overallScore || 70,
+                            totalFillers: speechFeedback?.totalFillers || 0,
+                            eyeContact: emotionMetrics?.eyeContact || 0,
+                            confidenceScore: speechFeedback?.confidenceScore || summaryData.overallScore || 70,
+                            interviewCount: parseInt(localStorage.getItem('pl_interview_count') || '0') + 1
+                        }}
+                    />
                 </div>
             </div>
         );
@@ -1048,13 +1461,25 @@ export default function CompanyInterview() {
                         <span>{formatTime(elapsed)}</span>
                     </div>
                     {questionCount > 0 && (
-                        <div className="ti-header-progress">
-                            Q{questionCount}/{totalQuestions}
+                        <div className="ti-breadcrumbs">
+                            {Array.from({ length: totalQuestions }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`ti-breadcrumb-dot ${i < questionCount - 1 ? 'completed' : i === questionCount - 1 ? 'active' : ''}`}
+                                />
+                            ))}
                         </div>
                     )}
                     {avgScore !== null && (
                         <div className="ti-header-score" style={{ color: avgScore >= 80 ? '#22c55e' : avgScore >= 60 ? '#f59e0b' : '#ef4444' }}>
                             <Star size={12} /> {avgScore}%
+                        </div>
+                    )}
+                    {/* Adaptive Difficulty Indicator */}
+                    {difficultyLevel && (
+                        <div className={`difficulty-indicator ${difficultyLevel}`} title={adaptiveNote || ''}>
+                            {difficultyLevel === 'hard' ? '🔥' : difficultyLevel === 'easy' ? '📉' : '📊'}
+                            {difficultyLevel === 'hard' ? 'Ramping Up' : difficultyLevel === 'easy' ? 'Adjusting' : 'Steady'}
                         </div>
                     )}
                 </div>
@@ -1072,12 +1497,21 @@ export default function CompanyInterview() {
                 </div>
             </header>
 
+            {/* ── Proctoring Status Bar ── */}
+            <ProctoringManager
+                enabled={proctoringEnabled}
+                isActive={phase === 'interview'}
+                emotionMetrics={emotionMetrics}
+                onViolation={(v) => setProctoringViolations(prev => [...prev, v])}
+                violations={proctoringViolations}
+            />
+
             {/* ── Main Content ── */}
-            <div className="ti-main">
+            <div className="ti-main" style={{ display: 'flex' }}>
                 {/* Video Grid */}
                 <div className={`ti-video-grid ${chatOpen ? 'with-chat' : 'full'}`}>
                     {/* AI Interviewer Tile */}
-                    <div className="ti-tile ti-tile-ai">
+                    <div className={`ti-tile ti-tile-ai ${aiSpeaking ? 'ai-speaking' : ''}`}>
                         <AIAvatar
                             speaking={aiSpeaking || loading}
                             companyColor={companyColor}
@@ -1096,10 +1530,10 @@ export default function CompanyInterview() {
                     </div>
 
                     {/* User Webcam Tile */}
-                    <div className="ti-tile ti-tile-user">
+                    <div className={`ti-tile ti-tile-user ${isListening ? 'listening' : ''}`} style={{ position: 'relative' }}>
                         {cameraOn && stream ? (
                             <video
-                                ref={videoRef}
+                                ref={handleVideoRef}
                                 autoPlay muted playsInline
                                 className="ti-user-video"
                             />
@@ -1110,6 +1544,59 @@ export default function CompanyInterview() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Speech Analytics Overlay */}
+                        {isListening && (
+                            <div className="ti-speech-overlay">
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                    {/* Waveform when listening but no metrics yet or alongside metrics */}
+                                    <div className="ti-waveform" style={{ marginRight: '8px', padding: '0 4px' }}>
+                                        <div className="ti-waveform-bar"></div>
+                                        <div className="ti-waveform-bar"></div>
+                                        <div className="ti-waveform-bar"></div>
+                                        <div className="ti-waveform-bar"></div>
+                                        <div className="ti-waveform-bar"></div>
+                                    </div>
+
+                                    {speechMetrics && speechMetrics.wordCount > 0 && (
+                                        <>
+                                            <span className={`ti-speech-pill ${speechMetrics.paceStatus}`}>
+                                                {speechMetrics.wpm} WPM
+                                            </span>
+                                            {speechMetrics.totalFillers > 0 && (
+                                                <span className="ti-speech-pill filler">
+                                                    {speechMetrics.totalFillers} fillers
+                                                </span>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Live Confidence Bar */}
+                                {speechMetrics && speechMetrics.wordCount > 0 && (
+                                    <div className="ti-confidence-wrapper">
+                                        <span className="ti-confidence-label">Confidence</span>
+                                        <div className="ti-confidence-bar-container">
+                                            <div
+                                                className="ti-confidence-bar-fill"
+                                                style={{ width: `${Math.max(10, speechMetrics.confidenceScore || 0)}%` }}
+                                            />
+                                        </div>
+                                        <span className="ti-confidence-value">{speechMetrics.confidenceScore || 0}%</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Emotion Detector */}
+                        {emotionEnabled && cameraOn && stream && (
+                            <EmotionDetector
+                                videoRef={videoRef}
+                                enabled={emotionEnabled}
+                                onMetricsUpdate={setEmotionMetrics}
+                            />
+                        )}
+
                         <div className="ti-tile-nameplate">
                             <div className="ti-tile-name">
                                 {isListening && <span className="ti-speaking-dot" />}
@@ -1117,6 +1604,13 @@ export default function CompanyInterview() {
                                 {!micOn && <MicOff size={12} className="ti-muted-icon" />}
                             </div>
                         </div>
+
+                        {/* Emotion overlay badge */}
+                        {emotionEnabled && emotionMetrics && (
+                            <div className="ti-emotion-badge">
+                                <Eye size={12} /> {Math.round(emotionMetrics.engagement || 0)}%
+                            </div>
+                        )}
                     </div>
 
                     {/* Live Captions Overlay */}
@@ -1129,9 +1623,11 @@ export default function CompanyInterview() {
                                 </div>
                                 <p className="ti-captions-text">
                                     {transcript && <span className="ti-captions-final">{transcript}</span>}
-                                    {interimText && <span className="ti-captions-interim">{interimText}</span>}
+                                    {isTranscribing && <span className="ti-captions-interim"> [Transcribing Audio with AI...] </span>}
+                                    {!isTranscribing && interimText && <span className="ti-captions-interim">{interimText}</span>}
+                                    <span ref={captionsEndRef} />
                                 </p>
-                                {autoSendCountdown > 0 && (
+                                {autoSendCountdown > 0 && !isTranscribing && (
                                     <div className="ti-captions-autosend">
                                         Sending in {autoSendCountdown}s...
                                     </div>
@@ -1359,6 +1855,35 @@ export default function CompanyInterview() {
                         <span>React</span>
                     </button>
 
+                    <button
+                        className={`ti-ctrl-btn ${emotionEnabled ? 'active' : ''}`}
+                        onClick={() => setEmotionEnabled(e => !e)}
+                        title="Body language AI"
+                    >
+                        <Eye size={20} />
+                        <span>Body AI</span>
+                    </button>
+
+                    <button
+                        className={`ti-ctrl-btn ${copilotOpen ? 'active' : ''}`}
+                        onClick={() => setCopilotOpen(c => !c)}
+                        title="AI Copilot suggestions"
+                    >
+                        <Brain size={20} />
+                        <span>Copilot</span>
+                    </button>
+
+                    {(config.stage === 'DSA / Coding' || config.stage === 'OA') && (
+                        <button
+                            className={`ti-ctrl-btn ${codeEditorOpen ? 'active' : ''}`}
+                            onClick={() => setCodeEditorOpen(c => !c)}
+                            title="Code Editor"
+                        >
+                            <Code2 size={20} />
+                            <span>Code</span>
+                        </button>
+                    )}
+
                     <button className="ti-ctrl-btn ti-ctrl-leave" onClick={endInterview} disabled={loading}>
                         <Phone size={20} />
                         <span>Leave</span>
@@ -1375,6 +1900,33 @@ export default function CompanyInterview() {
                     )}
                 </div>
             </div>
+
+            {/* AI Copilot sidebar */}
+            {copilotOpen && (
+                <AICopilot
+                    isOpen={copilotOpen}
+                    onToggle={() => setCopilotOpen(c => !c)}
+                    currentQuestion={currentQuestion}
+                    partialAnswer={transcript || userInput}
+                    stage={config.stage}
+                    company={companyName}
+                    role={config.role}
+                    getAuthHeaders={getAuthHeaders}
+                />
+            )}
+
+            {/* Code Editor Panel (DSA/OA stages) */}
+            <CodeEditorPanel
+                isOpen={codeEditorOpen}
+                onClose={() => setCodeEditorOpen(false)}
+                code={editorCode}
+                onCodeChange={setEditorCode}
+                language={editorLanguage}
+                onLanguageChange={setEditorLanguage}
+                codeFeedback={codeFeedback}
+                onSubmitCode={sendAnswer}
+                loading={loading}
+            />
         </div>
     );
 }

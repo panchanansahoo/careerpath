@@ -52,6 +52,9 @@ import DSATopicLearning from './pages/DSATopicLearning';
 import AITutorHub from './pages/AITutorHub';
 import CompanyPrep from './pages/CompanyPrep';
 import CompanyInterview from './pages/CompanyInterview';
+import MultiRoundInterview from './pages/MultiRoundInterview';
+import InterviewAnalytics from './pages/InterviewAnalytics';
+import InterviewHistory from './pages/InterviewHistory';
 import PersonalizedFeed from './pages/PersonalizedFeed';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Code2 } from 'lucide-react';
@@ -179,6 +182,9 @@ function AppContent() {
             <Route path="/ai-tutor" element={<AITutorHub />} />
             <Route path="/company-prep" element={<CompanyPrep />} />
             <Route path="/company-interview" element={<CompanyInterview />} />
+            <Route path="/multi-round-interview" element={<PrivateRoute><MultiRoundInterview /></PrivateRoute>} />
+            <Route path="/interview-analytics" element={<PrivateRoute><InterviewAnalytics /></PrivateRoute>} />
+            <Route path="/interview-history" element={<PrivateRoute><InterviewHistory /></PrivateRoute>} />
             <Route path="/personalized-feed" element={<PersonalizedFeed />} />
 
             <Route path="/pricing" element={<Pricing />} />
