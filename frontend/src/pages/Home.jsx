@@ -7,6 +7,20 @@ import {
   Building2, Mic
 } from 'lucide-react';
 import CursorGlow from '../components/CursorGlow';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut } from '../components/ui/dropdown-menu';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '../components/ui/popover';
+import { Checkbox } from '../components/ui/checkbox';
+import { Switch } from '../components/ui/switch';
+import { Slider } from '../components/ui/slider';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Progress } from '../components/ui/progress';
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from '../components/ui/navigation-menu';
 
 const features = [
 
@@ -195,12 +209,12 @@ export default function Home() {
               </p>
 
               <div style={{ display: 'flex', gap: '16px' }}>
-                <Link to="/signup" className="btn btn-primary" style={{ height: '52px', padding: '0 32px', fontSize: '16px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                  Start Building
-                </Link>
-                <a href="#features" className="btn btn-outline" style={{ height: '52px', padding: '0 32px', fontSize: '16px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                  Explore Platform
-                </a>
+                <Button asChild size="lg" className="h-[52px] px-8 text-base">
+                  <Link to="/signup">Start Building</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="h-[52px] px-8 text-base">
+                  <a href="#features">Explore Platform</a>
+                </Button>
               </div>
 
               <div style={{ display: 'flex', gap: '32px', color: 'var(--text-secondary)', fontSize: '14px', marginTop: '40px' }}>
@@ -257,6 +271,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
 
       {/* 3. FEATURES */}
       <section style={{ padding: '100px 0', background: 'transparent', position: 'relative', zIndex: 10 }} id="features">
@@ -339,9 +354,9 @@ export default function Home() {
                   <li key={j}><CheckCircle size={16} /> {f}</li>
                 ))}
               </ul>
-              <Link to="/signup" className={`btn ${plan.btnClass}`} style={{ width: '100%' }}>
-                {plan.btnText}
-              </Link>
+              <Button asChild variant={plan.btnClass === 'btn-primary' ? 'default' : 'outline'} className="w-[calc(100%-3rem)] mx-auto mb-2">
+                <Link to="/signup">{plan.btnText}</Link>
+              </Button>
             </div>
           ))}
         </div>
@@ -377,9 +392,11 @@ export default function Home() {
         <div className="container">
           <h2>Ready to get started?</h2>
           <p>Join thousands of engineers who are crushing technical interviews.</p>
-          <Link to="/signup" className="btn btn-primary" style={{ padding: '16px 40px', fontSize: '18px' }}>
-            Start Free Trial <ArrowRight size={20} />
-          </Link>
+          <Button asChild size="lg" className="px-10 py-6 text-lg">
+            <Link to="/signup">
+              Start Free Trial <ArrowRight size={20} className="ml-2" />
+            </Link>
+          </Button>
         </div>
       </section>
 
