@@ -58,7 +58,7 @@ export default class SpeechAnalyzer {
     }
 
     // ── Pace (WPM) ──
-    const wpm = Math.round((wordCount / durationSecs) * 60);
+    const wpm = durationSecs > 0 ? Math.round((wordCount / durationSecs) * 60) : 0;
 
     // ── Pace assessment ──
     let paceStatus = 'good';
@@ -95,11 +95,23 @@ export default class SpeechAnalyzer {
     if (sentenceCount >= 3 && avgWordsPerSentence < 30) confidenceScore += 5;
     confidenceScore = Math.max(0, Math.min(100, confidenceScore));
 
+    // ── Repeated Words detection ──
+    let repeatedWordsCount = 0;
+    for (let i = 0; i < words.length - 1; i++) {
+        // basic normalization to ignore case and simple punctuation connected to words
+        const w1 = words[i].toLowerCase().replace(/[^a-z0-9]/g, '');
+        const w2 = words[i + 1].toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (w1 && w2 && w1 === w2) {
+            repeatedWordsCount++;
+        }
+    }
+
     // ── Clarity Score (0–100) ──
     let clarityScore = 85;
     if (totalFillers > 5) clarityScore -= totalFillers * 2;
     if (wpm < 90 || wpm > 190) clarityScore -= 10;
     if (avgWordsPerSentence > 35) clarityScore -= 8; // run-on sentences
+    if (repeatedWordsCount > 0) clarityScore -= (repeatedWordsCount * 3); // penalize repeated words
     clarityScore = Math.max(0, Math.min(100, clarityScore));
 
     // ── Real-time nudges ──
@@ -108,6 +120,7 @@ export default class SpeechAnalyzer {
     if (wpm < 100 && durationSecs > 5) nudges.push({ type: 'pace', text: 'Speak with more confidence and energy' });
     if (wpm > 180) nudges.push({ type: 'pace', text: 'Slow down for better clarity' });
     if (wordCount > 20 && sentenceCount < 2) nudges.push({ type: 'structure', text: 'Break your answer into clear points' });
+    if (repeatedWordsCount >= 2) nudges.push({ type: 'repetition', text: 'Take a breath to avoid repeating words' });
     if (wordCount > 10 && !transcript.match(/because|since|therefore|however|although/i)) {
       nudges.push({ type: 'depth', text: 'Add reasoning — explain WHY' });
     }
@@ -127,6 +140,7 @@ export default class SpeechAnalyzer {
       clarityScore,
       avgWordLen: Math.round(avgWordLen * 10) / 10,
       sentenceCount,
+      repeatedWordsCount,
       nudges,
       tips,
     };
@@ -206,7 +220,7 @@ export default class SpeechAnalyzer {
     return {
       wordCount: 0, wpm: 0, paceStatus: 'waiting', paceLabel: 'Start speaking...',
       fillerCount: {}, totalFillers: 0, fillerRate: 0,
-      confidenceScore: 0, clarityScore: 0, avgWordLen: 0, sentenceCount: 0,
+      confidenceScore: 0, clarityScore: 0, avgWordLen: 0, sentenceCount: 0, repeatedWordsCount: 0,
       nudges: [], tips: [],
     };
   }

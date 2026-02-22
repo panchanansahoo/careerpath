@@ -12,7 +12,7 @@ import { useRef, useCallback } from 'react';
  *   });
  *   <div {...handlers}>...</div>
  */
-export default function useSwipe({ onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold = 50 } = {}) {
+export default function useSwipe({ onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold = 50, disabled = false } = {}) {
     const touchStart = useRef({ x: 0, y: 0 });
     const touchEnd = useRef({ x: 0, y: 0 });
 
@@ -26,6 +26,8 @@ export default function useSwipe({ onSwipeLeft, onSwipeRight, onSwipeUp, onSwipe
     }, []);
 
     const onTouchEnd = useCallback(() => {
+        if (disabled) return;
+        
         const dx = touchStart.current.x - touchEnd.current.x;
         const dy = touchStart.current.y - touchEnd.current.y;
         const absDx = Math.abs(dx);
@@ -38,7 +40,7 @@ export default function useSwipe({ onSwipeLeft, onSwipeRight, onSwipeUp, onSwipe
             if (dy > 0) onSwipeUp?.();
             else onSwipeDown?.();
         }
-    }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold]);
+    }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold, disabled]);
 
     return {
         handlers: { onTouchStart, onTouchMove, onTouchEnd },
