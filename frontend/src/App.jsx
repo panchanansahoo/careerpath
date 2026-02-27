@@ -39,7 +39,7 @@ import DSACodeEditor from './pages/DSACodeEditor';
 import SQLProblemExplorer from './pages/SQLProblemExplorer';
 import SQLCodeEditor from './pages/SQLCodeEditor';
 
-import GamificationDashboard from './pages/GamificationDashboard';
+
 import AptitudeHub from './pages/AptitudeHub';
 import AptitudePractice from './pages/AptitudePractice';
 import AptitudeResults from './pages/AptitudeResults';
@@ -55,7 +55,7 @@ import CompanyInterview from './pages/CompanyInterview';
 import MultiRoundInterview from './pages/MultiRoundInterview';
 import InterviewAnalytics from './pages/InterviewAnalytics';
 import InterviewHistory from './pages/InterviewHistory';
-import PersonalizedFeed from './pages/PersonalizedFeed';
+import CodingPlayground from './pages/CodingPlayground';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Code2 } from 'lucide-react';
 
@@ -109,7 +109,7 @@ function AppContent() {
 
   // Public pages that don't show sidebar
   const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
-  const isCodeEditorRoute = location.pathname.startsWith('/code-editor') || location.pathname.startsWith('/sql-editor');
+  const isCodeEditorRoute = location.pathname.startsWith('/code-editor') || location.pathname.startsWith('/sql-editor') || location.pathname === '/playground';
   const isVisualizerRoute = location.pathname === '/visualizer';
   const isFullScreenRoute = isCodeEditorRoute;
   const isPublicPage = publicPaths.includes(location.pathname);
@@ -166,7 +166,7 @@ function AppContent() {
 
 
 
-            <Route path="/gamification" element={<PrivateRoute><GamificationDashboard /></PrivateRoute>} />
+            <Route path="/gamification" element={<Navigate to="/profile" replace />} />
             <Route path="/problems" element={<ProblemExplorer />} />
             <Route path="/code-editor/:problemId" element={<DSACodeEditor />} />
             <Route path="/sql-problems" element={<SQLProblemExplorer />} />
@@ -185,7 +185,7 @@ function AppContent() {
             <Route path="/multi-round-interview" element={<PrivateRoute><MultiRoundInterview /></PrivateRoute>} />
             <Route path="/interview-analytics" element={<PrivateRoute><InterviewAnalytics /></PrivateRoute>} />
             <Route path="/interview-history" element={<PrivateRoute><InterviewHistory /></PrivateRoute>} />
-            <Route path="/personalized-feed" element={<PersonalizedFeed />} />
+            <Route path="/playground" element={<CodingPlayground />} />
 
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/library" element={<Library />} />

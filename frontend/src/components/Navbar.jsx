@@ -190,7 +190,7 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
                     to="/profile"
                     className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                   >
-                    <User size={16} className="text-purple-400" />
+                    <User size={16} className="text-gray-400" />
                     My Profile
                   </Link>
 

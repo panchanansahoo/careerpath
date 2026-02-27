@@ -7,8 +7,7 @@ const tabs = [
     { path: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { path: '/problems', label: 'Practice', icon: Code },
     { path: '/company-interview', label: 'Interview', icon: Mic },
-    { path: '/gamification', label: 'Progress', icon: BarChart3 },
-    { path: '/profile', label: 'Account', icon: User },
+    { path: '/profile', label: 'Profile', icon: User },
 ];
 
 export default function BottomNav() {
@@ -23,11 +22,8 @@ export default function BottomNav() {
         // Interview section
         if (['/company-prep', '/company-interview']
             .some(p => path.startsWith(p))) return '/company-interview';
-        // Progress section
-        if (['/gamification', '/dashboard/analytics', '/history']
-            .some(p => path.startsWith(p))) return '/gamification';
-        // Account section
-        if (['/profile', '/dashboard/settings']
+        // Account / Progress section
+        if (['/gamification', '/dashboard/analytics', '/history', '/profile', '/dashboard/settings']
             .some(p => path.startsWith(p))) return '/profile';
         // Home
         return '/dashboard';

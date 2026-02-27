@@ -1,0 +1,123 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Flame, CheckCircle2, Target, Zap } from 'lucide-react';
+
+function AnimatedCounter({ end, duration = 1200, suffix = '' }) {
+    const [count, setCount] = useState(0);
+    const ref = useRef(null);
+    const started = useRef(false);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(([entry]) => {
+            if (entry.isIntersecting && !started.current) {
+                started.current = true;
+                const start = 0;
+                const startTime = performance.now();
+                const animate = (now) => {
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    setCount(Math.round(start + (end - start) * eased));
+                    if (progress < 1) requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(animate);
+            }
+        }, { threshold: 0.3 });
+
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [end, duration]);
+
+    return <span ref={ref}>{count}{suffix}</span>;
+}
+
+export default function QuickStats() {
+    const [stats, setStats] = useState({
+        streak: 0,
+        problemsSolved: 0,
+        avgScore: 0,
+        totalXP: 0
+    });
+
+    useEffect(() => {
+        const streak = parseInt(localStorage.getItem('streakCount') || '0');
+        const solved = parseInt(localStorage.getItem('solvedCount') || '0');
+        const xp = parseInt(localStorage.getItem('totalXP') || '0');
+
+        let avgScore = 0;
+        try {
+            const history = JSON.parse(localStorage.getItem('interviewHistory') || '[]');
+            if (history.length > 0) {
+                avgScore = Math.round(history.reduce((sum, h) => sum + (h.score || 0), 0) / history.length);
+            }
+        } catch (e) { }
+
+        // Use real data if meaningful, otherwise show demo data
+        const hasRealData = streak > 0 || solved > 0 || xp > 0 || avgScore > 0;
+        setStats({
+            streak: hasRealData ? streak : 12,
+            problemsSolved: hasRealData ? solved : 147,
+            avgScore: hasRealData ? avgScore : 86,
+            totalXP: hasRealData ? xp : 4820
+        });
+    }, []);
+
+    const cards = [
+        {
+            label: 'Day Streak',
+            value: stats.streak,
+            icon: Flame,
+            color: '#f59e0b',
+            gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.03))',
+            borderGlow: 'rgba(245, 158, 11, 0.2)',
+            suffix: ''
+        },
+        {
+            label: 'Problems Solved',
+            value: stats.problemsSolved,
+            icon: CheckCircle2,
+            color: '#22c55e',
+            gradient: 'linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.03))',
+            borderGlow: 'rgba(34, 197, 94, 0.2)',
+            suffix: ''
+        },
+        {
+            label: 'Avg Score',
+            value: stats.avgScore,
+            icon: Target,
+            color: '#a78bfa',
+            gradient: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(167,139,250,0.03))',
+            borderGlow: 'rgba(167, 139, 250, 0.2)',
+            suffix: '%'
+        },
+        {
+            label: 'Total XP',
+            value: stats.totalXP,
+            icon: Zap,
+            color: '#38bdf8',
+            gradient: 'linear-gradient(135deg, rgba(56,189,248,0.15), rgba(56,189,248,0.03))',
+            borderGlow: 'rgba(56, 189, 248, 0.2)',
+            suffix: ''
+        }
+    ];
+
+    return (
+        <div className="quick-stats-grid">
+            {cards.map((card) => {
+                const Icon = card.icon;
+                return (
+                    <div key={card.label} className="quick-stat-card" style={{ background: card.gradient, borderColor: card.borderGlow }}>
+                        <div className="quick-stat-top-row">
+                            <div className="quick-stat-icon" style={{ background: `${card.color}20` }}>
+                                <Icon size={20} style={{ color: card.color }} />
+                            </div>
+                            <div className="quick-stat-label">{card.label}</div>
+                        </div>
+                        <div className="quick-stat-value" style={{ color: card.color }}>
+                            <AnimatedCounter end={card.value} suffix={card.suffix} />
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}

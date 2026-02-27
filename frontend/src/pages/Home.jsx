@@ -1,80 +1,146 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Brain, Code2, MessageSquare, FileText, TrendingUp, BookOpen,
   CheckCircle, ChevronDown, ArrowRight, Users, Star, Shield,
   Zap, Clock, Target, Award, Play, Sparkles, Database, Calculator, Map,
-  Building2, Mic
+  Building2, Mic, Globe, Cpu, BarChart3, Bot, Layers, GitBranch,
+  GraduationCap, Trophy, Rocket, ChevronRight, Quote, Activity,
+  PenTool, Eye, Gauge, UserCheck, Timer, Flame, Crown, BadgeCheck
 } from 'lucide-react';
-import CursorGlow from '../components/CursorGlow';
+
 import { Button } from '../components/ui/button';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut } from '../components/ui/dropdown-menu';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../components/ui/accordion';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/tooltip';
-import { Popover, PopoverTrigger, PopoverContent } from '../components/ui/popover';
-import { Checkbox } from '../components/ui/checkbox';
-import { Switch } from '../components/ui/switch';
-import { Slider } from '../components/ui/slider';
-import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
-import { Progress } from '../components/ui/progress';
-import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from '../components/ui/navigation-menu';
+
+/* ═══════════════════════════════════════════════ */
+/*                    DATA                         */
+/* ═══════════════════════════════════════════════ */
 
 const features = [
-
-
-
-
   {
     icon: <Zap size={24} />,
-    bg: 'rgba(6, 182, 212, 0.15)',
-    color: '#22d3ee',
+    bg: 'rgba(255, 255, 255, 0.08)',
+    color: '#e4e4e7',
     title: 'Intelligent Code Studio',
     desc: 'Write production-grade code with an environment that critiques your style, efficiency, and edge cases.',
-    link: '/code-practice'
+    link: '/code-practice',
+    tag: 'Most Used'
   },
   {
     icon: <Database size={24} />,
-    bg: 'rgba(139, 92, 246, 0.15)',
-    color: '#a78bfa',
+    bg: 'rgba(255, 255, 255, 0.06)',
+    color: '#d4d4d8',
     title: 'SQL Mastery',
     desc: 'Master database queries with 100+ real-world SQL problems across joins, subqueries, window functions & more.',
-    link: '/sql-problems'
+    link: '/sql-problems',
+    tag: '100+ Problems'
   },
   {
     icon: <Calculator size={24} />,
-    bg: 'rgba(244, 114, 182, 0.15)',
-    color: '#f472b6',
+    bg: 'rgba(255, 255, 255, 0.06)',
+    color: '#d4d4d8',
     title: 'Aptitude Mastery',
-    desc: 'Practice 200+ problems across quantitative aptitude, logical reasoning & verbal ability with timer, calculator & formula sheets.',
-    link: '/aptitude'
+    desc: 'Practice 200+ problems across quantitative aptitude, logical reasoning & verbal ability.',
+    link: '/aptitude',
+    tag: '200+ Problems'
   },
   {
     icon: <Map size={24} />,
-    bg: 'rgba(129, 140, 248, 0.15)',
-    color: '#818cf8',
+    bg: 'rgba(255, 255, 255, 0.06)',
+    color: '#d4d4d8',
     title: 'DSA Learning Path',
-    desc: 'Master 15 DSA topics with pattern-first learning, thinking frameworks, and curated practice problems.',
-    link: '/dsa-path'
+    desc: 'Master 15 DSA topics with pattern-first learning, thinking frameworks, and curated problems.',
+    link: '/dsa-path',
+    tag: '15 Topics'
   },
   {
     icon: <Building2 size={24} />,
-    bg: 'rgba(234, 179, 8, 0.15)',
-    color: '#eab308',
+    bg: 'rgba(255, 255, 255, 0.06)',
+    color: '#d4d4d8',
     title: 'Company Prep Hub',
-    desc: 'Practice real interview questions from top companies like Google, Amazon, TCS, Deloitte — filtered by role, stage & frequency.',
-    link: '/company-prep'
+    desc: 'Practice real interview questions from top companies — filtered by role, stage & frequency.',
+    link: '/company-prep',
+    tag: '50+ Companies'
   },
   {
     icon: <Mic size={24} />,
-    bg: 'rgba(236, 72, 153, 0.15)',
-    color: '#ec4899',
+    bg: 'rgba(255, 255, 255, 0.06)',
+    color: '#d4d4d8',
     title: 'AI Interview Simulator',
-    desc: 'Simulate real interviews with AI follow-ups tailored to your target company. Includes voice practice with pace & filler analysis.',
-    link: '/company-interview'
+    desc: 'Simulate real interviews with AI follow-ups. Includes voice practice with pace & filler analysis.',
+    link: '/company-interview',
+    tag: 'AI Powered'
   },
+];
+
+const howItWorks = [
+  {
+    step: '01',
+    icon: <UserCheck size={28} />,
+    title: 'Set Your Goal',
+    desc: 'Tell us your target company, role, and timeline. Our AI builds a personalized roadmap just for you.',
+    color: '#ffffff'
+  },
+  {
+    step: '02',
+    icon: <Flame size={28} />,
+    title: 'Practice Daily',
+    desc: 'Solve DSA, SQL, aptitude, and mock interviews. Get instant AI feedback on every attempt.',
+    color: '#d4d4d8'
+  },
+  {
+    step: '03',
+    icon: <Trophy size={28} />,
+    title: 'Land Your Dream Job',
+    desc: 'Track your readiness score, fix weak areas, and walk into interviews with unstoppable confidence.',
+    color: '#a1a1aa'
+  }
+];
+
+const testimonials = [
+  {
+    name: 'Priya Sharma',
+    role: 'SDE-1 at Amazon',
+    text: 'PrepLoop\'s AI interviewer is scary accurate. It asked follow-ups that were harder than my actual Amazon interview. I felt over-prepared — and that\'s exactly what you want.',
+    rating: 5,
+    avatar: 'PS'
+  },
+  {
+    name: 'Rahul Verma',
+    role: 'SDE-2 at Google',
+    text: 'The DSA learning path is brilliant. Instead of solving 500 random problems, I focused on 15 patterns and cracked Google in 3 months. The code feedback is like having a senior dev reviewing your code.',
+    rating: 5,
+    avatar: 'RV'
+  },
+  {
+    name: 'Ananya Patel',
+    role: 'Data Analyst at Deloitte',
+    text: 'SQL mastery + aptitude section was a game changer. The timer feature simulates real test pressure. Went from failing assessments to clearing them in the top 5%.',
+    rating: 5,
+    avatar: 'AP'
+  },
+  {
+    name: 'Vikram Singh',
+    role: 'SDE at Microsoft',
+    text: 'Company Prep Hub showed me exactly what Microsoft asks. No more guessing. The frequency data on questions saved me weeks of unfocused practice.',
+    rating: 5,
+    avatar: 'VS'
+  }
+];
+
+const liveActivities = [
+  { text: 'Priya just completed a Google mock interview', time: '2m ago', icon: <Mic size={12} /> },
+  { text: 'Rahul solved "Merge K Sorted Lists" in 12 min', time: '5m ago', icon: <Code2 size={12} /> },
+  { text: 'Ananya achieved SQL Expert badge', time: '8m ago', icon: <Award size={12} /> },
+  { text: 'Vikram scored 95/100 on System Design', time: '11m ago', icon: <Layers size={12} /> },
+  { text: 'Neha unlocked the DSA Master achievement', time: '15m ago', icon: <Trophy size={12} /> },
+  { text: 'Arjun completed 30-day coding streak 🔥', time: '18m ago', icon: <Flame size={12} /> },
+];
+
+const stats = [
+  { value: 15000, suffix: '+', label: 'Active Engineers', icon: <Users size={20} /> },
+  { value: 95, suffix: '%', label: 'Interview Success Rate', icon: <Target size={20} /> },
+  { value: 500, suffix: '+', label: 'Practice Problems', icon: <Code2 size={20} /> },
+  { value: 50, suffix: '+', label: 'Partner Companies', icon: <Building2 size={20} /> },
 ];
 
 const pricingPlans = [
@@ -87,8 +153,6 @@ const pricingPlans = [
       '5 AI mock interviews per month',
       'Basic code feedback',
       'DSA patterns sheet access',
-
-
       'Basic progress tracking'
     ],
     btnText: 'Get Started',
@@ -104,8 +168,6 @@ const pricingPlans = [
       'Unlimited AI mock interviews',
       'Advanced code feedback & optimization',
       'Full DSA patterns with solutions',
-
-
       'Priority support',
       'Progress analytics dashboard'
     ],
@@ -120,7 +182,6 @@ const pricingPlans = [
     priceSub: 'Billed monthly · Save 20% annually',
     features: [
       'Everything in Pro, plus:',
-
       'Extended interview time limits',
       'Behavioral interview coaching',
       'Custom study plan generation',
@@ -135,9 +196,7 @@ const pricingPlans = [
 ];
 
 const faqs = [
-
   { q: "Can I upgrade or downgrade my plan?", a: "Yes. You can upgrade your plan anytime for instant access to new features. Downgrades take effect at the end of your current billing cycle." },
-
   { q: "Is my payment information secure?", a: "Yes. We use industry-standard encryption and never store your card details on our servers." },
   { q: "What's your refund policy?", a: "We offer a 7-day money-back guarantee for all paid subscription plans." },
   { q: "Is the Starter plan really free?", a: "The Starter plan is free forever and gives you limited access to AI interviews and code feedback." },
@@ -145,8 +204,138 @@ const faqs = [
   { q: "Can I cancel anytime?", a: "Yes. No contracts or cancellation fees. Cancel from your profile page and retain access until end of billing period." }
 ];
 
+/* ═══════════════════════════════════════════════ */
+/*               SUB-COMPONENTS                    */
+/* ═══════════════════════════════════════════════ */
+
+function FloatingCard({ children, style, className = '' }) {
+  return (
+    <div className={`hero-float-card ${className}`} style={{
+      background: 'rgba(10, 10, 10, 0.75)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '16px',
+      backdropFilter: 'blur(20px)',
+      padding: '16px 20px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      ...style
+    }}>
+      {children}
+    </div>
+  );
+}
+
+/* Animated counter hook */
+function useCountUp(target, duration = 2000) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const counted = useRef(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !counted.current) {
+          counted.current = true;
+          const start = performance.now();
+          const animate = (now) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(eased * target));
+            if (progress < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return [count, ref];
+}
+
+function StatCard({ value, suffix, label, icon }) {
+  const [count, ref] = useCountUp(value);
+  return (
+    <div ref={ref} className="stat-card-animate" style={{
+      textAlign: 'center',
+      padding: '32px 24px',
+      flex: '1 1 200px',
+    }}>
+      <div style={{ color: '#d4d4d8', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{icon}</div>
+      <div style={{ fontSize: '42px', fontWeight: '800', color: '#fff', lineHeight: 1, marginBottom: '8px', fontFamily: "'Instrument Sans', sans-serif" }}>
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div style={{ fontSize: '14px', color: '#71717a', fontWeight: '500' }}>{label}</div>
+    </div>
+  );
+}
+
+/* Gradient divider */
+function GradientDivider() {
+  return (
+    <div style={{
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08), transparent)',
+      margin: '0 auto',
+      maxWidth: '800px'
+    }} />
+  );
+}
+
+/* Live Activity Ticker */
+function ActivityTicker() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex(i => (i + 1) % liveActivities.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const activity = liveActivities[currentIndex];
+
+  return (
+    <div className="activity-ticker" style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '8px 18px',
+      background: 'rgba(255, 255, 255, 0.03)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      borderRadius: '99px',
+      fontSize: '13px',
+      color: '#a1a1aa',
+      backdropFilter: 'blur(10px)',
+      overflow: 'hidden',
+      minWidth: '320px',
+      height: '38px'
+    }}>
+      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', flexShrink: 0, animation: 'pulse-dot 2s infinite' }} />
+      <span className="ticker-text" key={currentIndex} style={{ whiteSpace: 'nowrap', animation: 'fadeSlideUp 0.4s ease' }}>
+        {activity.icon} {activity.text}
+      </span>
+      <span style={{ color: '#52525b', fontSize: '11px', flexShrink: 0 }}>{activity.time}</span>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════ */
+/*                 MAIN COMPONENT                  */
+/* ═══════════════════════════════════════════════ */
+
 export default function Home() {
   const [openFaq, setOpenFaq] = useState(null);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  // Auto-rotate testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial(i => (i + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div style={{
@@ -158,126 +347,275 @@ export default function Home() {
       width: '100vw'
     }}>
 
-      {/* WebGL Fluid Simulation — Proception-style cursor effect */}
-      <CursorGlow />
 
-      {/* Subtle blue edge glow — proception.ai style ambient border */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 1,
-        pointerEvents: 'none',
-        background: `
-          linear-gradient(to right, rgba(30, 64, 175, 0.12) 0%, transparent 15%, transparent 85%, rgba(30, 64, 175, 0.12) 100%),
-          linear-gradient(to bottom, rgba(30, 64, 175, 0.08) 0%, transparent 10%, transparent 92%, rgba(30, 64, 175, 0.15) 100%)
-        `
-      }}></div>
 
-      {/* 2. HERO SECTION - Left Aligned, Proception Style */}
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                   HERO SECTION                  */}
+      {/* ═══════════════════════════════════════════════ */}
       <section className="home-hero" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', textAlign: 'left', paddingTop: '120px', position: 'relative', zIndex: 10 }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 1fr)', gap: '64px', alignItems: 'center' }}>
 
             {/* Left Content */}
             <div style={{ zIndex: 10, position: 'relative' }}>
-              <div style={{
-                display: 'inline-block',
-                padding: '6px 12px',
-                border: '1px solid var(--zinc-800)',
-                borderRadius: '99px',
-                fontSize: '13px',
-                color: 'var(--zinc-400)',
-                background: 'rgba(255,255,255,0.03)',
-                backdropFilter: 'blur(10px)',
-                marginBottom: '32px'
-              }}>
-                <span style={{ color: '#fff', marginRight: '8px' }}>●</span>
-                New: System Design Simulator
+
+              {/* Live Activity Ticker */}
+              <div style={{ marginBottom: '24px' }}>
+                <ActivityTicker />
               </div>
 
               <h1 style={{ fontSize: 'clamp(48px, 4vw, 80px)', lineHeight: '1.05', fontWeight: '600', marginBottom: '32px', letterSpacing: '-0.03em' }}>
-                Construct your <br />
-                <span style={{ color: 'var(--zinc-500)' }}>engineering career.</span>
+                Accelerate Your <br />
+                <span className="text-gradient">Career Growth</span>
               </h1>
 
               <p style={{ fontSize: '20px', lineHeight: '1.6', color: 'var(--zinc-400)', maxWidth: '540px', marginBottom: '48px' }}>
-                Advanced interview simulation for the next generation of engineers.
-                Master DSA, System Design, and behavioral patterns with real-time AI feedback.
+                Highly personalized interview preparation, expertly curated
+                to meet your objectives and drive your engineering career forward.
               </p>
 
-              <div style={{ display: 'flex', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                 <Button asChild size="lg" className="h-[52px] px-8 text-base">
-                  <Link to="/signup">Start Building</Link>
+                  <Link to="/signup">Get started <ArrowRight size={16} style={{ marginLeft: '4px' }} /></Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="h-[52px] px-8 text-base">
-                  <a href="#features">Explore Platform</a>
+                  <a href="#features"><Play size={14} style={{ marginRight: '4px' }} /> Explore Features</a>
                 </Button>
               </div>
 
-              <div style={{ display: 'flex', gap: '32px', color: 'var(--text-secondary)', fontSize: '14px', marginTop: '40px' }}>
+              <div style={{ display: 'flex', gap: '32px', color: 'var(--text-secondary)', fontSize: '14px', marginTop: '40px', flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Users size={16} /> Used by 15k+ engineers
+                  <Users size={16} /> 15,000+ engineers
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Shield size={16} /> 95% Success Rate
+                  <Shield size={16} /> 95% success rate
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Star size={16} color="#e4e4e7" /> 4.9/5 rating
                 </span>
               </div>
             </div>
 
-            {/* Right Visual - Hardware/Tech Aesthetic Mockup */}
-            <div style={{ position: 'relative', zIndex: 10 }}>
+            {/* Right Visual — Clean Dashboard Mockup */}
+            <div style={{ position: 'relative', zIndex: 10 }} className="hero-visual-container">
               <div style={{
-                background: 'rgba(10,10,10,0.8)',
-                border: '1px solid var(--zinc-800)',
-                borderRadius: '16px',
-                padding: '24px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '20px',
+                overflow: 'hidden',
                 backdropFilter: 'blur(20px)',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#333' }}></div>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#333' }}></div>
+                {/* Window Bar */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                  background: 'rgba(255, 255, 255, 0.02)'
+                }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
                   </div>
-                  <div style={{ fontSize: '12px', color: '#444', fontFamily: 'monospace' }}>AI_INTERVIEW_SESSION_01</div>
+                  <div style={{
+                    flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
+                    background: 'rgba(255,255,255,0.04)', borderRadius: '8px',
+                    padding: '6px 12px', fontSize: '11px', color: '#52525b'
+                  }}>
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e' }} />
+                    preploop.app/interview/two-sum
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
-                  <div style={{ background: '#050505', border: '1px solid #222', borderRadius: '8px', padding: '16px', height: '300px', fontFamily: 'monospace', fontSize: '12px', color: '#666', overflow: 'hidden' }}>
-                    <div style={{ color: '#fff', marginBottom: '8px' }}>// Solution.cpp</div>
-                    <div style={{ color: '#888' }}>
-                      class Solution {'{'}<br />
-                      &nbsp;&nbsp;public:<br />
-                      &nbsp;&nbsp;vector&lt;int&gt; twoSum(vector&lt;int&gt;& nums, int target) {'{'}<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;return {'{'}...{'}'};<br />
-                      &nbsp;&nbsp;{'}'}<br />
-                      {'}'}
+                {/* Content Area */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', minHeight: '320px' }}>
+                  {/* Code Panel */}
+                  <div style={{ padding: '24px', borderRight: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '16px' }}>
+                      Live Code Editor
+                    </div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '13px', lineHeight: '2', color: '#a1a1aa' }}>
+                      <div><span style={{ color: '#71717a' }}>1</span>  <span style={{ color: '#d4d4d8' }}>function</span> <span style={{ color: '#ffffff' }}>twoSum</span>(nums, target) {'{'}</div>
+                      <div><span style={{ color: '#71717a' }}>2</span>    <span style={{ color: '#d4d4d8' }}>const</span> map = <span style={{ color: '#d4d4d8' }}>new</span> <span style={{ color: '#ffffff' }}>Map</span>();</div>
+                      <div><span style={{ color: '#71717a' }}>3</span>    <span style={{ color: '#d4d4d8' }}>for</span> (<span style={{ color: '#d4d4d8' }}>let</span> i = 0; i {'<'} nums.length; i++) {'{'}</div>
+                      <div><span style={{ color: '#71717a' }}>4</span>      <span style={{ color: '#d4d4d8' }}>const</span> comp = target - nums[i];</div>
+                      <div><span style={{ color: '#71717a' }}>5</span>      <span style={{ color: '#d4d4d8' }}>if</span> (map.<span style={{ color: '#ffffff' }}>has</span>(comp))</div>
+                      <div><span style={{ color: '#71717a' }}>6</span>        <span style={{ color: '#d4d4d8' }}>return</span> [map.get(comp), i];</div>
+                      <div><span style={{ color: '#71717a' }}>7</span>      map.<span style={{ color: '#ffffff' }}>set</span>(nums[i], i);</div>
+                      <div><span style={{ color: '#71717a' }}>8</span>    {'}'}</div>
+                      <div><span style={{ color: '#71717a' }}>9</span>  {'}'}</div>
+                    </div>
+                    <div style={{
+                      marginTop: '20px', padding: '10px 14px',
+                      background: 'rgba(34, 197, 94, 0.06)',
+                      border: '1px solid rgba(34, 197, 94, 0.15)',
+                      borderRadius: '8px', fontSize: '12px', color: '#4ade80',
+                      display: 'flex', alignItems: 'center', gap: '6px'
+                    }}>
+                      <CheckCircle size={12} /> All test cases passed
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '16px', flex: 1 }}>
-                      <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#444', marginBottom: '8px' }}>Score</div>
-                      <div style={{ fontSize: '32px', color: '#fff', fontWeight: 'bold' }}>98</div>
+                  {/* Score Sidebar */}
+                  <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Score</div>
+                      <div style={{ fontSize: '40px', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>98</div>
+                      <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '8px' }}>
+                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill="#d4d4d8" color="#d4d4d8" />)}
+                      </div>
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {[
+                        { label: 'Time', value: 'O(n)' },
+                        { label: 'Space', value: 'O(n)' },
+                        { label: 'Pattern', value: 'Hash Map' },
+                      ].map((item, i) => (
+                        <div key={i}>
+                          <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase' }}>{item.label}</div>
+                          <div style={{ fontSize: '13px', color: '#e4e4e7', fontWeight: '600', marginTop: '2px' }}>{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle size={12} color="#22c55e" />
+                      <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Interview Ready</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════ */}
+      {/*              TRUSTED BY / LOGO STRIP            */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '40px 0 60px', position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255, 255, 255, 0.06)', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#71717a' }}>
+              <Cpu size={14} color="#a1a1aa" />
+              Engineers from these companies trust PrepLoop
+            </div>
+          </div>
+          <div className="logo-marquee-track">
+            {[...Array(3)].flatMap((_, rep) =>
+              ['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'Netflix', 'Uber', 'Flipkart', 'Adobe', 'Salesforce', 'Oracle', 'TCS', 'Infosys', 'Wipro', 'Deloitte', 'Goldman Sachs', 'JPMorgan', 'Samsung', 'PayPal', 'Stripe'].map((name, i) => (
+                <div key={`${rep}-${i}`} className="logo-marquee-item">{name}</div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
 
-      {/* 3. FEATURES */}
-      <section style={{ padding: '100px 0', background: 'transparent', position: 'relative', zIndex: 10 }} id="features">
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                ANIMATED STATS BAR               */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '60px 0', position: 'relative', zIndex: 10 }}>
+        <div className="container">
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0',
+            background: 'rgba(18, 18, 18, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '20px', backdropFilter: 'blur(20px)', overflow: 'hidden'
+          }}>
+            {stats.map((s, i) => (
+              <React.Fragment key={i}>
+                <StatCard {...s} />
+                {i < stats.length - 1 && (
+                  <div style={{ width: '1px', background: 'rgba(255, 255, 255, 0.08)', alignSelf: 'stretch', margin: '24px 0' }} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <GradientDivider />
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/*               HOW IT WORKS (3-STEP)             */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '80px 0', position: 'relative', zIndex: 10 }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '60px' }}>
-            <h2 style={{ fontSize: '36px', marginBottom: '16px', fontWeight: 'bold' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
+              background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+              textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
+            }}>
+              <Rocket size={12} /> How It Works
+            </div>
+            <h2 style={{ fontSize: '40px', marginBottom: '16px', fontWeight: 'bold' }}>
+              From Zero to <span className="text-gradient">Interview Ready</span>
+            </h2>
+            <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
+              Three simple steps to transform your interview preparation
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', position: 'relative' }}>
+            {/* Connecting line */}
+            <div style={{
+              position: 'absolute', top: '60px', left: '16.67%', right: '16.67%', height: '2px',
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))',
+              zIndex: 0
+            }} />
+
+            {howItWorks.map((item, i) => (
+              <div key={i} className="how-it-works-card" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+                <div style={{
+                  width: '80px', height: '80px', borderRadius: '24px', margin: '0 auto 24px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: item.color, position: 'relative'
+                }}>
+                  {item.icon}
+                  <div style={{
+                    position: 'absolute', top: '-8px', right: '-8px',
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #3f3f46, #52525b)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '10px', fontWeight: '800', color: '#fff'
+                  }}>{item.step}</div>
+                </div>
+                <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#fff' }}>{item.title}</h3>
+                <p style={{ fontSize: '15px', color: '#71717a', lineHeight: '1.6', maxWidth: '320px', margin: '0 auto' }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <GradientDivider />
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                    FEATURES                     */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '80px 0', background: 'transparent', position: 'relative', zIndex: 10 }} id="features">
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
+              background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+              textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
+            }}>
+              <Layers size={12} /> Platform Features
+            </div>
+            <h2 style={{ fontSize: '40px', marginBottom: '16px', fontWeight: 'bold' }}>
               Everything you need to <span className="text-gradient">Crack the Interview</span>
             </h2>
             <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
@@ -287,31 +625,160 @@ export default function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
             {features.map((f, i) => (
-              <Link to={f.link} key={i} className="card" style={{
-                background: 'rgba(10,10,10,0.6)',
+              <Link to={f.link} key={i} className="card feature-card-hover" style={{
+                background: 'rgba(18,18,18,0.6)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid var(--zinc-800)',
                 padding: '40px',
                 display: 'block',
-                textDecoration: 'none'
+                textDecoration: 'none',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
-                <div style={{ marginBottom: '24px', color: f.color }}>
+                {/* Tag */}
+                {f.tag && (
+                  <div style={{
+                    position: 'absolute', top: '16px', right: '16px',
+                    padding: '4px 10px', borderRadius: '99px',
+                    background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                    fontSize: '11px', fontWeight: '600', color: '#a1a1aa',
+                    letterSpacing: '0.02em'
+                  }}>{f.tag}</div>
+                )}
+                {/* Hover gradient orb */}
+                <div style={{
+                  position: 'absolute', bottom: '-40px', right: '-40px',
+                  width: '120px', height: '120px', borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(255, 255, 255, 0.03), transparent 70%)',
+                  transition: 'opacity 0.3s', opacity: 0.5
+                }} />
+                <div style={{
+                  marginBottom: '24px', color: f.color,
+                  width: '48px', height: '48px', borderRadius: '14px',
+                  background: f.bg, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
                   {f.icon}
                 </div>
                 <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#fff' }}>{f.title}</h3>
                 <p style={{ fontSize: '15px', color: 'var(--zinc-500)', lineHeight: '1.6' }}>{f.desc}</p>
+                <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#d4d4d8', fontWeight: '500' }}>
+                  Explore <ChevronRight size={14} />
+                </div>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* 4. PRICING PLANS */}
+      <GradientDivider />
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                  TESTIMONIALS                   */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '80px 0', position: 'relative', zIndex: 10 }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
+              background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+              textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
+            }}>
+              <Star size={12} /> Success Stories
+            </div>
+            <h2 style={{ fontSize: '40px', marginBottom: '16px', fontWeight: 'bold' }}>
+              Engineers Who <span className="text-gradient">Made It Happen</span>
+            </h2>
+            <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
+              Real stories from real engineers who landed their dream roles
+            </p>
+          </div>
+
+          {/* Testimonial Cards */}
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div style={{
+              background: 'rgba(18, 18, 18, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px',
+              padding: '48px',
+              backdropFilter: 'blur(20px)',
+              position: 'relative',
+              minHeight: '260px',
+              overflow: 'hidden'
+            }}>
+              {/* Quote mark */}
+              <Quote size={48} style={{ position: 'absolute', top: '24px', right: '32px', color: 'rgba(255, 255, 255, 0.05)' }} />
+
+              <div key={activeTestimonial} className="testimonial-fade">
+                <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
+                  {Array(testimonials[activeTestimonial].rating).fill(0).map((_, i) => (
+                    <Star key={i} size={16} fill="#d4d4d8" color="#d4d4d8" />
+                  ))}
+                </div>
+
+                <p style={{ fontSize: '18px', lineHeight: '1.8', color: '#d4d4d8', marginBottom: '28px', fontStyle: 'italic' }}>
+                  "{testimonials[activeTestimonial].text}"
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    width: '48px', height: '48px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #3f3f46, #52525b)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '16px', fontWeight: '700', color: '#fff'
+                  }}>
+                    {testimonials[activeTestimonial].avatar}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '16px', color: '#fff' }}>{testimonials[activeTestimonial].name}</div>
+                    <div style={{ fontSize: '14px', color: '#a1a1aa' }}>{testimonials[activeTestimonial].role}</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto' }}>
+                    <BadgeCheck size={20} color="#22c55e" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonial dots */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '24px' }}>
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveTestimonial(i)}
+                  style={{
+                    width: activeTestimonial === i ? '32px' : '10px',
+                    height: '10px',
+                    borderRadius: '99px',
+                    border: 'none',
+                    background: activeTestimonial === i ? 'linear-gradient(90deg, #e4e4e7, #ffffff)' : 'rgba(255, 255, 255, 0.12)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    padding: 0
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <GradientDivider />
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                  PRICING PLANS                  */}
+      {/* ═══════════════════════════════════════════════ */}
       <section className="container" id="pricing" style={{ padding: '100px 40px' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <div className="badge badge-popular" style={{ marginBottom: 24, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <Sparkles size={12} />
-            Unlock Your Potential
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
+            background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+            textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
+          }}>
+            <Sparkles size={12} /> Pricing
           </div>
           <h2 style={{ fontSize: '48px', marginBottom: '24px', lineHeight: 1.1 }}>
             Pick the Path that <br />
@@ -327,21 +794,11 @@ export default function Home() {
             <div key={i} className={`pricing-card ${plan.popular ? 'popular' : ''} ${plan.popular ? 'glow-effect' : ''}`}>
               {plan.popular && (
                 <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'linear-gradient(90deg, #f59e0b, #d97706)',
-                  color: 'white',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: '800',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 0 20px rgba(245, 158, 11, 0.4)',
-                  zIndex: 10,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  whiteSpace: 'nowrap'
+                  position: 'absolute', top: 0, left: '50%', transform: 'translate(-50%, -50%)',
+                  background: 'linear-gradient(90deg, #e4e4e7, #ffffff)', color: '#000',
+                  padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '800',
+                  letterSpacing: '0.5px', boxShadow: '0 0 20px rgba(255, 255, 255, 0.15)',
+                  zIndex: 10, border: '1px solid rgba(255,255,255,0.3)', whiteSpace: 'nowrap'
                 }}>MOST POPULAR</div>
               )}
               <h3>{plan.name}</h3>
@@ -362,12 +819,21 @@ export default function Home() {
         </div>
       </section>
 
-
-
-      {/* 6. FAQ */}
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                      FAQ                        */}
+      {/* ═══════════════════════════════════════════════ */}
       <section className="container" style={{ marginBottom: 120 }} id="faq">
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontSize: '32px' }}>Frequently Asked Questions</h2>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
+            background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+            textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
+          }}>
+            <MessageSquare size={12} /> FAQ
+          </div>
+          <h2 style={{ fontSize: '36px' }}>Frequently Asked Questions</h2>
         </div>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           {faqs.map((faq, i) => (
@@ -387,16 +853,41 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. BOTTOM CTA */}
-      <section className="home-cta-banner">
-        <div className="container">
-          <h2>Ready to get started?</h2>
-          <p>Join thousands of engineers who are crushing technical interviews.</p>
-          <Button asChild size="lg" className="px-10 py-6 text-lg">
-            <Link to="/signup">
-              Start Free Trial <ArrowRight size={20} className="ml-2" />
-            </Link>
-          </Button>
+      {/* ═══════════════════════════════════════════════ */}
+      {/*                   BOTTOM CTA                    */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section className="home-cta-banner" style={{ position: 'relative', overflow: 'hidden' }}>
+        {/* Ambient gradient orbs */}
+        <div style={{
+          position: 'absolute', top: '-50%', left: '20%', width: '400px', height: '400px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.04), transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-50%', right: '20%', width: '400px', height: '400px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(255, 255, 255, 0.03), transparent 70%)',
+          pointerEvents: 'none'
+        }} />
+
+        <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+          <div style={{ marginBottom: '16px' }}>
+            <Crown size={32} color="#d4d4d8" />
+          </div>
+          <h2 style={{ fontSize: '40px', marginBottom: '16px' }}>Ready to get started?</h2>
+          <p style={{ maxWidth: '500px', margin: '0 auto 32px', fontSize: '18px' }}>Join thousands of engineers who are crushing technical interviews. Start for free, upgrade when you're ready.</p>
+          <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button asChild size="lg" className="px-10 py-6 text-lg">
+              <Link to="/signup">
+                Start Free Trial <ArrowRight size={20} style={{ marginLeft: '8px' }} />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="px-10 py-6 text-lg">
+              <Link to="/dashboard">
+                View Dashboard <ChevronRight size={20} style={{ marginLeft: '8px' }} />
+              </Link>
+            </Button>
+          </div>
+          <p style={{ color: '#52525b', fontSize: '13px', marginTop: '20px' }}>No credit card required · Cancel anytime · 7-day money-back guarantee</p>
         </div>
       </section>
 

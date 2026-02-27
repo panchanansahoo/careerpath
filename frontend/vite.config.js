@@ -9,8 +9,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:5000',
         changeOrigin: true,
+      },
+      '/kontests-api': {
+        target: 'https://kontests.net',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/kontests-api/, '/api/v1'),
+        secure: false,
       }
     }
   },

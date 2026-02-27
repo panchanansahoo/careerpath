@@ -468,7 +468,9 @@ function HSVtoRGB(h, s, v) {
 }
 
 function generateColor() {
-  const c = HSVtoRGB(Math.random(), 1, 1);
+  // Constrain hue to purple/violet/magenta range (0.75-0.92) to avoid blue
+  const hue = 0.75 + Math.random() * 0.17;
+  const c = HSVtoRGB(hue, 1, 1);
   c.r *= 0.15;
   c.g *= 0.15;
   c.b *= 0.15;

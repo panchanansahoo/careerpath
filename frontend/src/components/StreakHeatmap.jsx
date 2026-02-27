@@ -1,10 +1,24 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 
 export default function StreakHeatmap({ activityHistory = {}, currentStreak = 0, bestStreak = 0 }) {
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const { weeks, months } = useMemo(() => {
     const today = new Date();
     const endDate = new Date(today);
-    // Start from ~52 weeks ago (Sunday)
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - 364);
     while (startDate.getDay() !== 0) startDate.setDate(startDate.getDate() - 1);
@@ -19,7 +33,10 @@ export default function StreakHeatmap({ activityHistory = {}, currentStreak = 0,
       const key = d.toISOString().split('T')[0];
       const monthNum = d.getMonth();
       if (monthNum !== lastMonth && d.getDay() === 0) {
-        monthLabels.push({ month: d.toLocaleDateString('en-US', { month: 'short' }), weekIndex: weeks.length });
+        monthLabels.push({
+          month: d.toLocaleDateString('en-US', { month: 'short' }),
+          weekIndex: weeks.length,
+        });
         lastMonth = monthNum;
       }
       currentWeek.push({
@@ -48,9 +65,24 @@ export default function StreakHeatmap({ activityHistory = {}, currentStreak = 0,
     return 'rgba(139,92,246,0.9)';
   };
 
-  const cellSize = 13;
+  // SVG-based layout calculations
+  const totalWeeks = weeks.length;
+  const labelWidth = 32;
+  const availableWidth = Math.max(containerWidth - labelWidth - 4, 100);
   const gap = 3;
-  const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+  const cellSize = Math.floor((availableWidth - gap * (totalWeeks - 1)) / totalWeeks);
+  const actualCellSize = Math.max(cellSize, 8);
+  const totalGridWidth = totalWeeks * actualCellSize + (totalWeeks - 1) * gap;
+  const monthRowHeight = 16;
+  const totalGridHeight = 7 * actualCellSize + 6 * gap;
+  const svgWidth = labelWidth + totalGridWidth;
+  const svgHeight = monthRowHeight + totalGridHeight;
+
+  const dayLabels = [
+    { label: 'Mon', index: 1 },
+    { label: 'Wed', index: 3 },
+    { label: 'Fri', index: 5 },
+  ];
 
   return (
     <div style={{
@@ -78,44 +110,80 @@ export default function StreakHeatmap({ activityHistory = {}, currentStreak = 0,
         </div>
       </div>
 
-      {/* Month labels */}
-      <div style={{ display: 'flex', paddingLeft: 30, marginBottom: 4 }}>
-        {months.map((m, i) => (
-          <div key={i} style={{
-            fontSize: 10, color: 'rgba(255,255,255,0.35)', position: 'absolute',
-            left: 30 + m.weekIndex * (cellSize + gap),
-          }}>{m.month}</div>
-        ))}
-      </div>
+      {/* SVG Heatmap */}
+      <div ref={containerRef} style={{ width: '100%', overflow: 'hidden' }}>
+        {containerWidth > 0 && (
+          <svg
+            width="100%"
+            viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            preserveAspectRatio="xMinYMin meet"
+            style={{ display: 'block' }}
+          >
+            {/* Month labels */}
+            {months.map((m, i) => {
+              // Don't render if it would overlap with next label
+              const nextMonth = months[i + 1];
+              const x = labelWidth + m.weekIndex * (actualCellSize + gap);
+              const nextX = nextMonth ? labelWidth + nextMonth.weekIndex * (actualCellSize + gap) : Infinity;
+              if (nextX - x < 28) {
+                // Skip if too close to next, but always show if it's the last
+                if (nextMonth) return null;
+              }
+              return (
+                <text
+                  key={`month-${i}`}
+                  x={x}
+                  y={11}
+                  fill="rgba(255,255,255,0.4)"
+                  fontSize={10}
+                  fontFamily="inherit"
+                >
+                  {m.month}
+                </text>
+              );
+            })}
 
-      {/* Grid */}
-      <div style={{ display: 'flex', gap: 0, marginTop: 18, position: 'relative', overflow: 'hidden' }}>
-        {/* Day labels */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap, marginRight: 6, flexShrink: 0 }}>
-          {dayLabels.map((label, i) => (
-            <div key={i} style={{ height: cellSize, fontSize: 9, color: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: 24 }}>
-              {label}
-            </div>
-          ))}
-        </div>
+            {/* Day labels */}
+            {dayLabels.map(({ label, index }) => (
+              <text
+                key={`day-${index}`}
+                x={labelWidth - 6}
+                y={monthRowHeight + index * (actualCellSize + gap) + actualCellSize / 2 + 3.5}
+                fill="rgba(255,255,255,0.35)"
+                fontSize={10}
+                fontFamily="inherit"
+                textAnchor="end"
+              >
+                {label}
+              </text>
+            ))}
 
-        {/* Weeks */}
-        <div style={{ display: 'flex', gap, overflow: 'auto', scrollbarWidth: 'none' }}>
-          {weeks.map((week, wi) => (
-            <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap }}>
-              {week.map((day, di) => (
-                <div key={di} title={`${day.date}: ${day.count} solved, ${day.xp} XP`} style={{
-                  width: cellSize, height: cellSize,
-                  borderRadius: 3,
-                  background: getColor(day.count, day.isFuture),
-                  border: day.isToday ? '2px solid rgba(139,92,246,0.8)' : '1px solid rgba(255,255,255,0.03)',
-                  cursor: 'default',
-                  transition: 'transform 0.15s, background 0.2s',
-                }} onMouseEnter={e => e.target.style.transform = 'scale(1.3)'} onMouseLeave={e => e.target.style.transform = 'scale(1)'} />
-              ))}
-            </div>
-          ))}
-        </div>
+            {/* Grid cells */}
+            {weeks.map((week, wi) =>
+              week.map((day, di) => {
+                const x = labelWidth + wi * (actualCellSize + gap);
+                const y = monthRowHeight + di * (actualCellSize + gap);
+                return (
+                  <rect
+                    key={`${wi}-${di}`}
+                    x={x}
+                    y={y}
+                    width={actualCellSize}
+                    height={actualCellSize}
+                    rx={3}
+                    ry={3}
+                    fill={getColor(day.count, day.isFuture)}
+                    stroke={day.isToday ? 'rgba(139,92,246,0.8)' : 'rgba(255,255,255,0.03)'}
+                    strokeWidth={day.isToday ? 2 : 1}
+                    style={{ cursor: 'default' }}
+                  >
+                    <title>{`${day.date}: ${day.count} solved, ${day.xp} XP`}</title>
+                  </rect>
+                );
+              })
+            )}
+          </svg>
+        )}
       </div>
 
       {/* Legend */}

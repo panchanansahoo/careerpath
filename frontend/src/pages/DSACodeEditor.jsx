@@ -9,6 +9,7 @@ import TestCasePanel from '../components/editor/TestCasePanel';
 import HintsPanel from '../components/solver/HintsPanel';
 import { LANGUAGES, ALGORITHM_TEMPLATES, DATA_STRUCTURE_TEMPLATES, PATTERN_HINTS } from '../data/dsaTemplates';
 import { PROBLEMS } from '../data/problemsDatabase';
+import { registerAllThemes, getSavedTheme, saveTheme, EDITOR_THEMES } from '../data/editorThemes';
 
 // ─── Starter code per language ───
 const STARTER_CODE = {
@@ -85,6 +86,8 @@ export default function DSACodeEditor() {
   const [timer, setTimer] = useState(0);
   const [timerActive, setTimerActive] = useState(true);
   const [testResults, setTestResults] = useState(null);
+  const [editorTheme, setEditorTheme] = useState(() => getSavedTheme('dsa-editor-theme'));
+  const monacoRef = useRef(null);
 
   // ─── Resizing ───
   const draggingRef = useRef(null);
@@ -285,39 +288,13 @@ export default function DSACodeEditor() {
   const detectedPattern = problem?.pattern_name || null;
 
   // ─── Monaco editor setup ───
+  const handleBeforeMount = (monaco) => {
+    registerAllThemes(monaco);
+  };
+
   const handleEditorMount = (editor, monaco) => {
     editorRef.current = editor;
-
-    // Custom editor theme
-    monaco.editor.defineTheme('dsa-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '5c6370', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'c678dd', fontStyle: 'bold' },
-        { token: 'string', foreground: '98c379' },
-        { token: 'number', foreground: 'd19a66' },
-        { token: 'type', foreground: 'e5c07b' },
-        { token: 'variable', foreground: 'e06c75' },
-        { token: 'function', foreground: '61afef' },
-        { token: 'operator', foreground: '56b6c2' },
-      ],
-      colors: {
-        'editor.background': '#0a0a1a',
-        'editor.foreground': '#abb2bf',
-        'editor.lineHighlightBackground': '#1a1a3e30',
-        'editorCursor.foreground': '#8b5cf6',
-        'editor.selectionBackground': '#3b3f5c50',
-        'editorLineNumber.foreground': '#3b3f5c',
-        'editorLineNumber.activeForeground': '#8b5cf6',
-        'editorIndentGuide.background': '#1a1a3e40',
-        'editorGutter.background': '#0a0a1a',
-        'scrollbar.shadow': '#00000000',
-        'editorScrollbar.background': '#0a0a1a',
-      },
-    });
-
-    monaco.editor.setTheme('dsa-dark');
+    monacoRef.current = monaco;
 
     editor.addAction({
       id: 'run-code',
@@ -325,6 +302,15 @@ export default function DSACodeEditor() {
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => handleRun(),
     });
+  };
+
+  // ─── Theme change handler ───
+  const handleThemeChange = (themeId) => {
+    setEditorTheme(themeId);
+    saveTheme(themeId, 'dsa-editor-theme');
+    if (monacoRef.current) {
+      monacoRef.current.editor.setTheme(themeId);
+    }
   };
 
   const langInfo = LANGUAGES.find(l => l.id === language) || LANGUAGES[0];
@@ -382,6 +368,8 @@ export default function DSACodeEditor() {
             timer={formatTime(timer)}
             onToggleFocus={() => setFocusMode(f => !f)}
             focusMode={focusMode}
+            editorTheme={editorTheme}
+            onThemeChange={handleThemeChange}
           />
         </div>
       </div>
@@ -435,8 +423,9 @@ export default function DSACodeEditor() {
               language={langInfo.monacoId}
               value={code}
               onChange={val => setCode(val || '')}
+              beforeMount={handleBeforeMount}
               onMount={handleEditorMount}
-              theme="vs-dark"
+              theme={editorTheme}
               options={{
                 fontSize: 14,
                 fontFamily: "'JetBrains Mono', 'Fira Code', monospace",

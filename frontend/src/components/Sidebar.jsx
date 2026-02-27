@@ -7,142 +7,64 @@ import {
     CalendarDays, BarChart3, Clock, Settings, User,
     PanelLeftClose, PanelLeftOpen, Calculator, Server,
     Trophy, ListFilter, Play, Database, GraduationCap, Map,
-    Building2, Mic, Compass
+    Building2, Mic, Terminal
 } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.svg';
 
-const navItems = [
+const navSections = [
     {
-        path: '/dashboard',
-        label: 'Dashboard',
-        subtitle: 'Overview & quick start',
-        icon: LayoutDashboard
-    },
-
-    {
-        path: '/gamification',
-        label: 'Gamification',
-        subtitle: 'XP, badges & leaderboard',
-        icon: Trophy
+        category: 'Overview',
+        items: [
+            { path: '/dashboard', label: 'Dashboard', subtitle: 'Overview & quick start', icon: LayoutDashboard },
+        ]
     },
     {
-        path: '/problems',
-        label: 'Problem Explorer',
-        subtitle: 'Browse & filter problems',
-        icon: ListFilter
+        category: 'Practice',
+        items: [
+            { path: '/problems', label: 'Problem Explorer', subtitle: 'Browse & filter problems', icon: ListFilter },
+            { path: '/code-editor/two-sum', label: 'Code Editor', subtitle: 'DSA-focused coding environment', icon: Code },
+            { path: '/playground', label: 'Playground', subtitle: 'Free-form coding sandbox', icon: Terminal },
+            { path: '/visualizer', label: 'Algorithm Visualizer', subtitle: 'Watch algorithms in action', icon: Play },
+            { path: '/sql-problems', label: 'SQL Mastery', subtitle: 'Database & query challenges', icon: Database },
+            { path: '/aptitude', label: 'Aptitude', subtitle: 'Quant, reasoning & verbal', icon: Calculator },
+        ]
     },
     {
-        path: '/code-editor/two-sum',
-        label: 'Code Editor',
-        subtitle: 'DSA-focused coding environment',
-        icon: Code
+        category: 'Learning',
+        items: [
+            { path: '/dsa-path', label: 'DSA Learning Path', subtitle: 'DSA roadmap & patterns', icon: Map },
+            { path: '/learning-path', label: 'Aptitude Path', subtitle: 'Formulas & shortcuts', icon: GraduationCap },
+            { path: '/ai-tutor', label: 'AI Tutor', subtitle: 'Guided DSA, SQL & aptitude', icon: Sparkles },
+        ]
     },
     {
-        path: '/visualizer',
-        label: 'Algorithm Visualizer',
-        subtitle: 'Watch algorithms in action',
-        icon: Play
+        category: 'Interview',
+        items: [
+            { path: '/company-prep', label: 'Company Prep', subtitle: 'Real interview Q&A by company', icon: Building2 },
+            { path: '/company-interview', label: 'AI Interview', subtitle: 'Mock interviews with AI', icon: Mic },
+            { path: '/multi-round-interview', label: 'Full Interview Loop', subtitle: 'Multi-round simulation', icon: Play },
+            { path: '/interview-analytics', label: 'Interview Analytics', subtitle: 'Performance trends', icon: BarChart3 },
+            { path: '/interview-history', label: 'Interview History', subtitle: 'Past sessions & replays', icon: Clock },
+        ]
     },
     {
-        path: '/sql-problems',
-        label: 'SQL Mastery',
-        subtitle: 'Database & query challenges',
-        icon: Database
+        category: 'Account',
+        items: [
+            { path: '/dashboard/analytics', label: 'Analytics', subtitle: 'Track your progress', icon: BarChart3 },
+            { path: '/history', label: 'History', subtitle: 'Past sessions & scores', icon: Clock },
+            { path: '/profile', label: 'Profile', subtitle: 'Account & preferences', icon: User },
+            { path: '/dashboard/settings', label: 'Settings', subtitle: 'App configuration', icon: Settings },
+        ]
     },
-    {
-        path: '/aptitude',
-        label: 'Aptitude',
-        subtitle: 'Quant, reasoning & verbal',
-        icon: Calculator
-    },
-    {
-        path: '/dsa-path',
-        label: 'DSA Learning Path',
-        subtitle: 'DSA roadmap & patterns',
-        icon: Map
-    },
-    {
-        path: '/ai-tutor',
-        label: 'AI Tutor',
-        subtitle: 'Guided DSA, SQL & aptitude',
-        icon: Sparkles
-    },
-    {
-        path: '/company-prep',
-        label: 'Company Prep',
-        subtitle: 'Real interview Q&A by company',
-        icon: Building2
-    },
-    {
-        path: '/company-interview',
-        label: 'AI Interview',
-        subtitle: 'Mock interviews with AI follow-ups',
-        icon: Mic
-    },
-    {
-        path: '/multi-round-interview',
-        label: 'Full Interview Loop',
-        subtitle: 'Multi-round simulation',
-        icon: Play
-    },
-    {
-        path: '/interview-analytics',
-        label: 'Interview Analytics',
-        subtitle: 'Performance trends & insights',
-        icon: BarChart3
-    },
-    {
-        path: '/interview-history',
-        label: 'Interview History',
-        subtitle: 'Past sessions & replays',
-        icon: Clock
-    },
-    {
-        path: '/personalized-feed',
-        label: 'Smart Feed',
-        subtitle: 'Personalized recommendations',
-        icon: Compass
-    },
-    {
-        path: '/learning-path',
-        label: 'Aptitude Learning Path',
-        subtitle: 'Formulas, shortcuts & practice',
-        icon: GraduationCap
-    },
-
-
-
-
-
-    {
-        path: '/dashboard/analytics',
-        label: 'Analytics',
-        subtitle: 'Track your progress',
-        icon: BarChart3
-    },
-    {
-        path: '/history',
-        label: 'History',
-        subtitle: 'Past sessions & scores',
-        icon: Clock
-    },
-    {
-        path: '/profile',
-        label: 'Profile',
-        subtitle: 'Account & preferences',
-        icon: User
-    },
-    {
-        path: '/dashboard/settings',
-        label: 'Settings',
-        subtitle: 'App configuration',
-        icon: Settings
-    }
 ];
 
 export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }) {
     const location = useLocation();
+    const { user } = useAuth();
+    const userName = user?.fullName || user?.name || 'Engineer';
+    const userEmail = user?.email || '';
 
     return (
         <>
@@ -173,35 +95,47 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
                     </button>
                 </div>
 
-                <nav className="sidebar-nav">
-                    {navItems.map(item => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.path ||
-                            (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
 
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`nav-item ${isActive ? 'active' : ''}`}
-                                title={collapsed ? item.label : undefined}
-                                onClick={() => mobileOpen && onMobileClose()}
-                            >
-                                <span className="nav-icon">
-                                    <Icon size={20} />
-                                </span>
-                                {(!collapsed || mobileOpen) && (
-                                    <div>
-                                        <div className="nav-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            {item.label}
-                                            {isActive && <ChevronRight size={14} />}
-                                        </div>
-                                        <div className="nav-subtitle">{item.subtitle}</div>
-                                    </div>
-                                )}
-                            </Link>
-                        );
-                    })}
+
+                <nav className="sidebar-nav">
+                    {navSections.map((section, sIdx) => (
+                        <div key={section.category} className="sidebar-section">
+                            {(!collapsed || mobileOpen) && (
+                                <div className="sidebar-section-label">{section.category}</div>
+                            )}
+                            {collapsed && !mobileOpen && sIdx > 0 && (
+                                <div className="sidebar-section-divider" />
+                            )}
+                            {section.items.map(item => {
+                                const Icon = item.icon;
+                                const isActive = location.pathname === item.path ||
+                                    (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`nav-item ${isActive ? 'active' : ''}`}
+                                        title={collapsed ? item.label : undefined}
+                                        onClick={() => mobileOpen && onMobileClose()}
+                                    >
+                                        <span className="nav-icon">
+                                            <Icon size={20} />
+                                        </span>
+                                        {(!collapsed || mobileOpen) && (
+                                            <div>
+                                                <div className="nav-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                    {item.label}
+                                                    {isActive && <ChevronRight size={14} />}
+                                                </div>
+                                                <div className="nav-subtitle">{item.subtitle}</div>
+                                            </div>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </nav>
             </aside>
         </>

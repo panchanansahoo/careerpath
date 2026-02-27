@@ -71,6 +71,16 @@ export default function ReadinessScore({ company = null, compact = false }) {
         const trackProgress = JSON.parse(localStorage.getItem(`ct_progress_${company || 'general'}`) || '{}');
         const sectionsCompleted = Object.values(trackProgress).filter(Boolean).length;
 
+        const hasRealData = streak > 0 || solvedCount > 0 || mockSessions > 0 || timedSessions > 0 || sectionsCompleted > 0;
+
+        if (!hasRealData) {
+            // Show impressive demo data
+            setScore(72);
+            setBreakdown({ practice: 85, mocks: 60, streak: 78, timed: 55, track: 45 });
+            setLoading(false);
+            return;
+        }
+
         // Calculate sub-scores (0-100 each)
         const practiceScore = Math.min(100, Math.round((solvedCount / 50) * 100));
         const mockScore = Math.min(100, Math.round((mockSessions / 5) * 100));
