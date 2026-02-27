@@ -1,9 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Bell, Menu, X, Code2, ChevronRight, User, LogOut, BookOpen, Settings } from 'lucide-react';
+import { PROBLEMS } from '../data/problemsDatabase';
+import {
+  Search, Bell, Menu, X, ChevronRight, User, LogOut,
+  Settings, Sparkles, Flame, Zap, Crown, Command, TrendingUp,
+  Award, ChevronDown
+} from 'lucide-react';
 
 import logo from '../assets/logo.svg';
+
+// Page title mapping for breadcrumb
+const PAGE_TITLES = {
+  '/dashboard': 'Dashboard',
+  '/problems': 'Problem Explorer',
+  '/code-editor': 'Code Editor',
+  '/playground': 'Playground',
+  '/visualizer': 'Algorithm Visualizer',
+  '/sql-problems': 'SQL Mastery',
+  '/aptitude': 'Aptitude',
+  '/dsa-path': 'DSA Learning Path',
+  '/learning-path': 'Aptitude Path',
+  '/ai-tutor': 'AI Tutor',
+  '/company-prep': 'Company Prep',
+  '/company-interview': 'AI Interview',
+  '/multi-round-interview': 'Full Interview Loop',
+  '/interview-analytics': 'Interview Analytics',
+  '/interview-history': 'Interview History',
+  '/profile': 'Profile',
+  '/history': 'History',
+};
+
+function getPageTitle(pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  for (const [path, title] of Object.entries(PAGE_TITLES)) {
+    if (pathname.startsWith(path)) return title;
+  }
+  return 'Dashboard';
+}
 
 export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   const { user, logout } = useAuth();
@@ -12,7 +46,13 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchContainerRef = useRef(null);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,24 +62,65 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Keyboard shortcut for search (Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        searchInputRef.current?.blur();
+        setSearchQuery('');
+        setSearchFocused(false);
+        setIsDropdownOpen(false);
+        setIsNotifOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setIsDropdownOpen(false);
+    setIsNotifOpen(false);
   }, [location.pathname]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setSearchFocused(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Search filtering
+  const searchResults = searchQuery.trim().length >= 2
+    ? PROBLEMS.filter(p => {
+      const q = searchQuery.toLowerCase();
+      return p.title.toLowerCase().includes(q)
+        || p.topics.some(t => t.toLowerCase().includes(q))
+        || p.difficulty.toLowerCase().includes(q);
+    }).slice(0, 8)
+    : [];
+
+  const handleSearchSelect = (problem) => {
+    setSearchQuery('');
+    setSearchFocused(false);
+    searchInputRef.current?.blur();
+    navigate(`/code-editor/${problem.id}`);
+  };
 
   const handleLogout = () => {
     logout();
@@ -136,70 +217,210 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
     );
   }
 
-  // Dashboard Navbar
+  // ─── Premium Dashboard Navbar ───
+  const pageTitle = getPageTitle(location.pathname);
+  const notifCount = 3; // Demo count
+  const streakCount = 12;
+  const xpCount = 1250;
+  const userTier = 'Free'; // or 'Pro'
+
   return (
-    <div className="navbar navbar-dashboard glass-panel">
-      <div className="container nav-content w-full px-6">
-        <div className="nav-brand flex items-center gap-4">
+    <div className="navbar navbar-dashboard premium-topbar">
+      <div className="premium-topbar-inner">
+
+        {/* Left: Mobile menu + Page title */}
+        <div className="topbar-left">
           <button
             className="icon-btn mobile-only"
             onClick={onMobileMenuToggle}
           >
-            <Menu size={24} />
+            <Menu size={22} />
           </button>
 
-          <div className="opacity-0 desktop-only">
-            {/* Hidden spacer or logo if needed */}
+          <div className="topbar-page-info desktop-only">
+            <h2 className="topbar-page-title">{pageTitle}</h2>
           </div>
         </div>
 
-        <div className="topbar-right flex items-center gap-6 ml-auto">
-          <div className="search-bar desktop-only">
-            <Search size={16} className="search-icon text-muted" />
+        {/* Right: All premium actions */}
+        <div className="topbar-right">
+
+          {/* Enhanced Search */}
+          <div className={`premium-search ${searchFocused ? 'focused' : ''} desktop-only`} ref={searchContainerRef}>
+            <Search size={15} className="premium-search-icon" />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Search problems..."
-              className="search-input"
+              placeholder="Search problems, topics..."
+              className="premium-search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
             />
+            {!searchQuery && <kbd className="premium-search-kbd">Ctrl K</kbd>}
+
+            {/* Search Results Dropdown */}
+            {searchFocused && searchQuery.trim().length >= 2 && (
+              <div className="search-results-dropdown">
+                {searchResults.length > 0 ? (
+                  searchResults.map(p => (
+                    <div
+                      key={p.id}
+                      className="search-result-item"
+                      onMouseDown={() => handleSearchSelect(p)}
+                    >
+                      <div className="search-result-main">
+                        <span className="search-result-title">{p.title}</span>
+                        <span className={`search-result-diff diff-${p.difficulty.toLowerCase()}`}>{p.difficulty}</span>
+                      </div>
+                      <div className="search-result-topics">
+                        {p.topics.slice(0, 3).map(t => (
+                          <span key={t} className="search-result-tag">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="search-no-results">No problems found for "{searchQuery}"</div>
+                )}
+              </div>
+            )}
           </div>
 
-          <button className="icon-btn">
-            <Bell size={20} />
-          </button>
+          {/* Streak Chip */}
+          <div className="topbar-chip streak-chip" title={`${streakCount} day streak`}>
+            <Flame size={14} className="streak-fire" />
+            <span>{streakCount}</span>
+          </div>
 
+          {/* XP Chip */}
+          <div className="topbar-chip xp-chip desktop-only" title={`${xpCount} XP earned`}>
+            <Zap size={14} className="xp-bolt" />
+            <span>{xpCount.toLocaleString()}</span>
+          </div>
+
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
+            <button
+              className="icon-btn notif-btn"
+              onClick={() => { setIsNotifOpen(!isNotifOpen); setIsDropdownOpen(false); }}
+            >
+              <Bell size={19} />
+              {notifCount > 0 && (
+                <span className="notif-badge">{notifCount > 9 ? '9+' : notifCount}</span>
+              )}
+            </button>
+
+            {isNotifOpen && (
+              <div className="premium-dropdown notif-dropdown">
+                <div className="premium-dropdown-header">
+                  <span>Notifications</span>
+                  <button className="premium-dropdown-action">Mark all read</button>
+                </div>
+                <div className="notif-list">
+                  <div className="notif-item unread">
+                    <div className="notif-dot" />
+                    <div>
+                      <p className="notif-text">🎯 New daily challenge available!</p>
+                      <span className="notif-time">2 min ago</span>
+                    </div>
+                  </div>
+                  <div className="notif-item unread">
+                    <div className="notif-dot" />
+                    <div>
+                      <p className="notif-text">🔥 You're on a 12-day streak!</p>
+                      <span className="notif-time">1 hour ago</span>
+                    </div>
+                  </div>
+                  <div className="notif-item">
+                    <div>
+                      <p className="notif-text">⭐ New problems added to Arrays topic</p>
+                      <span className="notif-time">Yesterday</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upgrade to Pro */}
+          {userTier === 'Free' && (
+            <Link to="/#pricing" className="upgrade-btn desktop-only">
+              <Crown size={14} />
+              <span>Upgrade</span>
+            </Link>
+          )}
+
+          {/* Premium Avatar */}
           <div className="relative" ref={dropdownRef}>
             <button
-              className="user-avatar cursor-pointer hover:ring-2 ring-primary/50 transition-all duration-300"
+              className="premium-avatar-btn"
               title={user.fullName}
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              onClick={() => { setIsDropdownOpen(!isDropdownOpen); setIsNotifOpen(false); }}
             >
-              {getInitials()}
+              <div className="premium-avatar">
+                {getInitials()}
+                <span className="avatar-status-dot" />
+              </div>
+              <ChevronDown size={14} className={`avatar-chevron ${isDropdownOpen ? 'open' : ''}`} />
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl glass-panel border border-white/10 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="p-4 border-b border-white/5 bg-white/5">
-                  <p className="font-medium text-white truncate">{user.fullName}</p>
-                  <p className="text-xs text-muted truncate">{user.email}</p>
+              <div className="premium-dropdown user-dropdown">
+                {/* User header */}
+                <div className="user-dropdown-header">
+                  <div className="user-dropdown-avatar">
+                    {getInitials()}
+                  </div>
+                  <div className="user-dropdown-info">
+                    <p className="user-dropdown-name">{user.fullName}</p>
+                    <p className="user-dropdown-email">{user.email}</p>
+                  </div>
+                  <span className={`user-tier-badge ${userTier === 'Pro' ? 'pro' : 'free'}`}>
+                    {userTier === 'Pro' ? <><Crown size={10} /> Pro</> : 'Free'}
+                  </span>
                 </div>
 
-                <div className="p-2">
+                {/* Quick stats */}
+                <div className="user-dropdown-stats">
+                  <div className="dropdown-stat">
+                    <Flame size={14} className="streak-fire" />
+                    <span className="dropdown-stat-value">{streakCount}</span>
+                    <span className="dropdown-stat-label">Streak</span>
+                  </div>
+                  <div className="dropdown-stat-divider" />
+                  <div className="dropdown-stat">
+                    <Zap size={14} className="xp-bolt" />
+                    <span className="dropdown-stat-value">{xpCount.toLocaleString()}</span>
+                    <span className="dropdown-stat-label">XP</span>
+                  </div>
+                  <div className="dropdown-stat-divider" />
+                  <div className="dropdown-stat">
+                    <TrendingUp size={14} style={{ color: '#22c55e' }} />
+                    <span className="dropdown-stat-value">Lv. 5</span>
+                    <span className="dropdown-stat-label">Level</span>
+                  </div>
+                </div>
 
-
-                  <Link
-                    to="/profile"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                  >
-                    <User size={16} className="text-gray-400" />
+                {/* Links */}
+                <div className="user-dropdown-links">
+                  <Link to="/profile" className="user-dropdown-link">
+                    <User size={16} />
                     My Profile
                   </Link>
+                  <Link to="/dashboard/analytics" className="user-dropdown-link">
+                    <TrendingUp size={16} />
+                    Analytics
+                  </Link>
+                  <Link to="/dashboard/settings" className="user-dropdown-link">
+                    <Settings size={16} />
+                    Settings
+                  </Link>
+                </div>
 
-                  <div className="h-px bg-white/5 my-1" />
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
-                  >
+                {/* Logout */}
+                <div className="user-dropdown-footer">
+                  <button onClick={handleLogout} className="user-dropdown-logout">
                     <LogOut size={16} />
                     Log Out
                   </button>
