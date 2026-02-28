@@ -109,7 +109,7 @@ function AppContent() {
 
   // Public pages that don't show sidebar
   const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
-  const isCodeEditorRoute = location.pathname.startsWith('/code-editor') || location.pathname.startsWith('/sql-editor') || location.pathname === '/playground';
+  const isCodeEditorRoute = location.pathname.startsWith('/code-editor') || location.pathname.startsWith('/sql-editor');
   const isVisualizerRoute = location.pathname === '/visualizer';
   const isFullScreenRoute = isCodeEditorRoute;
   const isPublicPage = publicPaths.includes(location.pathname);

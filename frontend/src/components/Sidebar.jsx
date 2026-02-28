@@ -24,7 +24,6 @@ const navSections = [
         category: 'Practice',
         items: [
             { path: '/problems', label: 'Problem Explorer', subtitle: 'Browse & filter problems', icon: ListFilter },
-            { path: '/code-editor/two-sum', label: 'Code Editor', subtitle: 'DSA-focused coding environment', icon: Code },
             { path: '/playground', label: 'Playground', subtitle: 'Free-form coding sandbox', icon: Terminal },
             { path: '/visualizer', label: 'Algorithm Visualizer', subtitle: 'Watch algorithms in action', icon: Play },
             { path: '/sql-problems', label: 'SQL Mastery', subtitle: 'Database & query challenges', icon: Database },

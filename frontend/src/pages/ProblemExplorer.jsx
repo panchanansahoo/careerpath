@@ -28,6 +28,7 @@ const ITEMS_PER_PAGE = 30;
 
 // Study plan presets
 const STUDY_PLANS = [
+    { id: 'top-interview-150', label: '🏆 Interview Top 150', desc: 'LeetCode Top Interview 150', filter: p => p.studyPlans && p.studyPlans.includes('top-interview-150') },
     { id: 'beginner', label: '🌱 Beginner 50', desc: 'Easy problems to build confidence', filter: p => p.difficulty === 'Easy', limit: 50 },
     { id: 'top-medium', label: '🔥 Top Medium', desc: 'Most asked medium problems', filter: p => p.difficulty === 'Medium' && p.frequency === 'high', limit: 50 },
     { id: 'hard-grind', label: '💪 Hard Grind', desc: 'Challenge yourself', filter: p => p.difficulty === 'Hard', limit: 30 },

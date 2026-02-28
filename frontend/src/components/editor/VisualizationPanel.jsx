@@ -161,56 +161,62 @@ export default function VisualizationPanel({
         { id: 'queue', label: 'Queue' },
     ];
 
-    // Demo data for visualization
-    const demoVizData = {
-        array: { array: [38, 27, 43, 3, 9, 82, 10], highlights: [1, 2], sorted: [5, 6], swapping: false, comparing: true },
-        tree: [1, 2, 3, 4, 5, 6, 7],
-        linkedList: [1, 2, 3, 4, 5],
-        stack: [10, 20, 30, 40],
-        queue: [10, 20, 30, 40],
-        graph: {
-            nodes: [0, 1, 2, 3, 4, 5, 6],
-            edges: [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]],
-            visited: [0, 1, 2],
-            current: 3,
-            exploring: 4,
-            queue: [3, 4, 5, 6],
-            order: [0, 1, 2],
-        },
-    };
+    // Try to parse actual output into visualizable data
+    const parsedData = (() => {
+        if (!output?.output) return null;
+        try {
+            const trimmed = output.output.trim();
+            // Try parsing as JSON array
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) return parsed;
+        } catch { }
+        // Try extracting numbers from output like "[1, 2, 3]"
+        const match = output?.output?.match(/\[([^\]]+)\]/);
+        if (match) {
+            const nums = match[1].split(',').map(s => {
+                const n = Number(s.trim());
+                return isNaN(n) ? s.trim() : n;
+            });
+            if (nums.length > 0) return nums;
+        }
+        return null;
+    })();
 
     const renderVisualization = () => {
+        if (!output && !vizData) {
+            return <EmptyState text="Run your code to see visualization here" />;
+        }
+
         const type = selectedViz === 'auto' ? (vizType || 'array') : selectedViz;
-        const data = vizData || demoVizData[type];
+        const arrayData = vizData || (parsedData ? { array: parsedData, highlights: [], sorted: [], swapping: false, comparing: false } : null);
+
+        if (!arrayData && !parsedData) {
+            return <EmptyState text="Output couldn't be visualized — try returning an array or data structure" />;
+        }
 
         switch (type) {
             case 'array':
-                return <ArrayVisualizer step={data || demoVizData.array} />;
+                return <ArrayVisualizer step={arrayData || { array: parsedData, highlights: [], sorted: [], swapping: false, comparing: false }} />;
             case 'tree':
-                return <TreeVisualizer data={data || demoVizData.tree} />;
-            case 'graph':
-                return <GraphVisualizer step={data || demoVizData.graph} />;
+                return <TreeVisualizer data={parsedData || []} />;
             case 'linkedList':
-                return <LinkedListVisualizer data={data || demoVizData.linkedList} />;
+                return <LinkedListVisualizer data={parsedData || []} />;
             case 'stack':
-                return <StackQueueVisualizer data={data || demoVizData.stack} type="stack" />;
+                return <StackQueueVisualizer data={parsedData || []} type="stack" />;
             case 'queue':
-                return <StackQueueVisualizer data={data || demoVizData.queue} type="queue" />;
+                return <StackQueueVisualizer data={parsedData || []} type="queue" />;
+            case 'graph':
+                if (vizData) return <GraphVisualizer step={vizData} />;
+                return <EmptyState text="Graph visualization requires structured data" />;
             default:
-                return <ArrayVisualizer step={demoVizData.array} />;
+                if (parsedData) return <ArrayVisualizer step={{ array: parsedData, highlights: [], sorted: [], swapping: false, comparing: false }} />;
+                return <EmptyState text="Run code that outputs an array to visualize" />;
         }
     };
 
     const variableEntries = Object.entries(variables).length > 0
         ? Object.entries(variables)
-        : [
-            ['i', { value: 3, type: 'int', changed: true }],
-            ['j', { value: 5, type: 'int', changed: false }],
-            ['sum', { value: 8, type: 'int', changed: true }],
-            ['nums', { value: '[2,7,11,15]', type: 'array', changed: false }],
-            ['target', { value: 9, type: 'int', changed: false }],
-            ['hashMap', { value: '{2:0, 7:1}', type: 'object', changed: true }],
-        ];
+        : [];
 
     return (
         <div style={{
@@ -253,7 +259,10 @@ export default function VisualizationPanel({
                                     color: output.success ? '#4ade80' : '#f87171',
                                 }}>
                                     {output.success ? '✓ ' : '✗ '}
-                                    {output.submission ? (output.submission.status === 'accepted' ? 'Accepted' : 'Wrong Answer') : (output.success ? 'All Tests Passed' : 'Error')}
+                                    {output.submission
+                                        ? (output.submission.status === 'accepted' ? 'Accepted' : 'Wrong Answer')
+                                        : (output.success ? 'Executed Successfully' : 'Execution Error')
+                                    }
                                 </div>
                                 {output.submission && (
                                     <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
@@ -274,14 +283,26 @@ export default function VisualizationPanel({
                                     </div>
                                 )}
                                 <pre style={{
-                                    whiteSpace: 'pre-wrap', fontSize: 12,
+                                    whiteSpace: 'pre-wrap', fontSize: 11,
                                     fontFamily: "'JetBrains Mono', monospace",
                                     color: 'rgba(255,255,255,0.6)',
-                                    padding: 12, borderRadius: 8,
+                                    padding: '6px 10px', borderRadius: 6, margin: 0,
                                     background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
                                 }}>
-                                    {output.message || output.output}
+                                    {output.message}
                                 </pre>
+                                {output.output && output.output !== output.message && (
+                                    <pre style={{
+                                        whiteSpace: 'pre-wrap', fontSize: 11,
+                                        fontFamily: "'JetBrains Mono', monospace",
+                                        color: '#e2e8f0',
+                                        padding: '6px 10px', borderRadius: 6, marginTop: 4,
+                                        background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.1)',
+                                    }}>
+                                        <span style={{ fontSize: 8, color: '#8b5cf6', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>Output</span>
+                                        {output.output}
+                                    </pre>
+                                )}
 
                                 {/* AI Feedback */}
                                 {feedback && (
@@ -351,7 +372,9 @@ export default function VisualizationPanel({
                             textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10,
                         }}>Variable Watch</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            {variableEntries.map(([name, info]) => {
+                            {variableEntries.length === 0 ? (
+                                <EmptyState text="Variable tracking requires a debugger integration — coming soon" />
+                            ) : variableEntries.map(([name, info]) => {
                                 const val = typeof info === 'object' ? info : { value: info, type: typeof info, changed: false };
                                 return (
                                     <div key={name} style={{

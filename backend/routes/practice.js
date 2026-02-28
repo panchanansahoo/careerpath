@@ -138,7 +138,7 @@ router.get("/submissions", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/run", authenticateToken, async (req, res) => {
+router.post("/run", optionalAuth, async (req, res) => {
   const { code, language, testCase } = req.body;
 
   try {
@@ -169,36 +169,105 @@ router.post("/execute", optionalAuth, async (req, res) => {
       try {
         const logs = [];
         const customConsole = {
-          log: (...args) => logs.push(args.join(" ")),
+          log: (...args) =>
+            logs.push(
+              args
+                .map((a) =>
+                  typeof a === "object" ? JSON.stringify(a) : String(a),
+                )
+                .join(" "),
+            ),
+          warn: (...args) =>
+            logs.push(
+              "[warn] " +
+              args
+                .map((a) =>
+                  typeof a === "object" ? JSON.stringify(a) : String(a),
+                )
+                .join(" "),
+            ),
+          error: (...args) =>
+            logs.push(
+              "[error] " +
+              args
+                .map((a) =>
+                  typeof a === "object" ? JSON.stringify(a) : String(a),
+                )
+                .join(" "),
+            ),
+          info: (...args) =>
+            logs.push(
+              args
+                .map((a) =>
+                  typeof a === "object" ? JSON.stringify(a) : String(a),
+                )
+                .join(" "),
+            ),
+          dir: (...args) =>
+            logs.push(
+              args
+                .map((a) =>
+                  typeof a === "object"
+                    ? JSON.stringify(a, null, 2)
+                    : String(a),
+                )
+                .join(" "),
+            ),
         };
 
-        const func = new Function("console", "input", code);
-        func(customConsole, input);
-        output = logs.join("\n") || "Code executed successfully";
+        // Wrap code to capture return values too
+        const wrappedCode = `
+          ${code}
+        `;
+        const func = new Function("console", "input", wrappedCode);
+        const result = func(customConsole, input || "");
+
+        // If there's a return value and no logs, show the return value
+        if (result !== undefined && logs.length === 0) {
+          output =
+            typeof result === "object"
+              ? JSON.stringify(result, null, 2)
+              : String(result);
+        } else if (logs.length > 0) {
+          output = logs.join("\n");
+        } else {
+          output = "(No output — use console.log() to see results)";
+        }
       } catch (error) {
         return res.json({
           success: false,
+          output: "",
           error: error.message,
           executionTime: Date.now() - startTime,
         });
       }
     } else if (normalizedLanguage === "python") {
+      // Simulate Python output with a helpful message
       output =
-        "Python execution: Hello, World!\nNote: Full Python execution requires additional setup.";
+        "⚠ Python runs in simulated mode.\nTo test Python code, use console.log() equivalent in JavaScript or wait for Python runtime support.";
     } else if (normalizedLanguage === "java") {
       output =
-        "Java execution: Hello, World!\nNote: Full Java execution requires additional setup.";
+        "⚠ Java runs in simulated mode.\nTo test Java code, switch to JavaScript or wait for Java runtime support.";
     } else if (normalizedLanguage === "cpp") {
       output =
-        "C++ execution: Hello, World!\nNote: Full C++ execution requires additional setup.";
+        "⚠ C++ runs in simulated mode.\nTo test C++ code, switch to JavaScript or wait for C++ runtime support.";
+    } else if (normalizedLanguage === "go") {
+      output =
+        "⚠ Go runs in simulated mode.\nTo test Go code, switch to JavaScript or wait for Go runtime support.";
     } else {
-      output = "Code executed successfully";
+      output =
+        "⚠ This language runs in simulated mode.\nSwitch to JavaScript for live execution.";
     }
 
     res.json({ success: true, output, executionTime: Date.now() - startTime });
   } catch (error) {
     console.error("Code execution error:", error);
-    res.json({ success: false, error: error.message, executionTime: 0 });
+    res.json({
+      success: false,
+      output: "",
+      error: error.message,
+      executionTime: 0,
+    });
   }
 });
 

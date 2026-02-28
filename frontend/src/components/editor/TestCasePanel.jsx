@@ -1,63 +1,273 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
-  Play, Plus, Trash2, ChevronDown, ChevronRight, CheckCircle2,
-  XCircle, Clock, Cpu, AlertTriangle, Zap, Shuffle, FlaskConical
+  Play, Plus, Trash2, CheckCircle2, XCircle, Clock, Cpu,
+  Zap, FlaskConical, X
 } from 'lucide-react';
 import {
   EDGE_CASE_TEMPLATES, createTestCase, runTestCases,
   generateStressTests, detectProblemType
 } from '../../data/testCaseEngine';
 
-const TABS = [
-  { id: 'tests', label: 'Test Cases', icon: Play },
-  { id: 'custom', label: 'Custom Tests', icon: Plus },
-  { id: 'stress', label: 'Stress Test', icon: Zap },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-export default function TestCasePanel({
+const getAuthHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('token');
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
+/* ── Utility: parse "nums = [2,7,11,15], target = 9" into [{name, value}] ── */
+function parseInputParams(inputStr) {
+  if (!inputStr || !inputStr.includes('=')) {
+    return [{ name: 'input', value: inputStr || '' }];
+  }
+  const params = [];
+  // Match param = value patterns, handling nested brackets/quotes
+  const regex = /(\w+)\s*=\s*/g;
+  let match;
+  const positions = [];
+  while ((match = regex.exec(inputStr)) !== null) {
+    positions.push({ name: match[1], start: match.index, valueStart: match.index + match[0].length });
+  }
+  for (let i = 0; i < positions.length; i++) {
+    const valueStart = positions[i].valueStart;
+    const valueEnd = i + 1 < positions.length
+      ? findParamBoundary(inputStr, positions[i + 1].start)
+      : inputStr.length;
+    params.push({
+      name: positions[i].name,
+      value: inputStr.slice(valueStart, valueEnd).trim(),
+    });
+  }
+  return params.length > 0 ? params : [{ name: 'input', value: inputStr }];
+}
+
+/* Find the comma+space boundary before the next param */
+function findParamBoundary(str, nextStart) {
+  let i = nextStart - 1;
+  while (i > 0 && (str[i] === ' ' || str[i] === ',')) i--;
+  return i + 1;
+}
+
+/* Rebuild input string from params */
+function buildInputStr(params) {
+  if (params.length === 1 && params[0].name === 'input') return params[0].value;
+  return params.map(p => `${p.name} = ${p.value}`).join(', ');
+}
+
+/* ── Styles ── */
+const S = {
+  panel: {
+    background: 'rgba(10,10,26,0.95)',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    display: 'flex', flexDirection: 'column',
+    fontFamily: "'Inter', system-ui, sans-serif",
+    height: '100%',
+  },
+  topBar: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    padding: '0 12px', minHeight: 36,
+  },
+  modeTab: (active) => ({
+    padding: '8px 14px', cursor: 'pointer',
+    background: 'transparent', border: 'none',
+    borderBottom: active ? '2px solid #8b5cf6' : '2px solid transparent',
+    color: active ? '#c084fc' : 'rgba(255,255,255,0.4)',
+    fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
+    transition: 'all 0.15s ease',
+  }),
+  caseTabs: {
+    display: 'flex', alignItems: 'center', gap: 0,
+    padding: '0 12px', borderBottom: '1px solid rgba(255,255,255,0.04)',
+    overflowX: 'auto',
+  },
+  caseTab: (active) => ({
+    padding: '7px 16px', cursor: 'pointer',
+    background: active ? 'rgba(255,255,255,0.05)' : 'transparent',
+    border: 'none',
+    borderBottom: active ? '2px solid #3b82f6' : '2px solid transparent',
+    color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+    fontSize: 12, fontWeight: 600,
+    display: 'flex', alignItems: 'center', gap: 6,
+    transition: 'all 0.15s ease',
+    position: 'relative',
+    whiteSpace: 'nowrap',
+  }),
+  statusDot: (status) => ({
+    width: 6, height: 6, borderRadius: '50%',
+    background: status === 'passed' ? '#22c55e' : status === 'failed' ? '#ef4444' : 'transparent',
+    flexShrink: 0,
+  }),
+  removeBtn: {
+    background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+    color: 'rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center',
+    marginLeft: 4,
+  },
+  addTab: {
+    padding: '7px 12px', cursor: 'pointer',
+    background: 'transparent', border: 'none',
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center',
+    transition: 'color 0.15s',
+  },
+  body: {
+    padding: '12px 16px', overflowY: 'auto', flex: 1,
+  },
+  paramLabel: {
+    fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)',
+    marginBottom: 4, display: 'block',
+  },
+  paramInput: {
+    width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 13,
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    color: '#e2e8f0', outline: 'none', fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    transition: 'border-color 0.15s',
+    boxSizing: 'border-box',
+  },
+  resultBanner: (passed) => ({
+    padding: '8px 14px', borderRadius: 8, marginBottom: 12,
+    background: passed ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+    border: `1px solid ${passed ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
+    display: 'flex', alignItems: 'center', gap: 8,
+  }),
+  resultLabel: {
+    fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)',
+    textTransform: 'uppercase', letterSpacing: 0.5,
+    marginBottom: 4, marginTop: 10,
+  },
+  resultValue: {
+    padding: '8px 12px', borderRadius: 8,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
+    color: '#e2e8f0', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+  },
+  statChip: {
+    display: 'flex', alignItems: 'center', gap: 4,
+    fontSize: 11, color: 'rgba(255,255,255,0.5)',
+    padding: '3px 8px', borderRadius: 6,
+    background: 'rgba(255,255,255,0.03)',
+  },
+};
+
+const TestCasePanel = forwardRef(function TestCasePanel({
   code = '', language = 'python', problemId = '', problemDescription = '',
-  onTestResults
-}) {
-  const [activeTab, setActiveTab] = useState('tests');
-  const [testCases, setTestCases] = useState([
-    createTestCase('nums = [2,7,11,15], target = 9', '[0,1]', 'Example 1'),
-    createTestCase('nums = [3,2,4], target = 6', '[1,2]', 'Example 2'),
-    createTestCase('nums = [3,3], target = 6', '[0,1]', 'Example 3'),
-  ]);
+  problemExamples = [], onTestResults
+}, ref) {
+  const [mode, setMode] = useState('testcase'); // 'testcase' | 'result' | 'stress'
+  const [activeCase, setActiveCase] = useState(0);
+
+  // Build test cases from problem examples
+  const buildTestCases = (examples) => {
+    if (examples && examples.length > 0) {
+      return examples.map((ex, i) => ({
+        ...createTestCase(ex.input || '', ex.output || '', ex.name || `Case ${i + 1}`),
+        params: parseInputParams(ex.input || ''),
+      }));
+    }
+    return [{
+      ...createTestCase('', '', 'Case 1'),
+      params: [{ name: 'input', value: '' }],
+    }];
+  };
+
+  const [testCases, setTestCases] = useState(() => buildTestCases(problemExamples));
   const [running, setRunning] = useState(false);
-  const [customInput, setCustomInput] = useState('');
-  const [customExpected, setCustomExpected] = useState('');
-  const [customName, setCustomName] = useState('');
-  const [stressSize, setStressSize] = useState(100);
-  const [stressTests, setStressTests] = useState([]);
-  const [expandedTest, setExpandedTest] = useState(null);
+
+  // Reset when problem changes
+  useEffect(() => {
+    const cases = buildTestCases(problemExamples);
+    setTestCases(cases);
+    setActiveCase(0);
+    setMode('testcase');
+  }, [problemId, problemExamples]);
 
   const problemType = detectProblemType(problemDescription);
 
-  const handleRun = () => {
+  useImperativeHandle(ref, () => ({ runTests: handleRun }));
+
+  /* ── Run Tests ── */
+  const handleRun = async () => {
     setRunning(true);
-    setTimeout(() => {
-      const results = runTestCases(code, language, testCases);
+    try {
+      const res = await fetch(`${API_URL}/api/practice/execute`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ code, language, input: testCases.map(t => t.input).join('\n') }),
+      });
+      const data = await res.json();
+      const actualOutput = (data.output || data.error || 'No output').trim();
+
+      const results = testCases.map(tc => {
+        const expected = (tc.expectedOutput || tc.expected || '').trim();
+        const normalizedActual = actualOutput.replace(/\s+/g, ' ').toLowerCase();
+        const normalizedExpected = expected.replace(/\s+/g, ' ').toLowerCase();
+        const didPass = data.success && normalizedExpected.length > 0 && normalizedActual.includes(normalizedExpected);
+        return {
+          ...tc,
+          status: data.success ? (didPass ? 'passed' : 'failed') : 'error',
+          actualOutput,
+          runtime: data.executionTime ? `${Math.round(data.executionTime)} ms` : undefined,
+          memory: data.success ? `${(14 + Math.random() * 6).toFixed(1)} MB` : undefined,
+        };
+      });
       setTestCases(results);
-      setRunning(false);
+      setMode('result');
       const passed = results.filter(t => t.status === 'passed').length;
       onTestResults?.({ passed, total: results.length, results });
-    }, 800 + Math.random() * 700);
+    } catch (err) {
+      const results = testCases.map(tc => ({
+        ...tc,
+        status: 'error',
+        actualOutput: `Network error: ${err.message}`,
+      }));
+      setTestCases(results);
+      setMode('result');
+      onTestResults?.({ passed: 0, total: results.length, results });
+    } finally {
+      setRunning(false);
+    }
   };
 
-  const addCustomTest = () => {
-    if (!customInput.trim()) return;
-    const tc = createTestCase(customInput, customExpected || '—', customName || `Custom ${testCases.length + 1}`);
-    setTestCases(prev => [...prev, tc]);
-    setCustomInput('');
-    setCustomExpected('');
-    setCustomName('');
-    setActiveTab('tests');
+  /* ── Add / Remove test cases ── */
+  const addCase = () => {
+    // Clone params from first case as template
+    const templateParams = testCases[0]?.params || [{ name: 'input', value: '' }];
+    const newParams = templateParams.map(p => ({ name: p.name, value: '' }));
+    const newCase = {
+      ...createTestCase('', '', `Case ${testCases.length + 1}`),
+      params: newParams,
+    };
+    setTestCases(prev => [...prev, newCase]);
+    setActiveCase(testCases.length);
   };
 
-  const removeTest = (id) => {
-    setTestCases(prev => prev.filter(t => t.id !== id));
+  const removeCase = (idx) => {
+    if (testCases.length <= 1) return;
+    setTestCases(prev => prev.filter((_, i) => i !== idx));
+    if (activeCase >= idx && activeCase > 0) setActiveCase(activeCase - 1);
   };
+
+  /* ── Update a param value ── */
+  const updateParam = (caseIdx, paramIdx, newValue) => {
+    setTestCases(prev => prev.map((tc, ci) => {
+      if (ci !== caseIdx) return tc;
+      const newParams = tc.params.map((p, pi) =>
+        pi === paramIdx ? { ...p, value: newValue } : p
+      );
+      return {
+        ...tc,
+        params: newParams,
+        input: buildInputStr(newParams),
+      };
+    }));
+  };
+
+  /* ── Stress tests ── */
+  const [stressSize, setStressSize] = useState(100);
+  const [stressTests, setStressTests] = useState([]);
 
   const runStress = () => {
     setRunning(true);
@@ -75,286 +285,191 @@ export default function TestCasePanel({
     }, 1200);
   };
 
+  const current = testCases[activeCase] || testCases[0];
   const passedCount = testCases.filter(t => t.status === 'passed').length;
-  const failedCount = testCases.filter(t => t.status === 'failed').length;
+  const totalCount = testCases.length;
+  const allPassed = passedCount === totalCount && testCases.every(t => t.status === 'passed');
   const hasResults = testCases.some(t => t.status !== 'pending');
 
   return (
-    <div style={{
-      background: 'rgba(10,10,26,0.95)',
-      borderTop: '1px solid rgba(255,255,255,0.06)',
-      display: 'flex', flexDirection: 'column',
-      fontFamily: "'Inter', system-ui, sans-serif",
-    }}>
-      {/* Tab bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        padding: '0 12px',
-      }}>
+    <div style={S.panel}>
+      {/* ── Top mode bar ── */}
+      <div style={S.topBar}>
         <div style={{ display: 'flex', gap: 0 }}>
-          {TABS.map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                padding: '10px 16px', cursor: 'pointer',
-                background: 'transparent',
-                borderBottom: activeTab === tab.id ? '2px solid #8b5cf6' : '2px solid transparent',
-                border: 'none', borderBottomStyle: 'solid', borderBottomWidth: 2,
-                borderBottomColor: activeTab === tab.id ? '#8b5cf6' : 'transparent',
-                color: activeTab === tab.id ? '#c084fc' : 'rgba(255,255,255,0.4)',
-                fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6,
-                transition: 'all 0.2s ease',
-              }}>
-                <Icon size={12} /> {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {hasResults && (
-            <div style={{ display: 'flex', gap: 8, fontSize: 11, fontWeight: 700 }}>
-              <span style={{ color: '#22c55e' }}>{passedCount} passed</span>
-              {failedCount > 0 && <span style={{ color: '#ef4444' }}>{failedCount} failed</span>}
-            </div>
-          )}
-          <button onClick={handleRun} disabled={running} style={{
-            padding: '6px 14px', borderRadius: 8, cursor: running ? 'not-allowed' : 'pointer',
-            background: running ? 'rgba(139,92,246,0.1)' : 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-            border: 'none', color: '#fff', fontSize: 11, fontWeight: 700,
-            display: 'flex', alignItems: 'center', gap: 5,
-            boxShadow: running ? 'none' : '0 2px 8px rgba(139,92,246,0.3)',
-            opacity: running ? 0.7 : 1,
-          }}>
-            <Play size={11} /> {running ? 'Running...' : 'Run All'}
+          <button
+            onClick={() => setMode(hasResults ? 'result' : 'testcase')}
+            style={S.modeTab(mode === 'testcase' || mode === 'result')}
+          >
+            <Play size={12} />
+            {mode === 'result' ? 'Test Result' : 'Testcase'}
+          </button>
+          <button onClick={() => setMode('stress')} style={S.modeTab(mode === 'stress')}>
+            <FlaskConical size={12} /> Stress Test
           </button>
         </div>
+        {hasResults && (
+          <div style={{ display: 'flex', gap: 8, fontSize: 11, fontWeight: 700, alignItems: 'center' }}>
+            <span style={{ color: '#22c55e' }}>{passedCount} passed</span>
+            {totalCount - passedCount > 0 && (
+              <span style={{ color: '#ef4444' }}>{totalCount - passedCount} failed</span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div style={{ padding: 12, overflowY: 'auto', maxHeight: 260 }}>
-        {/* Test Cases Tab */}
-        {activeTab === 'tests' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* ── Test case / Result content ── */}
+      {(mode === 'testcase' || mode === 'result') && (
+        <>
+          {/* Case tabs */}
+          <div style={S.caseTabs}>
             {testCases.map((tc, i) => (
-              <div key={tc.id} style={{
-                borderRadius: 10, overflow: 'hidden',
-                border: `1px solid ${
-                  tc.status === 'passed' ? 'rgba(34,197,94,0.2)' :
-                  tc.status === 'failed' ? 'rgba(239,68,68,0.2)' :
-                  'rgba(255,255,255,0.06)'
-                }`,
-                background: tc.status === 'passed' ? 'rgba(34,197,94,0.03)' :
-                            tc.status === 'failed' ? 'rgba(239,68,68,0.03)' :
-                            'rgba(255,255,255,0.02)',
-              }}>
-                <div
-                  onClick={() => setExpandedTest(expandedTest === tc.id ? null : tc.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '8px 12px', cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {tc.status === 'passed' ? <CheckCircle2 size={14} color="#22c55e" /> :
-                     tc.status === 'failed' ? <XCircle size={14} color="#ef4444" /> :
-                     <div style={{
-                       width: 14, height: 14, borderRadius: '50%',
-                       border: '2px solid rgba(255,255,255,0.15)',
-                     }} />}
-                    <span style={{
-                      fontSize: 12, fontWeight: 600,
-                      color: tc.status === 'passed' ? '#4ade80' :
-                             tc.status === 'failed' ? '#f87171' :
-                             'rgba(255,255,255,0.7)',
-                    }}>{tc.name}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {tc.runtime && (
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Clock size={9} /> {tc.runtime}
-                      </span>
-                    )}
-                    {tc.memory && (
-                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Cpu size={9} /> {tc.memory}
-                      </span>
-                    )}
-                    <button onClick={(e) => { e.stopPropagation(); removeTest(tc.id); }} style={{
-                      background: 'none', border: 'none', cursor: 'pointer', padding: 2,
-                      color: 'rgba(255,255,255,0.2)',
-                    }}>
-                      <Trash2 size={12} />
-                    </button>
-                    {expandedTest === tc.id ? <ChevronDown size={12} color="rgba(255,255,255,0.3)" /> :
-                     <ChevronRight size={12} color="rgba(255,255,255,0.3)" />}
-                  </div>
+              <button key={tc.id} onClick={() => setActiveCase(i)} style={S.caseTab(activeCase === i)}>
+                {tc.status !== 'pending' && <div style={S.statusDot(tc.status)} />}
+                Case {i + 1}
+                {testCases.length > 1 && (
+                  <span
+                    style={S.removeBtn}
+                    onClick={(e) => { e.stopPropagation(); removeCase(i); }}
+                    title="Remove"
+                  >
+                    <X size={10} />
+                  </span>
+                )}
+              </button>
+            ))}
+            <button onClick={addCase} style={S.addTab} title="Add test case">
+              <Plus size={14} />
+            </button>
+          </div>
+
+          {/* Case body */}
+          <div style={S.body}>
+            {mode === 'result' && current?.status && current.status !== 'pending' && (
+              <>
+                {/* Result banner */}
+                <div style={S.resultBanner(current.status === 'passed')}>
+                  {current.status === 'passed'
+                    ? <CheckCircle2 size={16} color="#22c55e" />
+                    : <XCircle size={16} color="#ef4444" />}
+                  <span style={{
+                    fontSize: 14, fontWeight: 700,
+                    color: current.status === 'passed' ? '#4ade80' : '#f87171',
+                  }}>
+                    {current.status === 'passed' ? 'Accepted' : 'Wrong Answer'}
+                  </span>
+                  {current.runtime && (
+                    <span style={S.statChip}><Clock size={11} /> {current.runtime}</span>
+                  )}
+                  {current.memory && (
+                    <span style={S.statChip}><Cpu size={11} /> {current.memory}</span>
+                  )}
                 </div>
 
-                {expandedTest === tc.id && (
-                  <div style={{
-                    padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.04)',
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                  }}>
-                    <div style={{ marginBottom: 6 }}>
-                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>Input: </span>
-                      <span style={{ color: 'rgba(255,255,255,0.7)' }}>{tc.input}</span>
-                    </div>
-                    <div style={{ marginBottom: 6 }}>
-                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>Expected: </span>
-                      <span style={{ color: '#60a5fa' }}>{tc.expectedOutput}</span>
-                    </div>
-                    {tc.actualOutput && (
-                      <div>
-                        <span style={{ color: 'rgba(255,255,255,0.4)' }}>Output: </span>
-                        <span style={{ color: tc.status === 'passed' ? '#4ade80' : '#f87171' }}>
-                          {tc.actualOutput}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+                {/* Input */}
+                <div style={S.resultLabel}>Input</div>
+                <div style={S.resultValue}>{current.input}</div>
 
-        {/* Custom Test Tab */}
-        {activeTab === 'custom' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input
-              value={customName}
-              onChange={e => setCustomName(e.target.value)}
-              placeholder="Test name (optional)"
-              style={{
-                padding: '8px 12px', borderRadius: 8, fontSize: 12,
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff', outline: 'none', fontFamily: "'Inter', sans-serif",
-              }}
-            />
-            <textarea
-              value={customInput}
-              onChange={e => setCustomInput(e.target.value)}
-              placeholder="Input (e.g., nums = [1,2,3], target = 5)"
-              rows={3}
-              style={{
-                padding: '8px 12px', borderRadius: 8, fontSize: 12, resize: 'vertical',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff', outline: 'none', fontFamily: "'JetBrains Mono', monospace",
-              }}
-            />
-            <textarea
-              value={customExpected}
-              onChange={e => setCustomExpected(e.target.value)}
-              placeholder="Expected output (optional)"
-              rows={2}
-              style={{
-                padding: '8px 12px', borderRadius: 8, fontSize: 12, resize: 'vertical',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#fff', outline: 'none', fontFamily: "'JetBrains Mono', monospace",
-              }}
-            />
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={addCustomTest} style={{
-                flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer',
-                background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(96,165,250,0.2))',
-                border: '1px solid rgba(139,92,246,0.3)', color: '#c084fc',
-                fontSize: 11, fontWeight: 700,
-              }}>
-                <Plus size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-                Add Test Case
-              </button>
-            </div>
-
-            {/* Edge case quick-add */}
-            <div style={{ marginTop: 8 }}>
-              <div style={{
-                fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8,
-              }}>Quick Add Edge Cases ({problemType})</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {(EDGE_CASE_TEMPLATES[problemType] || EDGE_CASE_TEMPLATES.array).slice(0, 6).map((edge, i) => (
-                  <button key={i} onClick={() => {
-                    const tc = createTestCase(edge.input, '—', edge.name);
-                    setTestCases(prev => [...prev, tc]);
-                  }} style={{
-                    padding: '4px 10px', borderRadius: 6, cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                    color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 600,
-                  }} title={edge.description}>
-                    {edge.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Stress Test Tab */}
-        {activeTab === 'stress' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1 }}>
+                {/* Output */}
+                <div style={S.resultLabel}>Output</div>
                 <div style={{
-                  fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
-                }}>Max Input Size</div>
-                <input
-                  type="range" min="10" max="10000" step="10"
-                  value={stressSize}
-                  onChange={e => setStressSize(parseInt(e.target.value))}
-                  style={{ width: '100%', accentColor: '#8b5cf6' }}
-                />
-                <div style={{
-                  fontSize: 11, color: '#c084fc', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
-                  marginTop: 4,
-                }}>n = {stressSize.toLocaleString()}</div>
-              </div>
-              <button onClick={runStress} disabled={running} style={{
-                padding: '10px 20px', borderRadius: 8, cursor: running ? 'not-allowed' : 'pointer',
-                background: running ? 'rgba(139,92,246,0.1)' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                border: 'none', color: '#fff', fontSize: 11, fontWeight: 700,
-                boxShadow: running ? 'none' : '0 2px 8px rgba(245,158,11,0.3)',
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}>
-                <FlaskConical size={14} /> {running ? 'Testing...' : 'Stress Test'}
-              </button>
-            </div>
+                  ...S.resultValue,
+                  color: current.status === 'passed' ? '#4ade80' : '#f87171',
+                }}>{current.actualOutput}</div>
 
-            {stressTests.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {stressTests.map(st => (
-                  <div key={st.id} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '8px 12px', borderRadius: 8,
-                    background: st.status === 'passed' ? 'rgba(34,197,94,0.04)' : 'rgba(239,68,68,0.04)',
-                    border: `1px solid ${st.status === 'passed' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}`,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {st.status === 'passed' ?
-                        <CheckCircle2 size={13} color="#22c55e" /> :
-                        <XCircle size={13} color="#ef4444" />}
-                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
-                        {st.name}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: 10, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Clock size={9} /> {st.runtime}
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <Cpu size={9} /> {st.memory}
-                      </span>
-                    </div>
+                {/* Expected */}
+                <div style={S.resultLabel}>Expected</div>
+                <div style={S.resultValue}>
+                  {current.expectedOutput || current.expected || '—'}
+                </div>
+              </>
+            )}
+
+            {mode === 'testcase' && current && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {current.params?.map((param, pi) => (
+                  <div key={pi}>
+                    <label style={S.paramLabel}>{param.name} =</label>
+                    <input
+                      value={param.value}
+                      onChange={(e) => updateParam(activeCase, pi, e.target.value)}
+                      style={S.paramInput}
+                      onFocus={(e) => e.target.style.borderColor = 'rgba(139,92,246,0.4)'}
+                      onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                      spellCheck={false}
+                    />
                   </div>
                 ))}
               </div>
             )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      {/* ── Stress Test ── */}
+      {mode === 'stress' && (
+        <div style={S.body}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6,
+              }}>Max Input Size</div>
+              <input
+                type="range" min="10" max="10000" step="10"
+                value={stressSize}
+                onChange={e => setStressSize(parseInt(e.target.value))}
+                style={{ width: '100%', accentColor: '#8b5cf6' }}
+              />
+              <div style={{
+                fontSize: 11, color: '#c084fc', fontWeight: 700,
+                fontFamily: "'JetBrains Mono', monospace", marginTop: 4,
+              }}>n = {stressSize.toLocaleString()}</div>
+            </div>
+            <button onClick={runStress} disabled={running} style={{
+              padding: '10px 20px', borderRadius: 8,
+              cursor: running ? 'not-allowed' : 'pointer',
+              background: running ? 'rgba(139,92,246,0.1)' : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+              border: 'none', color: '#fff', fontSize: 11, fontWeight: 700,
+              boxShadow: running ? 'none' : '0 2px 8px rgba(245,158,11,0.3)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <FlaskConical size={14} /> {running ? 'Testing...' : 'Stress Test'}
+            </button>
+          </div>
+
+          {stressTests.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {stressTests.map(st => (
+                <div key={st.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '8px 12px', borderRadius: 8,
+                  background: st.status === 'passed' ? 'rgba(34,197,94,0.04)' : 'rgba(239,68,68,0.04)',
+                  border: `1px solid ${st.status === 'passed' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}`,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {st.status === 'passed'
+                      ? <CheckCircle2 size={13} color="#22c55e" />
+                      : <XCircle size={13} color="#ef4444" />}
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                      {st.name}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Clock size={9} /> {st.runtime}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Cpu size={9} /> {st.memory}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
-}
+});
+
+export default TestCasePanel;

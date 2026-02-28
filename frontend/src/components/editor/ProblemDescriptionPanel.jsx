@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ChevronDown, ChevronRight, Tag, Building2, Target,
   BarChart3, Lightbulb, BookOpen, ExternalLink, Link2,
   FileText, Clock, CheckCircle2, Eye, EyeOff,
-  ChevronUp, AlertCircle, Code2, History
+  ChevronUp, AlertCircle, Code2, History, ArrowRight
 } from 'lucide-react';
 
 export default function ProblemDescriptionPanel({
-  problem, onShowHints, showHints = false
+  problem, onShowHints, showHints = false, allProblems = [], navigate
 }) {
   const [activeTopTab, setActiveTopTab] = useState('problem');
   const [activeSubTab, setActiveSubTab] = useState('description');
@@ -39,6 +39,28 @@ export default function ProblemDescriptionPanel({
   const visibleTopics = showAllTopics ? topics : topics.slice(0, 3);
   const hiddenCount = topics.length - 3;
 
+  // ─── Related Questions ───
+  const relatedProblems = useMemo(() => {
+    if (!problem || !allProblems.length) return [];
+    const currentTopics = new Set(problem.topics || []);
+    const currentPatterns = new Set(problem.patterns || []);
+
+    const scored = allProblems
+      .filter(p => p.id !== problem.id)
+      .map(p => {
+        let score = 0;
+        (p.topics || []).forEach(t => { if (currentTopics.has(t)) score += 2; });
+        (p.patterns || []).forEach(pt => { if (currentPatterns.has(pt)) score += 3; });
+        if (p.difficulty === problem.difficulty) score += 1;
+        return { ...p, score };
+      })
+      .filter(p => p.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    return scored;
+  }, [problem, allProblems]);
+
   // Mock submission history
   const submissionHistory = [
     { id: 1, status: 'Accepted', language: 'Python', runtime: '42ms', memory: '14.2MB', time: '2 hours ago' },
@@ -58,6 +80,7 @@ export default function ProblemDescriptionPanel({
     { id: 'description', label: 'Description', icon: BookOpen },
     { id: 'testcases', label: 'Test Cases', icon: CheckCircle2 },
     { id: 'hints', label: 'Hints', icon: Lightbulb },
+    { id: 'related', label: 'Related', icon: Link2 },
   ];
 
   return (

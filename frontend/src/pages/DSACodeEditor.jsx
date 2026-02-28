@@ -11,6 +11,15 @@ import { LANGUAGES, ALGORITHM_TEMPLATES, DATA_STRUCTURE_TEMPLATES, PATTERN_HINTS
 import { PROBLEMS } from '../data/problemsDatabase';
 import { registerAllThemes, getSavedTheme, saveTheme, EDITOR_THEMES } from '../data/editorThemes';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const getAuthHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('token');
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
 // ─── Starter code per language ───
 const STARTER_CODE = {
   python: (name) => `class Solution:
@@ -63,6 +72,7 @@ export default function DSACodeEditor() {
   const { problemId } = useParams();
   const navigate = useNavigate();
   const editorRef = useRef(null);
+  const testCaseRef = useRef(null);
 
   // Problem state
   const [problem, setProblem] = useState(null);
@@ -217,54 +227,105 @@ export default function DSACodeEditor() {
     }
   };
 
-  // ─── Run code (mock) ───
-  const handleRun = useCallback(() => {
+  // ─── Run code ───
+  const handleRun = useCallback(async () => {
     setRunning(true);
     setOutput(null);
     setFeedback(null);
 
-    setTimeout(() => {
-      setOutput({
-        success: true,
-        output: '[0, 1]',
-        message: 'All test cases passed!',
+    try {
+      const res = await fetch(`${API_URL}/api/practice/execute`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ code, language, input: '' }),
       });
+      const data = await res.json();
+      const actualOutput = (data.output || '').trim();
+      const errorMsg = (data.error || '').trim();
+      setOutput({
+        success: data.success,
+        output: actualOutput || errorMsg || '',
+        message: data.success
+          ? (actualOutput ? 'Executed Successfully' : 'No output produced')
+          : `Error: ${errorMsg || 'Unknown error'}`,
+        executionTime: data.executionTime ? `${Math.round(data.executionTime)}ms` : undefined,
+      });
+      // Also trigger test case execution
+      testCaseRef.current?.runTests?.();
+    } catch (err) {
+      setOutput({
+        success: false,
+        output: '',
+        message: `Network error: ${err.message}`,
+      });
+    } finally {
       setRunning(false);
-    }, 800 + Math.random() * 700);
+    }
   }, [code, language]);
 
-  // ─── Submit code (mock) ───
-  const handleSubmit = useCallback(() => {
+  // ─── Submit code ───
+  const handleSubmit = useCallback(async () => {
     setRunning(true);
     setOutput(null);
     setFeedback(null);
 
-    setTimeout(() => {
-      const accepted = Math.random() > 0.2;
+    try {
+      const res = await fetch(`${API_URL}/api/practice/submit`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ problemId: problem?.id, code, language }),
+      });
+
+      if (res.status === 401) {
+        // Fall back to execute for guests who can't fully submit
+        const execRes = await fetch(`${API_URL}/api/practice/execute`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ code, language, input: '' }),
+        });
+        const execData = await execRes.json();
+        const execOutput = (execData.output || '').trim();
+        const execError = (execData.error || '').trim();
+        setOutput({
+          success: execData.success,
+          output: execOutput || execError || '',
+          message: execData.success
+            ? 'Code executed (sign in to submit and track progress)'
+            : `Error: ${execError || 'Unknown error'}`,
+        });
+        setRunning(false);
+        return;
+      }
+
+      const data = await res.json();
+      const accepted = data.submission?.status === 'accepted';
       setOutput({
         success: accepted,
-        submission: {
-          status: accepted ? 'accepted' : 'wrong_answer',
-          runtime: `${Math.floor(40 + Math.random() * 80)}ms`,
-          memory: `${(14 + Math.random() * 6).toFixed(1)}MB`,
-          percentile: `${(60 + Math.random() * 38).toFixed(1)}%`,
-        },
-        message: accepted
-          ? `Accepted — Runtime: ${Math.floor(40 + Math.random() * 80)}ms`
-          : 'Wrong Answer on test case 3',
+        submission: data.submission ? {
+          status: data.submission.status,
+          runtime: `${data.submission.test_cases_passed}/${data.submission.total_test_cases} passed`,
+        } : undefined,
+        message: data.message || (accepted ? 'Accepted!' : 'Wrong Answer'),
       });
 
       if (accepted) {
         setFeedback({
-          timeComplexity: 'O(n)',
-          spaceComplexity: 'O(n)',
-          suggestions: 'Great solution using a hash map! This achieves optimal O(n) time complexity. Consider handling edge cases like empty arrays or arrays with a single element for robustness.',
+          timeComplexity: 'Submitted',
+          spaceComplexity: 'Submitted',
+          suggestions: 'Solution accepted! All test cases passed.',
         });
-        setTimerActive(false); // Stop timer on accept
+        setTimerActive(false);
       }
+    } catch (err) {
+      setOutput({
+        success: false,
+        output: '',
+        message: `Network error: ${err.message}`,
+      });
+    } finally {
       setRunning(false);
-    }, 1200 + Math.random() * 800);
-  }, [code, language]);
+    }
+  }, [code, language, problem]);
 
   // ─── Keyboard shortcuts ───
   useEffect(() => {
@@ -388,6 +449,8 @@ export default function DSACodeEditor() {
                 problem={problem}
                 onShowHints={() => setShowHints(s => !s)}
                 showHints={showHints}
+                allProblems={PROBLEMS}
+                navigate={navigate}
               />
             </div>
 
@@ -490,10 +553,12 @@ export default function DSACodeEditor() {
               }} />
             </div>
             <TestCasePanel
+              ref={testCaseRef}
               code={code}
               language={language}
               problemId={problemId}
               problemDescription={problem?.description}
+              problemExamples={problem?.examples}
               onTestResults={setTestResults}
             />
           </div>

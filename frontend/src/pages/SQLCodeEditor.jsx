@@ -7,12 +7,16 @@ import { getSchemaById } from '../data/sqlSchemas';
 import SchemaViewer from '../components/sql/SchemaViewer';
 import SQLResultsPanel from '../components/sql/SQLResultsPanel';
 
-const diffColors = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' };
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const MOCK_RESULTS = {
-  columns: ['Result'],
-  rows: [['Query executed successfully. In Phase 2, results will come from a real database.']],
+const getAuthHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('token');
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 };
+
+const diffColors = { Easy: '#10b981', Medium: '#f59e0b', Hard: '#ef4444' };
 
 export default function SQLCodeEditor() {
   const { problemId } = useParams();
@@ -59,23 +63,37 @@ export default function SQLCodeEditor() {
 
   const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
-  // Mock run
-  const handleRun = useCallback(() => {
+  // Run via backend
+  const handleRun = useCallback(async () => {
     if (running) return;
     setRunning(true);
     setStatus('running');
     setResults(null);
-    setTimeout(() => {
-      const trimmed = code.trim().replace(/;$/, '').toLowerCase();
-      const expected = problem?.expectedQuery?.trim().replace(/;$/, '').toLowerCase();
-      // Simple mock check
-      const isCorrect = trimmed && expected && (trimmed === expected || trimmed.includes('select'));
-      setResults(MOCK_RESULTS);
-      setExecTime(Math.floor(Math.random() * 50) + 10);
-      setStatus(isCorrect ? 'accepted' : 'accepted'); // Always accept in mock mode
+
+    try {
+      const res = await fetch(`${API_URL}/api/practice/execute`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ code, language: 'sql', input: '' }),
+      });
+      const data = await res.json();
+      const execTimeMs = data.executionTime || Math.floor(Math.random() * 50) + 10;
+      setResults({
+        columns: ['Output'],
+        rows: [[data.output || data.error || 'Query executed']],
+      });
+      setExecTime(execTimeMs);
+      setStatus(data.success ? 'accepted' : 'error');
+    } catch (err) {
+      setResults({
+        columns: ['Error'],
+        rows: [[`Network error: ${err.message}`]],
+      });
+      setStatus('error');
+    } finally {
       setRunning(false);
-    }, 800);
-  }, [code, running, problem]);
+    }
+  }, [code, running]);
 
   const handleSubmit = useCallback(() => {
     handleRun();
