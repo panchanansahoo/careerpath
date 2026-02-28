@@ -81,11 +81,24 @@ body {
 }
 
 .text-gradient {
-  /* Subtle gradient for Proception style, or just white */
-  background: linear-gradient(to right, #fff, #a1a1aa);
+  background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 40%, #a78bfa 70%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .text-gradient-purple {
@@ -620,6 +633,36 @@ h3 {
   overflow: hidden;
 }
 
+.home-hero::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+
+@keyframes orbFloat {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(-30px, 20px) scale(1.05);
+  }
+
+  66% {
+    transform: translate(20px, -15px) scale(0.95);
+  }
+}
+
 .home-hero h1 {
   font-size: 56px;
   line-height: 1.1;
@@ -788,9 +831,9 @@ h3 {
 }
 
 .home-cta-banner {
-  padding: 80px 0;
+  padding: 100px 0;
   text-align: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.06) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 100%);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -9033,13 +9076,257 @@ h3 {
   transform: translateY(-4px);
 }
 
-/* ─── How It Works Cards ─── */
-.how-it-works-card {
-  transition: transform 0.3s ease;
+/* ─── How It Works — Premium Redesign ─── */
+.hiw-grid {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
-.how-it-works-card:hover {
-  transform: translateY(-6px);
+.hiw-card {
+  flex: 1;
+  max-width: 340px;
+  text-align: center;
+  position: relative;
+  padding: 44px 32px 40px;
+  border-radius: 24px;
+  background: rgba(12, 12, 12, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.hiw-card:hover {
+  transform: translateY(-10px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.hiw-card-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: blur(80px);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hiw-card:hover .hiw-card-glow {
+  opacity: 1;
+}
+
+.hiw-step-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 2;
+}
+
+.hiw-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+  margin: 0 auto 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid;
+  position: relative;
+  z-index: 1;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hiw-card:hover .hiw-icon-wrap {
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
+}
+
+.hiw-icon-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e4e4e7;
+}
+
+.hiw-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  letter-spacing: -0.01em;
+}
+
+.hiw-desc {
+  font-size: 15px;
+  color: #71717a;
+  line-height: 1.7;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.hiw-accent-line {
+  width: 40px;
+  height: 3px;
+  border-radius: 10px;
+  margin: 24px auto 0;
+  opacity: 0.6;
+  transition: width 0.3s ease, opacity 0.3s ease;
+}
+
+.hiw-card:hover .hiw-accent-line {
+  width: 60px;
+  opacity: 1;
+}
+
+/* Connector between cards */
+.hiw-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.hiw-connector-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  border-radius: 2px;
+}
+
+.hiw-connector-pulse {
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+  border-radius: 2px;
+  animation: hiwPulseFlow 2.5s ease-in-out infinite;
+}
+
+@keyframes hiwPulseFlow {
+  0% {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+.hiw-connector-arrow {
+  color: rgba(255, 255, 255, 0.25);
+  position: relative;
+  z-index: 1;
+  animation: hiwArrowBounce 2s ease-in-out infinite;
+}
+
+@keyframes hiwArrowBounce {
+
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translateX(4px);
+    opacity: 0.8;
+  }
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 900px) {
+  .hiw-grid {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .hiw-card {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .hiw-connector {
+    width: 2px;
+    height: 48px;
+    flex-direction: column;
+  }
+
+  .hiw-connector-line {
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  }
+
+  .hiw-connector-pulse {
+    width: 2px;
+    height: 16px;
+    background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+    animation: hiwPulseFlowVert 2.5s ease-in-out infinite;
+  }
+
+  @keyframes hiwPulseFlowVert {
+    0% {
+      transform: translateY(-24px);
+      opacity: 0;
+    }
+
+    30% {
+      opacity: 1;
+    }
+
+    70% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+  }
+
+  .hiw-connector-arrow {
+    transform: rotate(90deg);
+  }
 }
 
 /* ─── Central Brand Pulse ─── */
@@ -9087,13 +9374,72 @@ h3 {
 
 /* ─── Feature Card Enhancements ─── */
 .feature-card-hover {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+}
+
+.feature-card-hover::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent, rgba(139, 92, 246, 0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.feature-card-hover:hover::before {
+  opacity: 1;
 }
 
 .feature-card-hover:hover {
-  transform: translateY(-6px);
-  border-color: rgba(139, 92, 246, 0.3) !important;
-  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.1);
+  transform: translateY(-8px);
+  border-color: rgba(139, 92, 246, 0.25) !important;
+  box-shadow: 0 24px 48px rgba(139, 92, 246, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.1);
+  background: rgba(20, 16, 32, 0.7) !important;
+}
+
+/* ─── Scroll Reveal Animation ─── */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Glow Effect for Popular Card ─── */
+.glow-effect {
+  position: relative;
+}
+
+.glow-effect::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(255, 255, 255, 0.1), rgba(139, 92, 246, 0.2));
+  z-index: -1;
+  filter: blur(12px);
+  opacity: 0.5;
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* ─── Section Badge Style (consistent across page) ─── */

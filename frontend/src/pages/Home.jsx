@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Brain, Code2, MessageSquare, FileText, TrendingUp, BookOpen,
@@ -11,6 +11,8 @@ import {
 
 import { Button } from '../components/ui/button';
 
+const Hero3DScene = lazy(() => import('../components/Hero3DScene'));
+
 /* ═══════════════════════════════════════════════ */
 /*                    DATA                         */
 /* ═══════════════════════════════════════════════ */
@@ -18,8 +20,8 @@ import { Button } from '../components/ui/button';
 const features = [
   {
     icon: <Zap size={24} />,
-    bg: 'rgba(255, 255, 255, 0.08)',
-    color: '#e4e4e7',
+    bg: 'rgba(139, 92, 246, 0.12)',
+    color: '#a78bfa',
     title: 'Intelligent Code Studio',
     desc: 'Write production-grade code with an environment that critiques your style, efficiency, and edge cases.',
     link: '/code-practice',
@@ -27,8 +29,8 @@ const features = [
   },
   {
     icon: <Database size={24} />,
-    bg: 'rgba(255, 255, 255, 0.06)',
-    color: '#d4d4d8',
+    bg: 'rgba(59, 130, 246, 0.12)',
+    color: '#60a5fa',
     title: 'SQL Mastery',
     desc: 'Master database queries with 100+ real-world SQL problems across joins, subqueries, window functions & more.',
     link: '/sql-problems',
@@ -36,8 +38,8 @@ const features = [
   },
   {
     icon: <Calculator size={24} />,
-    bg: 'rgba(255, 255, 255, 0.06)',
-    color: '#d4d4d8',
+    bg: 'rgba(16, 185, 129, 0.12)',
+    color: '#34d399',
     title: 'Aptitude Mastery',
     desc: 'Practice 200+ problems across quantitative aptitude, logical reasoning & verbal ability.',
     link: '/aptitude',
@@ -45,8 +47,8 @@ const features = [
   },
   {
     icon: <Map size={24} />,
-    bg: 'rgba(255, 255, 255, 0.06)',
-    color: '#d4d4d8',
+    bg: 'rgba(245, 158, 11, 0.12)',
+    color: '#fbbf24',
     title: 'DSA Learning Path',
     desc: 'Master 15 DSA topics with pattern-first learning, thinking frameworks, and curated problems.',
     link: '/dsa-path',
@@ -54,8 +56,8 @@ const features = [
   },
   {
     icon: <Building2 size={24} />,
-    bg: 'rgba(255, 255, 255, 0.06)',
-    color: '#d4d4d8',
+    bg: 'rgba(236, 72, 153, 0.12)',
+    color: '#f472b6',
     title: 'Company Prep Hub',
     desc: 'Practice real interview questions from top companies — filtered by role, stage & frequency.',
     link: '/company-prep',
@@ -63,8 +65,8 @@ const features = [
   },
   {
     icon: <Mic size={24} />,
-    bg: 'rgba(255, 255, 255, 0.06)',
-    color: '#d4d4d8',
+    bg: 'rgba(6, 182, 212, 0.12)',
+    color: '#22d3ee',
     title: 'AI Interview Simulator',
     desc: 'Simulate real interviews with AI follow-ups. Includes voice practice with pace & filler analysis.',
     link: '/company-interview',
@@ -78,21 +80,27 @@ const howItWorks = [
     icon: <UserCheck size={28} />,
     title: 'Set Your Goal',
     desc: 'Tell us your target company, role, and timeline. Our AI builds a personalized roadmap just for you.',
-    color: '#ffffff'
+    gradient: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
+    glowColor: 'rgba(139, 92, 246, 0.15)',
+    borderColor: 'rgba(139, 92, 246, 0.3)'
   },
   {
     step: '02',
     icon: <Flame size={28} />,
     title: 'Practice Daily',
     desc: 'Solve DSA, SQL, aptitude, and mock interviews. Get instant AI feedback on every attempt.',
-    color: '#d4d4d8'
+    gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
+    glowColor: 'rgba(59, 130, 246, 0.15)',
+    borderColor: 'rgba(59, 130, 246, 0.3)'
   },
   {
     step: '03',
     icon: <Trophy size={28} />,
     title: 'Land Your Dream Job',
     desc: 'Track your readiness score, fix weak areas, and walk into interviews with unstoppable confidence.',
-    color: '#a1a1aa'
+    gradient: 'linear-gradient(135deg, #34d399, #10b981)',
+    glowColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.3)'
   }
 ];
 
@@ -347,6 +355,18 @@ export default function Home() {
       width: '100vw'
     }}>
 
+      {/* Ambient gradient orbs */}
+      <div style={{
+        position: 'fixed', top: '20%', left: '-5%', width: '500px', height: '500px',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0, animation: 'orbFloat 15s ease-in-out infinite reverse'
+      }} />
+      <div style={{
+        position: 'fixed', bottom: '10%', right: '-5%', width: '400px', height: '400px',
+        borderRadius: '50%', background: 'radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0, animation: 'orbFloat 18s ease-in-out infinite'
+      }} />
+
 
 
       {/* ═══════════════════════════════════════════════ */}
@@ -396,145 +416,17 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Visual — Clean Dashboard Mockup */}
-            <div style={{ position: 'relative', zIndex: 10 }} className="hero-visual-container">
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
-              }}>
-                {/* Window Bar */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px 16px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-                  background: 'rgba(255, 255, 255, 0.02)'
-                }}>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-                  </div>
-                  <div style={{
-                    flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'rgba(255,255,255,0.04)', borderRadius: '8px',
-                    padding: '6px 12px', fontSize: '11px', color: '#52525b'
-                  }}>
-                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e' }} />
-                    preploop.app/interview/two-sum
-                  </div>
-                </div>
+            {/* Right Visual — 3D Interactive Scene */}
+            <div style={{ position: 'relative', zIndex: 10, minHeight: '480px' }} className="hero-visual-container">
+              {/* 3D Scene Background */}
+              <Suspense fallback={null}>
+                <Hero3DScene />
+              </Suspense>
 
-                {/* Content Area */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', minHeight: '320px' }}>
-                  {/* Code Panel */}
-                  <div style={{ padding: '24px', borderRight: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                    <div style={{ fontSize: '11px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '16px' }}>
-                      Live Code Editor
-                    </div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '13px', lineHeight: '2', color: '#a1a1aa' }}>
-                      <div><span style={{ color: '#71717a' }}>1</span>  <span style={{ color: '#d4d4d8' }}>function</span> <span style={{ color: '#ffffff' }}>twoSum</span>(nums, target) {'{'}</div>
-                      <div><span style={{ color: '#71717a' }}>2</span>    <span style={{ color: '#d4d4d8' }}>const</span> map = <span style={{ color: '#d4d4d8' }}>new</span> <span style={{ color: '#ffffff' }}>Map</span>();</div>
-                      <div><span style={{ color: '#71717a' }}>3</span>    <span style={{ color: '#d4d4d8' }}>for</span> (<span style={{ color: '#d4d4d8' }}>let</span> i = 0; i {'<'} nums.length; i++) {'{'}</div>
-                      <div><span style={{ color: '#71717a' }}>4</span>      <span style={{ color: '#d4d4d8' }}>const</span> comp = target - nums[i];</div>
-                      <div><span style={{ color: '#71717a' }}>5</span>      <span style={{ color: '#d4d4d8' }}>if</span> (map.<span style={{ color: '#ffffff' }}>has</span>(comp))</div>
-                      <div><span style={{ color: '#71717a' }}>6</span>        <span style={{ color: '#d4d4d8' }}>return</span> [map.get(comp), i];</div>
-                      <div><span style={{ color: '#71717a' }}>7</span>      map.<span style={{ color: '#ffffff' }}>set</span>(nums[i], i);</div>
-                      <div><span style={{ color: '#71717a' }}>8</span>    {'}'}</div>
-                      <div><span style={{ color: '#71717a' }}>9</span>  {'}'}</div>
-                    </div>
-                    <div style={{
-                      marginTop: '20px', padding: '10px 14px',
-                      background: 'rgba(34, 197, 94, 0.06)',
-                      border: '1px solid rgba(34, 197, 94, 0.15)',
-                      borderRadius: '8px', fontSize: '12px', color: '#4ade80',
-                      display: 'flex', alignItems: 'center', gap: '6px'
-                    }}>
-                      <CheckCircle size={12} /> All test cases passed
-                    </div>
-                  </div>
 
-                  {/* Score Sidebar */}
-                  <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Score</div>
-                      <div style={{ fontSize: '40px', fontWeight: '700', color: '#ffffff', lineHeight: 1 }}>98</div>
-                      <div style={{ display: 'flex', gap: '2px', justifyContent: 'center', marginTop: '8px' }}>
-                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={10} fill="#d4d4d8" color="#d4d4d8" />)}
-                      </div>
-                    </div>
 
-                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {[
-                        { label: 'Time', value: 'O(n)' },
-                        { label: 'Space', value: 'O(n)' },
-                        { label: 'Pattern', value: 'Hash Map' },
-                      ].map((item, i) => (
-                        <div key={i}>
-                          <div style={{ fontSize: '10px', color: '#71717a', textTransform: 'uppercase' }}>{item.label}</div>
-                          <div style={{ fontSize: '13px', color: '#e4e4e7', fontWeight: '600', marginTop: '2px' }}>{item.value}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.06)' }} />
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <CheckCircle size={12} color="#22c55e" />
-                      <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Interview Ready</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════ */}
-      {/*              TRUSTED BY / LOGO STRIP            */}
-      {/* ═══════════════════════════════════════════════ */}
-      <section style={{ padding: '40px 0 60px', position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255, 255, 255, 0.06)', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#71717a' }}>
-              <Cpu size={14} color="#a1a1aa" />
-              Engineers from these companies trust PrepLoop
-            </div>
-          </div>
-          <div className="logo-marquee-track">
-            {[...Array(3)].flatMap((_, rep) =>
-              ['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'Netflix', 'Uber', 'Flipkart', 'Adobe', 'Salesforce', 'Oracle', 'TCS', 'Infosys', 'Wipro', 'Deloitte', 'Goldman Sachs', 'JPMorgan', 'Samsung', 'PayPal', 'Stripe'].map((name, i) => (
-                <div key={`${rep}-${i}`} className="logo-marquee-item">{name}</div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════ */}
-      {/*                ANIMATED STATS BAR               */}
-      {/* ═══════════════════════════════════════════════ */}
-      <section style={{ padding: '60px 0', position: 'relative', zIndex: 10 }}>
-        <div className="container">
-          <div style={{
-            display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0',
-            background: 'rgba(18, 18, 18, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '20px', backdropFilter: 'blur(20px)', overflow: 'hidden'
-          }}>
-            {stats.map((s, i) => (
-              <React.Fragment key={i}>
-                <StatCard {...s} />
-                {i < stats.length - 1 && (
-                  <div style={{ width: '1px', background: 'rgba(255, 255, 255, 0.08)', alignSelf: 'stretch', margin: '24px 0' }} />
-                )}
-              </React.Fragment>
-            ))}
           </div>
         </div>
       </section>
@@ -544,55 +436,61 @@ export default function Home() {
       {/* ═══════════════════════════════════════════════ */}
       {/*               HOW IT WORKS (3-STEP)             */}
       {/* ═══════════════════════════════════════════════ */}
-      <section style={{ padding: '80px 0', position: 'relative', zIndex: 10 }}>
+      <section style={{ padding: '100px 0', position: 'relative', zIndex: 10 }}>
         <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '72px' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
-              padding: '6px 16px', border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '99px', fontSize: '12px', color: '#a1a1aa',
-              background: 'rgba(255, 255, 255, 0.04)', marginBottom: '20px',
+              padding: '6px 16px', border: '1px solid rgba(139, 92, 246, 0.2)',
+              borderRadius: '99px', fontSize: '12px', color: '#a78bfa',
+              background: 'rgba(139, 92, 246, 0.06)', marginBottom: '20px',
               textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600'
             }}>
               <Rocket size={12} /> How It Works
             </div>
-            <h2 style={{ fontSize: '40px', marginBottom: '16px', fontWeight: 'bold' }}>
+            <h2 style={{ fontSize: '44px', marginBottom: '16px', fontWeight: '700', letterSpacing: '-0.02em' }}>
               From Zero to <span className="text-gradient">Interview Ready</span>
             </h2>
-            <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
+            <p style={{ color: 'var(--zinc-400)', fontSize: '18px', maxWidth: '600px', margin: '0 auto', lineHeight: '1.7' }}>
               Three simple steps to transform your interview preparation
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', position: 'relative' }}>
-            {/* Connecting line */}
-            <div style={{
-              position: 'absolute', top: '60px', left: '16.67%', right: '16.67%', height: '2px',
-              background: 'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.08))',
-              zIndex: 0
-            }} />
-
+          <div className="hiw-grid">
             {howItWorks.map((item, i) => (
-              <div key={i} className="how-it-works-card" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-                <div style={{
-                  width: '80px', height: '80px', borderRadius: '24px', margin: '0 auto 24px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: item.color, position: 'relative'
-                }}>
-                  {item.icon}
-                  <div style={{
-                    position: 'absolute', top: '-8px', right: '-8px',
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3f3f46, #52525b)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '10px', fontWeight: '800', color: '#fff'
-                  }}>{item.step}</div>
+              <React.Fragment key={i}>
+                <div className="hiw-card">
+                  {/* Glow orb behind card */}
+                  <div className="hiw-card-glow" style={{ background: item.glowColor }} />
+
+                  {/* Step number badge */}
+                  <div className="hiw-step-badge" style={{ background: item.gradient }}>
+                    {item.step}
+                  </div>
+
+                  {/* Icon container */}
+                  <div className="hiw-icon-wrap" style={{ borderColor: item.borderColor }}>
+                    <div className="hiw-icon-inner" style={{ background: item.glowColor }}>
+                      {item.icon}
+                    </div>
+                  </div>
+
+                  <h3 className="hiw-title">{item.title}</h3>
+                  <p className="hiw-desc">{item.desc}</p>
+
+                  {/* Bottom accent line */}
+                  <div className="hiw-accent-line" style={{ background: item.gradient }} />
                 </div>
-                <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#fff' }}>{item.title}</h3>
-                <p style={{ fontSize: '15px', color: '#71717a', lineHeight: '1.6', maxWidth: '320px', margin: '0 auto' }}>{item.desc}</p>
-              </div>
+
+                {/* Animated connector arrow between cards */}
+                {i < howItWorks.length - 1 && (
+                  <div className="hiw-connector">
+                    <div className="hiw-connector-line" />
+                    <div className="hiw-connector-pulse" />
+                    <ArrowRight size={16} className="hiw-connector-arrow" />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -764,6 +662,27 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════ */}
+      {/*              TRUSTED BY / LOGO STRIP            */}
+      {/* ═══════════════════════════════════════════════ */}
+      <section style={{ padding: '40px 0 60px', position: 'relative', zIndex: 10, borderTop: '1px solid rgba(255, 255, 255, 0.06)', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#71717a' }}>
+              <Cpu size={14} color="#a1a1aa" />
+              Engineers from these companies trust PrepLoop
+            </div>
+          </div>
+          <div className="logo-marquee-track">
+            {[...Array(3)].flatMap((_, rep) =>
+              ['Google', 'Amazon', 'Microsoft', 'Meta', 'Apple', 'Netflix', 'Uber', 'Flipkart', 'Adobe', 'Salesforce', 'Oracle', 'TCS', 'Infosys', 'Wipro', 'Deloitte', 'Goldman Sachs', 'JPMorgan', 'Samsung', 'PayPal', 'Stripe'].map((name, i) => (
+                <div key={`${rep}-${i}`} className="logo-marquee-item">{name}</div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+
       <GradientDivider />
 
       {/* ═══════════════════════════════════════════════ */}
@@ -870,8 +789,8 @@ export default function Home() {
         }} />
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ marginBottom: '16px' }}>
-            <Crown size={32} color="#d4d4d8" />
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <Crown size={32} color="#a78bfa" />
           </div>
           <h2 style={{ fontSize: '40px', marginBottom: '16px' }}>Ready to get started?</h2>
           <p style={{ maxWidth: '500px', margin: '0 auto 32px', fontSize: '18px' }}>Join thousands of engineers who are crushing technical interviews. Start for free, upgrade when you're ready.</p>
