@@ -6,6 +6,7 @@ import path from 'path';
 import os from 'os';
 import { authenticateToken, optionalAuth } from '../middleware/auth.js';
 import { supabaseAdmin } from '../db/supabaseClient.js';
+import { getRandomQuestionSet, getFilteredQuestions, getQuestionCount } from '../services/companyQuestionService.js';
 
 const router = express.Router();
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
@@ -151,9 +152,69 @@ ${stage === 'Managerial' ? `- Leadership, project management, team handling, con
 
 // ─── Start Interview ───
 router.post('/start', optionalAuth, async (req, res) => {
-  const { company, role, stage, difficulty, totalQuestions = 8 } = req.body;
+  const { company, role, stage, difficulty, totalQuestions = 8, useRealQuestions = false } = req.body;
+
+  // If useRealQuestions, pre-load a question set from the company bank
+  let questionBank = [];
+  let questionSource = 'ai';
+  if (useRealQuestions) {
+    questionBank = getRandomQuestionSet(company, role, stage, difficulty, totalQuestions);
+    if (questionBank.length > 0) {
+      questionSource = 'database';
+      console.log(`📋 Loaded ${questionBank.length} real questions for ${company} (${stage}/${role}/${difficulty})`);
+    } else {
+      console.log(`⚠️ No real questions found for ${company} ${stage}/${role}/${difficulty}, falling back to AI`);
+    }
+  }
 
   try {
+    // If we have real questions, use the first one with AI-generated greeting
+    if (questionSource === 'database' && questionBank.length > 0) {
+      const firstQ = questionBank[0];
+      const greeting = `Hi! Welcome to your ${stage} interview at ${company}. I'm excited to get started! Here's your first question:`;
+      const questionText = `${greeting}\n\n${firstQ.question}`;
+
+      // If groq is available, generate a natural greeting wrapping the real question
+      if (groq) {
+        try {
+          const completion = await groq.chat.completions.create({
+            model: 'llama-3.1-8b-instant',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a friendly interviewer at ${company}. Greet the candidate warmly in 1 sentence, then naturally ask this exact interview question (do NOT change the question content, just present it conversationally):\n\n"${firstQ.question}"\n\nRespond as JSON:\n{\n  "question": "Your greeting + the question asked naturally",\n  "tips": ["Tip 1", "Tip 2"],\n  "thinkTime": 30,\n  "interviewerReaction": "greeting"\n}`
+              }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.7
+          });
+          const result = JSON.parse(completion.choices[0].message.content);
+          return res.json({
+            ...result,
+            context: { company, role, stage, difficulty, totalQuestions },
+            thinkTime: result.thinkTime || 30,
+            interviewerReaction: 'greeting',
+            questionSource: 'database',
+            questionMeta: { id: firstQ.id, tags: firstQ.tags, difficulty: firstQ.difficulty, frequencyScore: firstQ.frequencyScore },
+            questionBank: questionBank.map(q => q.id), // Send IDs so frontend can track which questions to request
+          });
+        } catch (e) {
+          // Fall through to use raw question
+        }
+      }
+
+      return res.json({
+        question: questionText,
+        context: { company, role, stage, difficulty, totalQuestions },
+        tips: firstQ.hints?.length > 0 ? firstQ.hints : ['Take a moment to collect your thoughts', 'Structure your answer clearly'],
+        interviewerReaction: 'greeting',
+        thinkTime: 30,
+        questionSource: 'database',
+        questionMeta: { id: firstQ.id, tags: firstQ.tags, difficulty: firstQ.difficulty, frequencyScore: firstQ.frequencyScore },
+        questionBank: questionBank.map(q => q.id),
+      });
+    }
+
     if (!groq) {
       // Stage-specific fallback questions
       const fallbackQuestions = {
@@ -170,7 +231,8 @@ router.post('/start', optionalAuth, async (req, res) => {
         context: { company, role, stage, difficulty, totalQuestions },
         tips: ['Take a moment to collect your thoughts', 'Structure your answer: context → approach → result'],
         interviewerReaction: 'greeting',
-        thinkTime: 30
+        thinkTime: 30,
+        questionSource: 'ai',
       });
     }
 
@@ -200,7 +262,8 @@ Respond as JSON:
       ...result,
       context: { company, role, stage, difficulty, totalQuestions },
       thinkTime: result.thinkTime || 30,
-      interviewerReaction: result.interviewerReaction || 'greeting'
+      interviewerReaction: result.interviewerReaction || 'greeting',
+      questionSource: 'ai',
     });
   } catch (error) {
     console.error('Interview start error:', error.message?.substring(0, 200));
@@ -219,7 +282,8 @@ Respond as JSON:
       context: { company, role, stage, difficulty, totalQuestions },
       tips: ['Take a moment to collect your thoughts', 'Structure your answer clearly'],
       interviewerReaction: 'greeting',
-      thinkTime: 30
+      thinkTime: 30,
+      questionSource: 'ai',
     });
   }
 });
@@ -259,7 +323,29 @@ function getAdaptiveDifficultyPrompt(lastScore, averageScore, cumulativeScores) 
 
 // ─── Follow-up with realistic interviewer behavior ───
 router.post('/follow-up', optionalAuth, async (req, res) => {
-  const { company, role, stage, difficulty, previousQuestion, userAnswer, conversationHistory, questionNumber = 2, totalQuestions = 8, lastScore, averageScore, cumulativeScores, code, codeLanguage } = req.body;
+  const { company, role, stage, difficulty, previousQuestion, userAnswer, conversationHistory, questionNumber = 2, totalQuestions = 8, lastScore, averageScore, cumulativeScores, code, codeLanguage, useRealQuestions = false, questionBankIds, currentQuestionId } = req.body;
+
+  // If using real questions, get the next question from the bank
+  let nextRealQuestion = null;
+  let realQuestionMeta = null;
+  if (useRealQuestions && questionBankIds && questionBankIds.length > 0) {
+    const nextIdx = questionNumber - 1; // questionNumber is 1-indexed, and we want the next one
+    if (nextIdx < questionBankIds.length) {
+      const { getQuestionById } = await import('../services/companyQuestionService.js');
+      nextRealQuestion = getQuestionById(questionBankIds[nextIdx]);
+      if (nextRealQuestion) {
+        realQuestionMeta = { id: nextRealQuestion.id, tags: nextRealQuestion.tags, difficulty: nextRealQuestion.difficulty, frequencyScore: nextRealQuestion.frequencyScore };
+      }
+    }
+  }
+
+  // Get reference answer for current question if available
+  let referenceAnswer = null;
+  if (useRealQuestions && currentQuestionId) {
+    const { getQuestionById: getQ } = await import('../services/companyQuestionService.js');
+    const currentQ = getQ(currentQuestionId);
+    if (currentQ?.answer) referenceAnswer = currentQ.answer;
+  }
 
   try {
     if (!groq) {
@@ -351,7 +437,7 @@ router.post('/follow-up', optionalAuth, async (req, res) => {
 
       return res.json({
         feedback: reactions[Math.floor(Math.random() * reactions.length)],
-        followUpQuestion: isLast ? '' : questions[qIdx],
+        followUpQuestion: isLast ? '' : (nextRealQuestion ? nextRealQuestion.question : questions[qIdx]),
         closingRemark: isLast ? `Thank you so much for your time today! You've given some really thoughtful answers. We'll be in touch soon with next steps. Best of luck!` : undefined,
         score: 65 + Math.floor(Math.random() * 25),
         strengths: [
@@ -364,7 +450,9 @@ router.post('/follow-up', optionalAuth, async (req, res) => {
         ],
         interviewerReaction: ['encouraging', 'impressed', 'probing', 'neutral'][Math.floor(Math.random() * 4)],
         thinkTime: 30 + Math.floor(Math.random() * 30),
-        hint: ['Think about time vs space trade-offs', 'Consider the edge cases first', 'Try working through a small example', 'What would happen at scale?'][Math.floor(Math.random() * 4)]
+        hint: ['Think about time vs space trade-offs', 'Consider the edge cases first', 'Try working through a small example', 'What would happen at scale?'][Math.floor(Math.random() * 4)],
+        questionSource: nextRealQuestion ? 'database' : 'ai',
+        questionMeta: realQuestionMeta || null,
       });
     }
 
@@ -388,10 +476,25 @@ Include your evaluation in "codeFeedback" in the JSON response.` : '';
 
     const adaptivePrompt = getAdaptiveDifficultyPrompt(lastScore, averageScore, cumulativeScores);
 
+    // Build reference answer context if using real questions
+    const referenceContext = referenceAnswer ? `
+
+## Reference Answer (for your evaluation only, DO NOT reveal this to the candidate):
+"${referenceAnswer.substring(0, 500)}"
+Use this as a benchmark to evaluate the candidate's answer. Score higher if they cover the key points from the reference.` : '';
+
+    // Build real question injection if available
+    const realQuestionInstruction = (nextRealQuestion && !isLastQuestion) ? `
+
+## IMPORTANT: Use This Exact Question as Your Follow-Up
+You MUST use this question as your follow-up (present it naturally, in your own words, but keep the core question intact):
+"${nextRealQuestion.question}"
+Do NOT generate a different question. Transitions should be natural.` : '';
+
     const messages = [
       {
         role: 'system',
-        content: getInterviewerPersona(company, role, stage, difficulty, questionNumber, totalQuestions) + adaptivePrompt + codeContext + `
+        content: getInterviewerPersona(company, role, stage, difficulty, questionNumber, totalQuestions) + adaptivePrompt + codeContext + referenceContext + realQuestionInstruction + `
 
 The candidate just answered a question. You must:
 1. React naturally to their answer (say something like "Makes sense", "Got it")
@@ -441,7 +544,10 @@ Respond as JSON:
       hint: result.hint || 'Try breaking the problem into smaller parts',
       difficultyLevel: result.difficultyLevel || 'medium',
       adaptiveNote: result.adaptiveNote || null,
-      codeFeedback: result.codeFeedback || null
+      codeFeedback: result.codeFeedback || null,
+      questionSource: nextRealQuestion ? 'database' : 'ai',
+      questionMeta: realQuestionMeta || null,
+      referenceAnswer: referenceAnswer || null,
     });
   } catch (error) {
     console.error('Follow-up error:', error.message?.substring(0, 200));
@@ -606,6 +712,142 @@ Respond as JSON:
   }
 });
 
+// ─── Detailed per-question report ───
+router.post('/detailed-report', optionalAuth, async (req, res) => {
+  const { company, role, stage, conversation, sessionScores, speechHistory } = req.body;
+
+  try {
+    // Extract Q&A pairs from conversation
+    const qaPairs = [];
+    let currentQ = null;
+    for (const msg of (conversation || [])) {
+      if (msg.role === 'interviewer' && !currentQ) {
+        currentQ = { question: msg.content, questionSource: msg.questionSource, questionMeta: msg.questionMeta };
+      } else if (msg.role === 'candidate' && currentQ) {
+        qaPairs.push({ ...currentQ, answer: msg.content, timestamp: msg.timestamp });
+        currentQ = null;
+      } else if (msg.role === 'interviewer' && currentQ) {
+        // New question without an answer to the previous one
+        currentQ = { question: msg.content, questionSource: msg.questionSource, questionMeta: msg.questionMeta };
+      } else if (msg.role === 'feedback' && qaPairs.length > 0) {
+        // Attach feedback score to the last Q&A pair
+        qaPairs[qaPairs.length - 1].inlineScore = msg.score;
+        qaPairs[qaPairs.length - 1].strengths = msg.strengths;
+        qaPairs[qaPairs.length - 1].improvements = msg.improvements;
+      }
+    }
+
+    if (!groq) {
+      // Fallback: generate a basic report from collected data
+      const questionBreakdown = qaPairs.map((qa, i) => ({
+        questionNumber: i + 1,
+        question: qa.question?.substring(0, 200),
+        candidateAnswer: qa.answer?.substring(0, 300),
+        score: qa.inlineScore || (sessionScores?.[i] || 70),
+        category: stage?.toLowerCase() || 'technical',
+        feedback: 'Good response with room for improvement.',
+        strengths: qa.strengths || ['Clear communication'],
+        improvements: qa.improvements || ['Add more specifics'],
+        idealAnswerPoints: ['Cover key concepts', 'Use specific examples', 'Discuss trade-offs'],
+      }));
+
+      return res.json({
+        overallScore: sessionScores?.length > 0 ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length) : 72,
+        summary: `Completed ${qaPairs.length} questions in ${stage} round at ${company}.`,
+        verdict: 'Would Advance',
+        verdictEmoji: '👍',
+        questionBreakdown,
+        categoryScores: { technicalSkills: 75, communication: 80, problemSolving: 72, cultureFit: 78 },
+        speechAnalysis: speechHistory?.length > 0 ? {
+          overallWPM: Math.round(speechHistory.reduce((a, s) => a + (s.wpm || 0), 0) / speechHistory.length),
+          totalFillers: speechHistory.reduce((a, s) => a + (s.totalFillers || 0), 0),
+          clarityTrend: speechHistory.map(s => s.clarityScore || 80),
+          confidenceTrend: speechHistory.map(s => s.confidenceScore || 75),
+        } : null,
+        recommendations: [
+          { area: 'Practice', action: `Review ${stage} questions for ${company}`, resources: ['/company-prep'] },
+          { area: 'Communication', action: 'Focus on structuring answers with STAR method', resources: ['/learning-path'] },
+        ],
+        companyFitScore: 76,
+        companyFitNotes: `Shows potential alignment with ${company}'s values.`,
+      });
+    }
+
+    // Build Q&A summary for AI analysis
+    const qaText = qaPairs.map((qa, i) =>
+      `Q${i + 1}: ${qa.question?.substring(0, 300)}\nA${i + 1}: ${qa.answer?.substring(0, 500)}\nInline Score: ${qa.inlineScore || 'N/A'}`
+    ).join('\n\n');
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a senior interviewing panel at ${company} creating a DETAILED post-interview report for a ${stage} interview for ${role}.
+Analyze EACH question-answer pair individually. Be specific — reference actual content from answers.
+
+Respond as JSON:
+{
+  "overallScore": 0-100,
+  "summary": "3-4 sentence comprehensive evaluation",
+  "verdict": "Strong Hire / Would Advance / Borderline / Would Not Advance",
+  "verdictEmoji": "🌟 or 👍 or 🤔 or 👎",
+  "questionBreakdown": [
+    {
+      "questionNumber": 1,
+      "question": "The question asked",
+      "score": 0-100,
+      "category": "technical|behavioral|system-design|hr|coding",
+      "feedback": "2-3 sentence specific feedback on THIS answer",
+      "strengths": ["Specific strength 1", "Specific strength 2"],
+      "improvements": ["Specific improvement 1"],
+      "idealAnswerPoints": ["Key point they should have covered", "Another key point"]
+    }
+  ],
+  "categoryScores": { "technicalSkills": 0-100, "communication": 0-100, "problemSolving": 0-100, "cultureFit": 0-100 },
+  "recommendations": [
+    { "area": "Area name", "action": "Specific actionable recommendation" }
+  ],
+  "companyFitScore": 0-100,
+  "companyFitNotes": "1-2 sentences on company-specific fit"
+}`
+        },
+        { role: 'user', content: `Analyze this interview:\n\n${qaText}` }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.5
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content);
+
+    // Merge speech analysis data if available
+    if (speechHistory?.length > 0) {
+      result.speechAnalysis = {
+        overallWPM: Math.round(speechHistory.reduce((a, s) => a + (s.wpm || 0), 0) / speechHistory.length),
+        totalFillers: speechHistory.reduce((a, s) => a + (s.totalFillers || 0), 0),
+        clarityTrend: speechHistory.map(s => s.clarityScore || 80),
+        confidenceTrend: speechHistory.map(s => s.confidenceScore || 75),
+      };
+    }
+
+    // Attach candidate answers to the breakdown for display
+    if (result.questionBreakdown) {
+      result.questionBreakdown.forEach((q, i) => {
+        if (qaPairs[i]) {
+          q.candidateAnswer = qaPairs[i].answer?.substring(0, 500);
+          q.questionSource = qaPairs[i].questionSource;
+          q.questionMeta = qaPairs[i].questionMeta;
+        }
+      });
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('Detailed report error:', error.message);
+    res.status(500).json({ error: 'Failed to generate detailed report' });
+  }
+});
+
 // ─── Analyze speech for pace, fillers, clarity ───
 router.post('/speech-feedback', optionalAuth, async (req, res) => {
   const { transcript, duration } = req.body;
@@ -722,11 +964,21 @@ Respond strictly in this JSON format:
 
 // ─── Text-to-Speech (Orpheus TTS) ───
 router.post('/tts', optionalAuth, async (req, res) => {
-  const { text } = req.body;
+  const { text, persona } = req.body;
 
   if (!text || text.trim().length === 0) {
     return res.status(400).json({ error: 'Text is required' });
   }
+
+  // Voice selection based on interviewer persona
+  const voiceMap = {
+    friendly: 'diana',
+    analytical: 'tara',
+    formal: 'charlie',
+    casual: 'leo',
+    default: 'diana'
+  };
+  const selectedVoice = voiceMap[persona] || voiceMap.default;
 
   try {
     if (!groq) {
@@ -737,11 +989,11 @@ router.post('/tts', optionalAuth, async (req, res) => {
       return res.status(413).json({ error: 'Text too long for TTS', fallback: true });
     }
 
-    // Primary: Orpheus (confirmed working)
+    // Primary: Orpheus with persona-selected voice
     const response = await groq.audio.speech.create({
       model: 'canopylabs/orpheus-v1-english',
       input: text,
-      voice: 'diana',
+      voice: selectedVoice,
       response_format: 'wav',
     });
 
@@ -802,7 +1054,7 @@ router.post('/stt', optionalAuth, upload.single('audio'), async (req, res) => {
     });
 
     // Clean up temp file
-    try { fs.unlinkSync(filePath); } catch {}
+    try { fs.unlinkSync(filePath); } catch { }
 
     res.json({
       text: transcription.text || '',
@@ -810,7 +1062,7 @@ router.post('/stt', optionalAuth, upload.single('audio'), async (req, res) => {
     });
   } catch (error) {
     console.error('STT error:', error.message);
-    try { if (filePath) fs.unlinkSync(filePath); } catch {}
+    try { if (filePath) fs.unlinkSync(filePath); } catch { }
     res.status(500).json({ error: 'STT failed' });
   }
 });

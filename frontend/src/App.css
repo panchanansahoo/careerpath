@@ -6884,6 +6884,106 @@ h3 {
   color: #818cf8;
 }
 
+/* Real Questions Toggle */
+.ti-realq-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ti-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ti-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ti-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.ti-toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.ti-toggle-switch input:checked+.ti-toggle-slider {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.ti-toggle-switch input:checked+.ti-toggle-slider::before {
+  transform: translateX(20px);
+  background: #818cf8;
+  box-shadow: 0 0 8px rgba(129, 140, 248, 0.4);
+}
+
+.ti-toggle-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ti-realq-badge {
+  font-size: 15px;
+}
+
+.ti-realq-note {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(129, 140, 248, 0.7);
+  padding: 6px 10px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 8px;
+}
+
+/* Question Source Badge (in chat) */
+.ti-qsource-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 6px;
+}
+
+.ti-qsource-badge.database {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.ti-qsource-badge.ai {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+
 .ti-join-btn {
   width: 100%;
   padding: 16px;

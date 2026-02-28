@@ -16,6 +16,7 @@ import AICopilot from '../components/AICopilot';
 import InterviewBadges from '../components/InterviewBadges';
 import CodeEditorPanel from '../components/CodeEditorPanel';
 import ProctoringManager from '../components/ProctoringManager';
+import DetailedReport from '../components/interview/DetailedReport';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -183,6 +184,7 @@ export default function CompanyInterview() {
     const [currentQuestion, setCurrentQuestion] = useState('');
     const [sessionScores, setSessionScores] = useState([]);
     const [summaryData, setSummaryData] = useState(null);
+    const [detailedReportData, setDetailedReportData] = useState(null);
     const [questionCount, setQuestionCount] = useState(0);
     const totalQuestions = 8;
 
@@ -253,6 +255,12 @@ export default function CompanyInterview() {
     // Proctoring
     const [proctoringEnabled, setProctoringEnabled] = useState(true);
     const [proctoringViolations, setProctoringViolations] = useState([]);
+
+    // Company-specific questions
+    const [useRealQuestions, setUseRealQuestions] = useState(false);
+    const [questionBankIds, setQuestionBankIds] = useState([]);
+    const [currentQuestionMeta, setCurrentQuestionMeta] = useState(null);
+    const [questionSource, setQuestionSource] = useState('ai');
 
     // ── Helpers ──
     const companyObj = COMPANIES.find(c => c.id === config.company) || COMPANIES[0];
@@ -420,12 +428,16 @@ export default function CompanyInterview() {
     const speakText = async (text, onComplete) => {
         setAiSpeaking(true);
 
+        // Determine persona for voice selection based on difficulty
+        const personaMap = { 'Easy': 'friendly', 'Medium': 'analytical', 'Hard': 'formal', 'Medium-Hard': 'formal' };
+        const persona = personaMap[config.difficulty] || 'friendly';
+
         // Try high-quality backend TTS first
         try {
             const res = await fetch(`${API_URL}/api/company-interview/tts`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ text })
+                body: JSON.stringify({ text, persona })
             });
 
             if (res.ok) {
@@ -621,18 +633,33 @@ export default function CompanyInterview() {
         return recognition;
     }, []);
 
+    // ── Stop AI speech (for interruption) ──
+    const stopAiSpeech = useCallback(() => {
+        window.speechSynthesis?.cancel();
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current.currentTime = 0;
+        }
+        setAiSpeaking(false);
+    }, []);
+
     const toggleListening = useCallback(async (forceStart = false) => {
         if (config.format !== 'voice') return; // Don't auto-listen in text mode
+
+        // Interrupt AI speech when user starts speaking
+        if (!isListeningRef.current || forceStart) {
+            stopAiSpeech();
+        }
 
         if (isListeningRef.current && !forceStart) {
             // ── Stop listening ──
             isListeningRef.current = false;
             setIsListening(false);
             recognitionRef.current?.stop();
-            
+
             // Stop outstanding MediaRecorder if user mutes or aborts
             if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-                try { mediaRecorderRef.current.stop(); } catch (e) {}
+                try { mediaRecorderRef.current.stop(); } catch (e) { }
             }
 
             // Send speech feedback with accumulated transcript
@@ -668,9 +695,9 @@ export default function CompanyInterview() {
                     if (hasLiveAudio) {
                         // Clean up any lingering recorder
                         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-                            try { mediaRecorderRef.current.stop(); } catch (e) {}
+                            try { mediaRecorderRef.current.stop(); } catch (e) { }
                         }
-                        
+
                         audioChunksRef.current = [];
                         // Create a stream with ONLY the audio track so we don't accidentally record video
                         const audioStream = new MediaStream(streamRef.current.getAudioTracks());
@@ -750,7 +777,7 @@ export default function CompanyInterview() {
         try {
             const res = await fetch(`${API_URL}/api/company-interview/start`, {
                 method: 'POST', headers: getAuthHeaders(),
-                body: JSON.stringify({ ...config, totalQuestions })
+                body: JSON.stringify({ ...config, totalQuestions, useRealQuestions })
             });
             const data = await res.json();
             const q = data.question || `Hi! Great to have you here today. I'm excited to learn more about your experience as a ${config.role}. Let's start with something fundamental — can you tell me about a challenging technical problem you solved recently?`;
@@ -758,7 +785,13 @@ export default function CompanyInterview() {
             setQuestionCount(1);
             setInterviewerReaction(data.interviewerReaction || 'greeting');
             if (data.thinkTime) startThinkTimer(data.thinkTime);
-            const msg = { role: 'interviewer', content: q, tips: data.tips || [], reaction: 'greeting', timestamp: new Date().toISOString() };
+
+            // Track question source and bank IDs
+            setQuestionSource(data.questionSource || 'ai');
+            if (data.questionBank) setQuestionBankIds(data.questionBank);
+            if (data.questionMeta) setCurrentQuestionMeta(data.questionMeta);
+
+            const msg = { role: 'interviewer', content: q, tips: data.tips || [], reaction: 'greeting', timestamp: new Date().toISOString(), questionSource: data.questionSource, questionMeta: data.questionMeta };
             setConversation([msg]);
             speakText(q, () => toggleListening(true));
         } catch {
@@ -870,7 +903,10 @@ export default function CompanyInterview() {
                     averageScore: avgScoreVal,
                     cumulativeScores: sessionScores,
                     code: editorCode || undefined,
-                    codeLanguage: editorLanguage || undefined
+                    codeLanguage: editorLanguage || undefined,
+                    useRealQuestions,
+                    questionBankIds: questionBankIds.length > 0 ? questionBankIds : undefined,
+                    currentQuestionId: currentQuestionMeta?.id || undefined
                 })
             });
             const data = await res.json();
@@ -903,8 +939,14 @@ export default function CompanyInterview() {
                 setConversation(prev => [...prev, {
                     role: 'interviewer', content: followUp, tips: [],
                     reaction: data.interviewerReaction,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    questionSource: data.questionSource,
+                    questionMeta: data.questionMeta
                 }]);
+
+                // Track question source metadata for next follow-up
+                if (data.questionSource) setQuestionSource(data.questionSource);
+                if (data.questionMeta) setCurrentQuestionMeta(data.questionMeta);
                 speakText(followUp, () => toggleListening(true));
             } else {
                 // All questions done — closing compliment and auto-end
@@ -1039,6 +1081,18 @@ export default function CompanyInterview() {
         setPhase('summary');
         setLoading(false);
 
+        // Fetch detailed report in background (non-blocking)
+        try {
+            fetch(`${API_URL}/api/company-interview/detailed-report`, {
+                method: 'POST', headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    company: config.company, role: config.role, stage: config.stage,
+                    conversation, sessionScores,
+                    speechHistory: speechHistory || []
+                })
+            }).then(r => r.json()).then(d => setDetailedReportData(d)).catch(() => { });
+        } catch { }
+
         // Auto-save session to backend (non-blocking)
         try {
             const avg = sessionScores.length > 0 ? Math.round(sessionScores.reduce((a, b) => a + b, 0) / sessionScores.length) : 70;
@@ -1064,6 +1118,7 @@ export default function CompanyInterview() {
         setPhase('lobby');
         setConversation([]);
         setSummaryData(null);
+        setDetailedReportData(null);
         setSpeechFeedback(null);
         setSessionScores([]);
         setQuestionCount(0);
@@ -1261,6 +1316,33 @@ export default function CompanyInterview() {
                                 </div>
                             </div>
 
+                            {/* Question Source Toggle */}
+                            <div className="ti-form-section">
+                                <label>Question Source</label>
+                                <div className="ti-realq-toggle">
+                                    <label className="ti-toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={useRealQuestions}
+                                            onChange={() => setUseRealQuestions(prev => !prev)}
+                                        />
+                                        <span className="ti-toggle-slider"></span>
+                                    </label>
+                                    <span className="ti-toggle-label">
+                                        {useRealQuestions ? (
+                                            <><span className="ti-realq-badge">📋</span> Real {companyName} interview questions</>
+                                        ) : (
+                                            <><span className="ti-realq-badge">🤖</span> AI-generated questions</>
+                                        )}
+                                    </span>
+                                </div>
+                                {useRealQuestions && (
+                                    <div className="ti-realq-note">
+                                        Questions sourced from actual {companyName} interview reports
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Setup Summary Card */}
                             <div className="ti-setup-summary">
                                 <div className="ti-setup-row">
@@ -1414,6 +1496,25 @@ export default function CompanyInterview() {
                                 <div className="ti-speech-stat"><strong>{speechFeedback.clarityScore}%</strong><span>Clarity</span></div>
                             </div>
                             <p>{speechFeedback.paceAssessment}</p>
+                        </div>
+                    )}
+
+                    {/* Detailed Report */}
+                    {detailedReportData ? (
+                        <div style={{ marginTop: 24 }}>
+                            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <BarChart3 size={16} /> Detailed Analysis
+                            </h3>
+                            <DetailedReport
+                                data={detailedReportData}
+                                companyName={companyName}
+                                companyColor={companyColor}
+                                companyLogo={companyLogo}
+                            />
+                        </div>
+                    ) : loading ? null : (
+                        <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
+                            Loading detailed analysis...
                         </div>
                     )}
 
