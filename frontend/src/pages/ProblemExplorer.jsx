@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
     Search, Filter, ChevronDown, ChevronUp, Check, X,
     Clock, Building2, Tag, BarChart3, Target, Flame,
@@ -7,9 +7,33 @@ import {
     ExternalLink, SlidersHorizontal, Bookmark, Shuffle,
     Zap, Star, Sparkles, History, StickyNote,
     ChevronRight, Trophy, BarChart2, Eye, EyeOff,
-    ChevronLeft, ListFilter, BookOpen, TrendingUp
+    ChevronLeft, ListFilter, BookOpen, TrendingUp,
+    Lock, MessageSquare, Play, Code2, List
 } from 'lucide-react';
 import { PROBLEMS, COMPANIES, TOPICS, PATTERNS, getDifficultyCounts } from '../data/problemsDatabase';
+import { dsaPatterns } from '../data/dsaPatternsData';
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+
+// Top-level pattern categories matching the reference design
+// patternIds: from dsaPatternsData.js | topics: from PROBLEMS database
+const PATTERN_CATEGORIES = [
+    { id: 'two-pointer', name: 'Two Pointer Patterns', patternIds: ['two-pointers', 'two-pointers-converging', 'fast-slow-pointers'], topics: ['Two Pointers'] },
+    { id: 'sliding-window', name: 'Sliding Window Patterns', patternIds: ['sliding-window'], topics: ['Sliding Window'] },
+    { id: 'tree-traversal', name: 'Tree Traversal Patterns (DFS & BFS)', patternIds: ['trie', 'dfs-graph-tree'], topics: ['Trees', 'Trie', 'DFS'] },
+    { id: 'graph-traversal', name: 'Graph Traversal Patterns (DFS & BFS)', patternIds: ['bfs-grid-graph', 'topological-sort', 'union-find', 'shortest-path'], topics: ['Graphs', 'BFS', 'Union Find'] },
+    { id: 'dp', name: 'Dynamic Programming (DP) Patterns', patternIds: ['dp-1d', 'dp-2d', 'dp-strings'], topics: ['Dynamic Programming'] },
+    { id: 'heap', name: 'Heap (Priority Queue) Patterns', patternIds: ['heap-top-k', 'two-heaps'], topics: ['Heap', 'Priority Queue'] },
+    { id: 'backtracking', name: 'Backtracking Patterns', patternIds: ['backtracking'], topics: ['Backtracking', 'Recursion'] },
+    { id: 'greedy', name: 'Greedy Patterns', patternIds: ['greedy'], topics: ['Greedy'] },
+    { id: 'binary-search', name: 'Binary Search Patterns', patternIds: ['binary-search-on-answer'], topics: ['Binary Search'] },
+    { id: 'stack', name: 'Stack Patterns', patternIds: ['monotonic-stack'], topics: ['Stack', 'Queue'] },
+    { id: 'bit-manipulation', name: 'Bit Manipulation Patterns', patternIds: ['bit-manipulation'], topics: ['Bit Manipulation', 'Math'] },
+    { id: 'linked-list', name: 'Linked List Manipulation Patterns', patternIds: [], topics: ['Linked List'] },
+    { id: 'array-matrix', name: 'Array/Matrix Manipulation Patterns', patternIds: ['arrays-hashing', 'prefix-sum', 'merge-intervals', 'cyclic-sort'], topics: ['Arrays', 'Matrix', 'Hashing', 'Sorting'] },
+    { id: 'string', name: 'String Manipulation Patterns', patternIds: [], topics: ['Strings'] },
+    { id: 'design', name: 'Design Patterns', patternIds: [], topics: ['Design', 'Divide & Conquer'] },
+];
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const FREQUENCIES = ['high', 'medium', 'low'];
@@ -84,10 +108,11 @@ export default function ProblemExplorer() {
     const [maxTime, setMaxTime] = useState('');
     const [sortBy, setSortBy] = useState('id');
     const [sortDir, setSortDir] = useState('asc');
-    const [showFilters, setShowFilters] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
     const [showBookmarksOnly, setShowBookmarksOnly] = useState(false);
     const [hideSolved, setHideSolved] = useState(false);
     const [activePlan, setActivePlan] = useState(null);
+    const [viewMode, setViewMode] = useState('patterns'); // 'patterns' | 'all'
     const [page, setPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -101,7 +126,9 @@ export default function ProblemExplorer() {
     const [showRecentlyViewed, setShowRecentlyViewed] = useState(false);
     const [activeNote, setActiveNote] = useState(null); // problemId being edited
     const [noteText, setNoteText] = useState('');
-
+    const [expandedPatterns, setExpandedPatterns] = useState({});
+    const [expandedCategories, setExpandedCategories] = useState({});
+    const [expandedSubPatterns, setExpandedSubPatterns] = useState({});
     const [solvedSet, setSolvedSet] = useState(() => {
         try { return new Set(JSON.parse(localStorage.getItem('cl_solved') || '[]')); } catch { return new Set(); }
     });
@@ -204,6 +231,13 @@ export default function ProblemExplorer() {
 
     const diffCounts = getDifficultyCounts();
     const activeFilterCount = selectedDifficulties.length + selectedTopics.length + selectedCompanies.length + selectedPatterns.length + (selectedFrequency ? 1 : 0) + (maxTime ? 1 : 0);
+
+    // Auto-switch to "All Questions" when any filter is active
+    useEffect(() => {
+        if (activeFilterCount > 0 || search || activePlan) {
+            setViewMode('all');
+        }
+    }, [activeFilterCount, search, activePlan]);
 
     const clearAll = () => {
         setSelectedDifficulties([]);
@@ -803,7 +837,7 @@ export default function ProblemExplorer() {
                     {STUDY_PLANS.map(plan => {
                         const isActive = activePlan === plan.id;
                         return (
-                            <button key={plan.id} onClick={() => { setActivePlan(isActive ? null : plan.id); setPage(1); }} title={plan.desc} style={{
+                            <button key={plan.id} onClick={() => { setActivePlan(isActive ? null : plan.id); setViewMode('all'); setPage(1); }} title={plan.desc} style={{
                                 padding: '5px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
                                 background: isActive ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
                                 border: isActive ? '1px solid rgba(139,92,246,0.3)' : '1px solid rgba(255,255,255,0.06)',
@@ -814,9 +848,31 @@ export default function ProblemExplorer() {
                     })}
                 </div>
 
+                {/* ── View Toggle Tabs ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 3, border: '1px solid rgba(255,255,255,0.06)', width: 'fit-content' }}>
+                    <button onClick={() => setViewMode('patterns')} style={{
+                        padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                        background: viewMode === 'patterns' ? 'linear-gradient(135deg, rgba(139,92,246,0.25), rgba(99,102,241,0.2))' : 'transparent',
+                        border: viewMode === 'patterns' ? '1px solid rgba(139,92,246,0.35)' : '1px solid transparent',
+                        color: viewMode === 'patterns' ? '#c084fc' : 'rgba(255,255,255,0.4)',
+                        transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                        <BookOpen size={14} /> Pattern Based
+                    </button>
+                    <button onClick={() => setViewMode('all')} style={{
+                        padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                        background: viewMode === 'all' ? 'linear-gradient(135deg, rgba(59,130,246,0.25), rgba(99,102,241,0.2))' : 'transparent',
+                        border: viewMode === 'all' ? '1px solid rgba(59,130,246,0.35)' : '1px solid transparent',
+                        color: viewMode === 'all' ? '#93c5fd' : 'rgba(255,255,255,0.4)',
+                        transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                        <List size={14} /> All Questions
+                    </button>
+                </div>
+
                 {/* Results Count */}
                 <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span>Showing <span style={{ color: '#c084fc', fontWeight: 700 }}>{Math.min(page * ITEMS_PER_PAGE, filteredProblems.length)}</span> of {filteredProblems.length} problems</span>
+                    <span>Showing <span style={{ color: '#c084fc', fontWeight: 700 }}>{filteredProblems.length}</span> problems</span>
                     {solvedInFiltered > 0 && (
                         <span style={{ color: 'rgba(110,231,183,0.6)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 3 }}>
                             <CheckCircle2 size={11} /> {solvedInFiltered} solved
@@ -835,186 +891,509 @@ export default function ProblemExplorer() {
                     </button>
                 </div>
 
-                <div style={{
-                    display: 'grid', gridTemplateColumns: '30px 30px 50px 1fr 240px 80px 70px 50px',
-                    gap: 6, padding: '12px 14px', borderRadius: '14px 14px 0 0',
-                    background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)',
-                }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>★</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>✓</span>
-                    <SortHeader label="#" sortKey="id" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
-                    <SortHeader label="TITLE" sortKey="title" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>TOPICS / COMPANIES</span>
-                    <SortHeader label="DIFF" sortKey="difficulty" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
+                {/* ══════════ PATTERN VIEW ══════════ */}
+                {viewMode === 'patterns' && (
+                    <React.Fragment>
+                        {(() => {
+                            // Build set of all problem IDs already in dsaPatterns (to deduplicate)
+                            const dsaProblemIds = new Set();
+                            dsaPatterns.forEach(pat => (pat.problems || []).forEach(p => dsaProblemIds.add(p.id)));
 
-                    <SortHeader label="ACC %" sortKey="acceptance" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
-                    <SortHeader label="TIME" sortKey="time" sortBy={sortBy} sortDir={sortDir} onClick={handleSort} />
-                </div>
+                            // Build global sub-pattern numbering (dsaPatterns + topic-based groups)
+                            let globalIdx = 0;
+                            let totalSubPatterns = 0;
+                            PATTERN_CATEGORIES.forEach(cat => {
+                                const pats = cat.patternIds.map(id => dsaPatterns.find(p => p.id === id)).filter(Boolean);
+                                totalSubPatterns += pats.length;
+                                // Count extra topic-based sub-pattern if there are matching PROBLEMS
+                                const extraProblems = PROBLEMS.filter(p =>
+                                    !dsaProblemIds.has(p.id) &&
+                                    (p.topics || []).some(t => (cat.topics || []).includes(t))
+                                );
+                                if (extraProblems.length > 0) totalSubPatterns += 1;
+                            });
 
-                {/* Problem Rows */}
-                <div style={{ borderRadius: '0 0 14px 14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)', borderTop: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
-                    {initialLoading ? (
-                        /* Skeleton loading rows */
-                        Array.from({ length: 8 }).map((_, i) => (
-                            <div key={i} style={{
-                                display: 'grid', gridTemplateColumns: '30px 30px 50px 1fr 240px 80px 70px 50px',
-                                gap: 6, padding: '14px 14px', alignItems: 'center',
-                                borderBottom: '1px solid rgba(255,255,255,0.03)',
-                                animation: `fade-up-in 0.4s ease ${i * 0.06}s both`,
-                            }}>
-                                <div style={{ width: 14, height: 14, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
-                                <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s' }} />
-                                <div style={{ width: 24, height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.15s' }} />
-                                <div>
-                                    <div style={{ width: `${55 + (i * 7) % 30}%`, height: 12, borderRadius: 5, background: 'rgba(255,255,255,0.05)', marginBottom: 6, animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s' }} />
-                                    <div style={{ width: `${70 + (i * 11) % 20}%`, height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.03)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s' }} />
+                            return (
+                                <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
+                                    {initialLoading ? (
+                                        Array.from({ length: 8 }).map((_, i) => (
+                                            <div key={i} style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 14, animation: `fade-up-in 0.4s ease ${i * 0.07}s both` }}>
+                                                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ width: `${35 + (i * 13) % 30}%`, height: 13, borderRadius: 5, background: 'rgba(255,255,255,0.05)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s' }} />
+                                                </div>
+                                                <div style={{ width: 60, height: 10, borderRadius: 4, background: 'rgba(255,255,255,0.03)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.35s' }} />
+                                            </div>
+                                        ))
+                                    ) : (
+                                        PATTERN_CATEGORIES.map((category, catIdx) => {
+                                            const catPatterns = category.patternIds.map(id => dsaPatterns.find(p => p.id === id)).filter(Boolean);
+
+                                            // Topic-based extra problems from PROBLEMS database (deduplicated)
+                                            const extraProblems = PROBLEMS.filter(p =>
+                                                !dsaProblemIds.has(p.id) &&
+                                                (p.topics || []).some(t => (category.topics || []).includes(t))
+                                            );
+
+                                            const dsaTotal = catPatterns.reduce((sum, p) => sum + (p.problems || []).length, 0);
+                                            const totalProblems = dsaTotal + extraProblems.length;
+                                            const dsaAttempted = catPatterns.reduce((sum, p) => sum + (p.problems || []).filter(pr => solvedSet.has(pr.id) || pr.status === 'solved').length, 0);
+                                            const extraAttempted = extraProblems.filter(p => solvedSet.has(p.id)).length;
+                                            const attemptedProblems = dsaAttempted + extraAttempted;
+                                            const isCatExpanded = !!expandedCategories[category.id];
+
+                                            // Filter: hide category if no matching problems
+                                            if (search || selectedDifficulties.length > 0) {
+                                                const anyDsaMatch = catPatterns.some(pat => {
+                                                    if (pat.name.toLowerCase().includes(search.toLowerCase()) || category.name.toLowerCase().includes(search.toLowerCase())) return true;
+                                                    return (pat.problems || []).some(pr => {
+                                                        if (search && !pr.title.toLowerCase().includes(search.toLowerCase()) && !pat.name.toLowerCase().includes(search.toLowerCase()) && !category.name.toLowerCase().includes(search.toLowerCase())) return false;
+                                                        if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(pr.difficulty)) return false;
+                                                        return true;
+                                                    });
+                                                });
+                                                const anyExtraMatch = extraProblems.some(p => {
+                                                    if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !category.name.toLowerCase().includes(search.toLowerCase())) return false;
+                                                    if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(p.difficulty)) return false;
+                                                    return true;
+                                                });
+                                                if (!anyDsaMatch && !anyExtraMatch) return null;
+                                            }
+
+                                            // Skip truly empty categories
+                                            if (totalProblems === 0) return null;
+
+                                            return (
+                                                <div key={category.id}>
+                                                    {/* ── CATEGORY HEADER ── */}
+                                                    <div
+                                                        onClick={() => setExpandedCategories(prev => ({ ...prev, [category.id]: !prev[category.id] }))}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: 14, padding: '15px 20px',
+                                                            background: isCatExpanded ? 'rgba(139,92,246,0.05)' : catIdx % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent',
+                                                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                                            cursor: 'pointer', transition: 'all 0.2s ease', userSelect: 'none',
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.07)'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = isCatExpanded ? 'rgba(139,92,246,0.05)' : catIdx % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'transparent'}
+                                                    >
+                                                        <div style={{ transition: 'transform 0.2s ease', transform: isCatExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                                            <ChevronRight size={16} color="rgba(255,255,255,0.4)" />
+                                                        </div>
+                                                        <div style={{
+                                                            minWidth: 32, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)',
+                                                            fontSize: 11, fontWeight: 800, color: '#c084fc', letterSpacing: 0.5,
+                                                            padding: '0 6px', flexShrink: 0,
+                                                        }}>
+                                                            {ROMAN[catIdx] || catIdx + 1}
+                                                        </div>
+                                                        <div style={{ flex: 1, fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>
+                                                            {category.name}
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }}>
+                                                            <div style={{ textAlign: 'center' }}>
+                                                                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{totalProblems}</span>
+                                                                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', display: 'block', lineHeight: 1, marginTop: 1 }}>problems</span>
+                                                            </div>
+                                                            <div style={{ textAlign: 'center' }}>
+                                                                <span style={{ fontSize: 14, fontWeight: 700, color: attemptedProblems > 0 ? '#6ee7b7' : 'rgba(255,255,255,0.2)' }}>{attemptedProblems}</span>
+                                                                <span style={{ fontSize: 9, color: attemptedProblems > 0 ? 'rgba(110,231,183,0.6)' : 'rgba(255,255,255,0.2)', display: 'block', lineHeight: 1, marginTop: 1 }}>attempted</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* ── EXPANDED: SUB-PATTERNS ── */}
+                                                    {isCatExpanded && catPatterns.map((pattern) => {
+                                                        globalIdx++;
+                                                        const subKey = `${category.id}__${pattern.id}`;
+                                                        const isSubExpanded = !!expandedSubPatterns[subKey];
+                                                        const problems = pattern.problems || [];
+                                                        const subAttempted = problems.filter(pr => solvedSet.has(pr.id) || pr.status === 'solved').length;
+
+                                                        // Filter problems
+                                                        const filteredProbs = problems.filter(pr => {
+                                                            if (search && !pr.title.toLowerCase().includes(search.toLowerCase()) && !pattern.name.toLowerCase().includes(search.toLowerCase()) && !category.name.toLowerCase().includes(search.toLowerCase())) return false;
+                                                            if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(pr.difficulty)) return false;
+                                                            return true;
+                                                        });
+
+                                                        if ((search || selectedDifficulties.length > 0) && filteredProbs.length === 0 && !pattern.name.toLowerCase().includes(search.toLowerCase())) return null;
+
+                                                        return (
+                                                            <div key={pattern.id}>
+                                                                {/* Sub-pattern row */}
+                                                                <div
+                                                                    onClick={() => setExpandedSubPatterns(prev => ({ ...prev, [subKey]: !prev[subKey] }))}
+                                                                    style={{
+                                                                        display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px 11px 52px',
+                                                                        background: isSubExpanded ? 'rgba(103,232,249,0.04)' : 'rgba(0,0,0,0.15)',
+                                                                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                                                        cursor: 'pointer', transition: 'all 0.15s ease', userSelect: 'none',
+                                                                    }}
+                                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(103,232,249,0.06)'}
+                                                                    onMouseLeave={e => e.currentTarget.style.background = isSubExpanded ? 'rgba(103,232,249,0.04)' : 'rgba(0,0,0,0.15)'}
+                                                                >
+                                                                    <div style={{ transition: 'transform 0.2s ease', transform: isSubExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                                                        <ChevronRight size={14} color="rgba(255,255,255,0.3)" />
+                                                                    </div>
+                                                                    {/* Sub-pattern number badge */}
+                                                                    <span style={{
+                                                                        fontSize: 10, fontWeight: 700, color: '#67e8f9',
+                                                                        background: 'rgba(103,232,249,0.1)', border: '1px solid rgba(103,232,249,0.2)',
+                                                                        padding: '2px 8px', borderRadius: 5, flexShrink: 0,
+                                                                    }}>
+                                                                        {globalIdx}/{totalSubPatterns}
+                                                                    </span>
+                                                                    {/* Sub-pattern name */}
+                                                                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                                                                        {pattern.name}
+                                                                    </span>
+                                                                    {/* Theory badge */}
+                                                                    {pattern.theory && (
+                                                                        <Link
+                                                                            to={`/patterns/${pattern.id}`}
+                                                                            onClick={e => e.stopPropagation()}
+                                                                            style={{
+                                                                                padding: '2px 9px', borderRadius: 4, fontSize: 10, fontWeight: 700,
+                                                                                background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)',
+                                                                                color: '#c084fc', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                                                                            }}
+                                                                        >
+                                                                            <BookOpen size={9} /> Theory
+                                                                        </Link>
+                                                                    )}
+                                                                    {/* Sub-pattern counts */}
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+                                                                        <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>{problems.length} problems</span>
+                                                                        <span style={{ fontSize: 12, fontWeight: 600, color: subAttempted > 0 ? '#6ee7b7' : 'rgba(255,255,255,0.2)' }}>{subAttempted} attempted</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Sub-pattern expanded: Problem table */}
+                                                                {isSubExpanded && (
+                                                                    <div style={{ background: 'rgba(0,0,0,0.3)' }}>
+                                                                        {/* Table header */}
+                                                                        <div style={{
+                                                                            display: 'grid', gridTemplateColumns: '40px 1fr 80px 70px 70px 60px',
+                                                                            gap: 8, padding: '7px 20px 7px 90px',
+                                                                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                                                        }}>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase' }}></span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase' }}>Problem</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Editorial</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Code</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>AI Coach</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>External</span>
+                                                                        </div>
+
+                                                                        {/* Problem rows */}
+                                                                        {filteredProbs.map((problem, probIdx) => {
+                                                                            const isSolved = solvedSet.has(problem.id) || problem.status === 'solved';
+                                                                            const dc = problem.difficulty === 'Easy' ? '#6ee7b7' : problem.difficulty === 'Medium' ? '#fbbf24' : '#f87171';
+                                                                            const dbg = problem.difficulty === 'Easy' ? 'rgba(110,231,183,0.12)' : problem.difficulty === 'Medium' ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
+                                                                            const dt = problem.difficulty === 'Easy' ? 'E' : problem.difficulty === 'Medium' ? 'M' : 'H';
+
+                                                                            return (
+                                                                                <div key={problem.id || probIdx} style={{
+                                                                                    display: 'grid', gridTemplateColumns: '40px 1fr 80px 70px 70px 60px',
+                                                                                    gap: 8, padding: '9px 20px 9px 90px', alignItems: 'center',
+                                                                                    borderBottom: probIdx < filteredProbs.length - 1 ? '1px solid rgba(255,255,255,0.025)' : 'none',
+                                                                                    background: isSolved ? 'rgba(110,231,183,0.025)' : probIdx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent',
+                                                                                    transition: 'background 0.15s',
+                                                                                }}
+                                                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.04)'}
+                                                                                    onMouseLeave={e => e.currentTarget.style.background = isSolved ? 'rgba(110,231,183,0.025)' : probIdx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent'}
+                                                                                >
+                                                                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontWeight: 600 }}>{probIdx + 1}.</span>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                                                                        {isSolved && <CheckCircle2 size={12} color="#6ee7b7" style={{ flexShrink: 0 }} />}
+                                                                                        <span style={{
+                                                                                            fontSize: 13, fontWeight: 500, color: isSolved ? 'rgba(255,255,255,0.4)' : '#fff',
+                                                                                            textDecoration: isSolved ? 'line-through' : 'none',
+                                                                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                                                        }}>{problem.title}</span>
+                                                                                        <span style={{
+                                                                                            fontSize: 9, fontWeight: 800, color: dc, background: dbg,
+                                                                                            padding: '1px 6px', borderRadius: 3, border: `1px solid ${dc}25`,
+                                                                                            letterSpacing: 0.5, flexShrink: 0,
+                                                                                        }}>{dt}</span>
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        {pattern.theory ? (
+                                                                                            <Link to={`/patterns/${pattern.id}`} style={{
+                                                                                                padding: '3px 10px', borderRadius: 5, fontSize: 10, fontWeight: 600,
+                                                                                                background: 'rgba(139,92,246,0.12)', color: '#c084fc', textDecoration: 'none',
+                                                                                            }}>Editorial</Link>
+                                                                                        ) : <Lock size={12} color="rgba(255,255,255,0.12)" />}
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <button onClick={() => navigate(`/problem/${problem.id}`)} style={{
+                                                                                            padding: '4px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                                                                            background: 'linear-gradient(135deg, rgba(59,130,246,0.8), rgba(99,102,241,0.8))',
+                                                                                            border: 'none', color: '#fff', cursor: 'pointer',
+                                                                                            boxShadow: '0 2px 8px rgba(59,130,246,0.2)',
+                                                                                        }}
+                                                                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.35)'; }}
+                                                                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.2)'; }}
+                                                                                        >Solve</button>
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <MessageSquare size={14} color="rgba(255,255,255,0.18)" style={{ cursor: 'pointer' }} />
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        {problem.leetcodeLink ? (
+                                                                                            <a href={problem.leetcodeLink} target="_blank" rel="noopener noreferrer" style={{
+                                                                                                display: 'flex', alignItems: 'center', padding: 3, borderRadius: 4,
+                                                                                                color: 'rgba(255,255,255,0.3)', transition: 'all 0.15s',
+                                                                                            }}
+                                                                                                onMouseEnter={e => { e.currentTarget.style.color = '#fbbf24'; e.currentTarget.style.background = 'rgba(251,191,36,0.1)'; }}
+                                                                                                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; e.currentTarget.style.background = 'transparent'; }}
+                                                                                            ><ExternalLink size={12} /></a>
+                                                                                        ) : <span style={{ color: 'rgba(255,255,255,0.08)' }}>—</span>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+
+                                                                        {filteredProbs.length === 0 && (
+                                                                            <div style={{ padding: '14px 90px', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>No problems match current filters.</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+
+                                                    {/* ── EXTRA: Topic-based problems from PROBLEMS database ── */}
+                                                    {isCatExpanded && extraProblems.length > 0 && (() => {
+                                                        globalIdx++;
+                                                        const extraKey = `${category.id}__extra`;
+                                                        const isExtraExpanded = !!expandedSubPatterns[extraKey];
+                                                        const extraAttemptedCount = extraProblems.filter(p => solvedSet.has(p.id)).length;
+
+                                                        // Filter extra problems
+                                                        const filteredExtra = extraProblems.filter(p => {
+                                                            if (search && !p.title.toLowerCase().includes(search.toLowerCase()) && !category.name.toLowerCase().includes(search.toLowerCase())) return false;
+                                                            if (selectedDifficulties.length > 0 && !selectedDifficulties.includes(p.difficulty)) return false;
+                                                            return true;
+                                                        });
+
+                                                        if ((search || selectedDifficulties.length > 0) && filteredExtra.length === 0) return null;
+
+                                                        return (
+                                                            <div>
+                                                                <div
+                                                                    onClick={() => setExpandedSubPatterns(prev => ({ ...prev, [extraKey]: !prev[extraKey] }))}
+                                                                    style={{
+                                                                        display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px 11px 52px',
+                                                                        background: isExtraExpanded ? 'rgba(251,191,36,0.04)' : 'rgba(0,0,0,0.15)',
+                                                                        borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                                                        cursor: 'pointer', transition: 'all 0.15s ease', userSelect: 'none',
+                                                                    }}
+                                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(251,191,36,0.06)'}
+                                                                    onMouseLeave={e => e.currentTarget.style.background = isExtraExpanded ? 'rgba(251,191,36,0.04)' : 'rgba(0,0,0,0.15)'}
+                                                                >
+                                                                    <div style={{ transition: 'transform 0.2s ease', transform: isExtraExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                                                        <ChevronRight size={14} color="rgba(255,255,255,0.3)" />
+                                                                    </div>
+                                                                    <span style={{
+                                                                        fontSize: 10, fontWeight: 700, color: '#fbbf24',
+                                                                        background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)',
+                                                                        padding: '2px 8px', borderRadius: 5, flexShrink: 0,
+                                                                    }}>
+                                                                        {globalIdx}/{totalSubPatterns}
+                                                                    </span>
+                                                                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+                                                                        More {category.name.replace(' Patterns', '').replace(' Manipulation', '')} Problems
+                                                                    </span>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+                                                                        <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>{extraProblems.length} problems</span>
+                                                                        <span style={{ fontSize: 12, fontWeight: 600, color: extraAttemptedCount > 0 ? '#6ee7b7' : 'rgba(255,255,255,0.2)' }}>{extraAttemptedCount} attempted</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {isExtraExpanded && (
+                                                                    <div style={{ background: 'rgba(0,0,0,0.3)' }}>
+                                                                        <div style={{
+                                                                            display: 'grid', gridTemplateColumns: '40px 1fr 80px 70px 70px 60px',
+                                                                            gap: 8, padding: '7px 20px 7px 90px',
+                                                                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                                                        }}>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase' }}></span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase' }}>Problem</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Editorial</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Code</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>AI Coach</span>
+                                                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>External</span>
+                                                                        </div>
+
+                                                                        {filteredExtra.map((problem, probIdx) => {
+                                                                            const isSolved = solvedSet.has(problem.id);
+                                                                            const dc = problem.difficulty === 'Easy' ? '#6ee7b7' : problem.difficulty === 'Medium' ? '#fbbf24' : '#f87171';
+                                                                            const dbg = problem.difficulty === 'Easy' ? 'rgba(110,231,183,0.12)' : problem.difficulty === 'Medium' ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
+                                                                            const dt = problem.difficulty === 'Easy' ? 'E' : problem.difficulty === 'Medium' ? 'M' : 'H';
+
+                                                                            return (
+                                                                                <div key={problem.id} style={{
+                                                                                    display: 'grid', gridTemplateColumns: '40px 1fr 80px 70px 70px 60px',
+                                                                                    gap: 8, padding: '9px 20px 9px 90px', alignItems: 'center',
+                                                                                    borderBottom: probIdx < filteredExtra.length - 1 ? '1px solid rgba(255,255,255,0.025)' : 'none',
+                                                                                    background: isSolved ? 'rgba(110,231,183,0.025)' : probIdx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent',
+                                                                                    transition: 'background 0.15s',
+                                                                                }}
+                                                                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.04)'}
+                                                                                    onMouseLeave={e => e.currentTarget.style.background = isSolved ? 'rgba(110,231,183,0.025)' : probIdx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent'}
+                                                                                >
+                                                                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontWeight: 600 }}>{probIdx + 1}.</span>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                                                                        {isSolved && <CheckCircle2 size={12} color="#6ee7b7" style={{ flexShrink: 0 }} />}
+                                                                                        <span style={{
+                                                                                            fontSize: 13, fontWeight: 500, color: isSolved ? 'rgba(255,255,255,0.4)' : '#fff',
+                                                                                            textDecoration: isSolved ? 'line-through' : 'none',
+                                                                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                                                        }}>{problem.title}</span>
+                                                                                        <span style={{
+                                                                                            fontSize: 9, fontWeight: 800, color: dc, background: dbg,
+                                                                                            padding: '1px 6px', borderRadius: 3, border: `1px solid ${dc}25`,
+                                                                                            letterSpacing: 0.5, flexShrink: 0,
+                                                                                        }}>{dt}</span>
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <Lock size={12} color="rgba(255,255,255,0.12)" />
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <button onClick={() => navigate(`/problem/${problem.id}`)} style={{
+                                                                                            padding: '4px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                                                                            background: 'linear-gradient(135deg, rgba(59,130,246,0.8), rgba(99,102,241,0.8))',
+                                                                                            border: 'none', color: '#fff', cursor: 'pointer',
+                                                                                            boxShadow: '0 2px 8px rgba(59,130,246,0.2)',
+                                                                                        }}
+                                                                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.35)'; }}
+                                                                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.2)'; }}
+                                                                                        >Solve</button>
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <MessageSquare size={14} color="rgba(255,255,255,0.18)" style={{ cursor: 'pointer' }} />
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                                                                        <span style={{ color: 'rgba(255,255,255,0.08)' }}>—</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+
+                                                                        {filteredExtra.length === 0 && (
+                                                                            <div style={{ padding: '14px 90px', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>No problems match current filters.</div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
-                                <div style={{ display: 'flex', gap: 4 }}>
-                                    <div style={{ width: 44, height: 16, borderRadius: 4, background: 'rgba(139,92,246,0.06)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.25s' }} />
-                                    <div style={{ width: 52, height: 16, borderRadius: 4, background: 'rgba(139,92,246,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.35s' }} />
-                                </div>
-                                <div style={{ width: 50, height: 18, borderRadius: 6, background: i % 3 === 0 ? 'rgba(110,231,183,0.06)' : i % 3 === 1 ? 'rgba(251,191,36,0.06)' : 'rgba(248,113,113,0.06)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s' }} />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 28, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.35s' }} />
-                                    <div style={{ width: 20, height: 8, borderRadius: 3, background: 'rgba(255,255,255,0.03)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.4s' }} />
-                                </div>
-                                <div style={{ width: 30, height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.03)', animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.4s' }} />
-                            </div>
-                        ))
-                    ) : filteredProblems.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 48, color: 'rgba(255,255,255,0.3)' }}>
-                            {showBookmarksOnly ? 'No bookmarked problems yet. Star problems to save them.' :
-                                'No problems match your filters.'}
+                            );
+                        })()}
+                    </React.Fragment>
+                )}
+
+                {/* ══════════ ALL QUESTIONS VIEW ══════════ */}
+                {viewMode === 'all' && (
+                    <div style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
+                        {/* Table Header */}
+                        <div style={{
+                            display: 'grid', gridTemplateColumns: '50px 1fr 140px 100px 80px 70px',
+                            gap: 8, padding: '10px 20px',
+                            background: 'rgba(255,255,255,0.02)',
+                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                        }}>
+                            <SortHeader label="#" sortKey="id" sortBy={sortBy} sortDir={sortDir} onClick={k => { setSortBy(k); setSortDir(d => sortBy === k ? (d === 'asc' ? 'desc' : 'asc') : 'asc'); }} />
+                            <SortHeader label="Problem" sortKey="title" sortBy={sortBy} sortDir={sortDir} onClick={k => { setSortBy(k); setSortDir(d => sortBy === k ? (d === 'asc' ? 'desc' : 'asc') : 'asc'); }} />
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontWeight: 700, textTransform: 'uppercase' }}>Company</span>
+                            <SortHeader label="Difficulty" sortKey="difficulty" sortBy={sortBy} sortDir={sortDir} onClick={k => { setSortBy(k); setSortDir(d => sortBy === k ? (d === 'asc' ? 'desc' : 'asc') : 'asc'); }} />
+                            <SortHeader label="Acceptance" sortKey="acceptance" sortBy={sortBy} sortDir={sortDir} onClick={k => { setSortBy(k); setSortDir(d => sortBy === k ? (d === 'asc' ? 'desc' : 'asc') : 'asc'); }} />
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', fontWeight: 700, textTransform: 'uppercase', textAlign: 'center' }}>Code</span>
                         </div>
-                    ) : filteredProblems.slice(0, page * ITEMS_PER_PAGE).map((problem, i) => {
-                        const solved = solvedSet.has(problem.id);
-                        const isBookmarked = bookmarks.has(problem.id);
-                        const hasNote = !!notes[problem.id];
-                        const isDaily = problem.id === dailyChallenge.id;
-                        return (
-                            <div key={problem.id} style={{
-                                display: 'grid', gridTemplateColumns: '30px 30px 50px 1fr 240px 80px 70px 50px',
-                                gap: 6, padding: '12px 14px', alignItems: 'center',
-                                borderBottom: i < filteredProblems.length - 1 ? '1px solid rgba(255,255,255,0.035)' : 'none',
-                                background: isDaily ? 'rgba(251,191,36,0.03)' : solved ? 'rgba(16,185,129,0.03)' : i % 2 === 0 ? 'rgba(255,255,255,0.012)' : 'transparent',
-                                transition: 'all 0.2s ease', cursor: 'pointer',
-                                borderLeft: isDaily ? '3px solid rgba(251,191,36,0.5)' : '3px solid transparent',
-                            }}
-                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.05)'; e.currentTarget.style.borderLeftColor = solved ? '#6ee7b7' : '#8b5cf6'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = isDaily ? 'rgba(251,191,36,0.03)' : solved ? 'rgba(16,185,129,0.03)' : i % 2 === 0 ? 'rgba(255,255,255,0.012)' : 'transparent'; e.currentTarget.style.borderLeftColor = isDaily ? 'rgba(251,191,36,0.5)' : 'transparent'; }}
-                                onClick={() => goToProblem(problem.id)}>
-                                {/* Bookmark */}
-                                <button onClick={(e) => toggleBookmark(e, problem.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                                    <Bookmark size={13} color={isBookmarked ? '#fbbf24' : 'rgba(255,255,255,0.12)'} fill={isBookmarked ? '#fbbf24' : 'none'} />
-                                </button>
-                                {/* Status */}
-                                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                                    {solved ? <CheckCircle2 size={14} color="#6ee7b7" /> : <Circle size={14} color="rgba(255,255,255,0.12)" />}
-                                </div>
-                                {/* ID */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>{problem.id}</span>
-                                    {isDaily && <Sparkles size={9} color="#fbbf24" />}
-                                </div>
-                                {/* Title + Note indicator */}
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>{problem.title}</div>
-                                        <button onClick={(e) => openNote(e, problem.id)} title={hasNote ? notes[problem.id] : 'Add note'} style={{
-                                            background: 'none', border: 'none', cursor: 'pointer', padding: 1, opacity: hasNote ? 1 : 0.3,
-                                            transition: 'opacity 0.15s',
-                                        }}
-                                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-                                            onMouseLeave={e => e.currentTarget.style.opacity = hasNote ? '1' : '0.3'}
-                                        >
-                                            <StickyNote size={11} color={hasNote ? '#fbbf24' : 'rgba(255,255,255,0.4)'} />
-                                        </button>
-                                    </div>
-                                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', lineHeight: 1.4, maxWidth: 350, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {hasNote ? <span style={{ color: 'rgba(251,191,36,0.5)' }}>📝 {notes[problem.id]}</span> : problem.description}
-                                    </div>
-                                </div>
-                                {/* Topics & Companies */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                    <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                                        {problem.topics.slice(0, 2).map(t => (
-                                            <span key={t} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: 'rgba(139,92,246,0.1)', color: '#c084fc', fontWeight: 600 }}>{t}</span>
-                                        ))}
-                                        {(problem.patterns || []).slice(0, 1).map(pt => {
-                                            const pat = PATTERNS.find(p => p.id === pt);
-                                            return pat ? <span key={pt} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: `${pat.color}15`, color: pat.color, fontWeight: 600 }}>⚡ {pat.name}</span> : null;
-                                        })}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                                        {problem.companies.slice(0, 3).map(c => {
-                                            const comp = COMPANIES.find(co => co.id === c);
-                                            return comp ? <span key={c} style={{ fontSize: 9, padding: '1px 5px', borderRadius: 3, background: `${comp.color}10`, color: `${comp.color}cc`, fontWeight: 600 }}>{comp.name}</span> : null;
-                                        })}
-                                        {problem.companies.length > 3 && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>+{problem.companies.length - 3}</span>}
-                                    </div>
-                                </div>
-                                {/* Difficulty */}
-                                <span style={{
-                                    fontSize: 10, fontWeight: 700, color: diffColor(problem.difficulty),
-                                    padding: '3px 10px', borderRadius: 6, background: `${diffColor(problem.difficulty)}12`,
-                                    border: `1px solid ${diffColor(problem.difficulty)}18`,
-                                    boxShadow: `0 0 8px ${diffColor(problem.difficulty)}10`,
-                                    letterSpacing: '0.3px',
-                                }}>{problem.difficulty}</span>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ width: 28, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                                        <div style={{ width: `${problem.acceptance}%`, height: '100%', background: `linear-gradient(90deg, ${problem.acceptance > 60 ? '#6ee7b7' : problem.acceptance > 40 ? '#fbbf24' : '#f87171'}, ${problem.acceptance > 60 ? '#34d399' : problem.acceptance > 40 ? '#f59e0b' : '#ef4444'})`, borderRadius: 3, transition: 'width 0.5s ease', boxShadow: `0 0 4px ${problem.acceptance > 60 ? 'rgba(110,231,183,0.3)' : problem.acceptance > 40 ? 'rgba(251,191,36,0.3)' : 'rgba(248,113,113,0.3)'}` }} />
-                                    </div>
-                                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>{problem.acceptance}%</span>
-                                </div>
-                                {/* Time */}
-                                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Clock size={10} />{problem.timeEstimate}m
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
+                        {/* Problem Rows */}
+                        {filteredProblems.map((problem, idx) => {
+                            const isSolved = solvedSet.has(problem.id);
+                            const dc = problem.difficulty === 'Easy' ? '#6ee7b7' : problem.difficulty === 'Medium' ? '#fbbf24' : '#f87171';
+                            const dbg = problem.difficulty === 'Easy' ? 'rgba(110,231,183,0.12)' : problem.difficulty === 'Medium' ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
 
-                {/* Pagination / Load More */}
-                {
-                    filteredProblems.length > page * ITEMS_PER_PAGE && (
-                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                            {isLoading ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, animation: 'fade-up-in 0.3s ease' }}>
-                                    <div style={{
-                                        width: 32, height: 32, borderRadius: '50%',
-                                        border: '3px solid rgba(139,92,246,0.1)',
-                                        borderTopColor: '#a78bfa',
-                                        animation: 'spin-loader 0.8s linear infinite',
-                                    }} />
-                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>Loading problems...</span>
-                                </div>
-                            ) : (
-                                <button onClick={() => {
-                                    setIsLoading(true);
-                                    setTimeout(() => {
-                                        setPage(p => p + 1);
-                                        setIsLoading(false);
-                                    }, 600);
-                                }} style={{
-                                    padding: '12px 36px', borderRadius: 14, cursor: 'pointer', fontSize: 13, fontWeight: 700,
-                                    background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(110,231,183,0.06))',
-                                    border: '1px solid rgba(139,92,246,0.3)',
-                                    color: '#c084fc', transition: 'all 0.3s ease',
-                                    boxShadow: '0 0 15px rgba(139,92,246,0.08)',
-                                    position: 'relative', overflow: 'hidden',
+                            return (
+                                <div key={problem.id} style={{
+                                    display: 'grid', gridTemplateColumns: '50px 1fr 140px 100px 80px 70px',
+                                    gap: 8, padding: '10px 20px', alignItems: 'center',
+                                    borderBottom: '1px solid rgba(255,255,255,0.03)',
+                                    background: isSolved ? 'rgba(110,231,183,0.025)' : idx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent',
+                                    transition: 'background 0.15s',
                                 }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(110,231,183,0.1))'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(139,92,246,0.2)'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(110,231,183,0.06))'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(139,92,246,0.08)'; }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.04)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = isSolved ? 'rgba(110,231,183,0.025)' : idx % 2 === 0 ? 'rgba(255,255,255,0.008)' : 'transparent'}
                                 >
-                                    Load More <span style={{ color: '#a78bfa', fontWeight: 800 }}>({filteredProblems.length - page * ITEMS_PER_PAGE} remaining)</span>
-                                </button>
-                            )}
-                        </div>
-                    )
-                }
+                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', fontWeight: 600 }}>{idx + 1}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                                        {isSolved && <CheckCircle2 size={13} color="#6ee7b7" style={{ flexShrink: 0 }} />}
+                                        <span style={{
+                                            fontSize: 13, fontWeight: 500, color: isSolved ? 'rgba(255,255,255,0.4)' : '#fff',
+                                            textDecoration: isSolved ? 'line-through' : 'none',
+                                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                        }}>{problem.title}</span>
+                                        {(problem.topics || []).slice(0, 2).map(t => (
+                                            <span key={t} style={{
+                                                fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.3)',
+                                                background: 'rgba(255,255,255,0.04)', padding: '1px 6px', borderRadius: 3,
+                                                border: '1px solid rgba(255,255,255,0.06)', flexShrink: 0,
+                                            }}>{t}</span>
+                                        ))}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', overflow: 'hidden' }}>
+                                        {(problem.companies || []).slice(0, 2).map(c => (
+                                            <span key={c} style={{
+                                                fontSize: 9, fontWeight: 600, color: 'rgba(59,130,246,0.7)',
+                                                background: 'rgba(59,130,246,0.08)', padding: '1px 6px', borderRadius: 3,
+                                                border: '1px solid rgba(59,130,246,0.12)', flexShrink: 0, whiteSpace: 'nowrap',
+                                            }}>{c}</span>
+                                        ))}
+                                        {(problem.companies || []).length > 2 && (
+                                            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>+{problem.companies.length - 2}</span>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{
+                                            fontSize: 11, fontWeight: 700, color: dc, background: dbg,
+                                            padding: '2px 10px', borderRadius: 5, border: `1px solid ${dc}25`,
+                                        }}>{problem.difficulty}</span>
+                                    </div>
+                                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
+                                        {problem.acceptance || '—'}
+                                    </span>
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <button onClick={() => navigate(`/problem/${problem.id}`)} style={{
+                                            padding: '4px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                                            background: 'linear-gradient(135deg, rgba(59,130,246,0.8), rgba(99,102,241,0.8))',
+                                            border: 'none', color: '#fff', cursor: 'pointer',
+                                            boxShadow: '0 2px 8px rgba(59,130,246,0.2)',
+                                        }}
+                                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.35)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,0.2)'; }}
+                                        >Solve</button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {filteredProblems.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: 48, color: 'rgba(255,255,255,0.3)' }}>No problems match your filters.</div>
+                        )}
+                    </div>
+                )}
+
             </div >
         </div >
     );

@@ -111,7 +111,8 @@ function AppContent() {
   const publicPaths = ['/', '/login', '/signup', '/pricing', '/blog', '/about', '/contact', '/verify-email', '/dsa-patterns', '/privacy', '/terms', '/library'];
   const isCodeEditorRoute = location.pathname.startsWith('/code-editor') || location.pathname.startsWith('/sql-editor');
   const isVisualizerRoute = location.pathname === '/visualizer';
-  const isFullScreenRoute = isCodeEditorRoute;
+  const isPlaygroundRoute = location.pathname === '/playground';
+  const isFullScreenRoute = isCodeEditorRoute || isPlaygroundRoute;
   const isPublicPage = publicPaths.includes(location.pathname);
   const showSidebar = user && !isPublicPage;
   const hideNavbar = false;

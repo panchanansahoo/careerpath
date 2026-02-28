@@ -5,10 +5,22 @@ import {
     ArrowLeft, Play, Terminal, Trash2, Copy, Check,
     Download, Upload, Clock, ChevronDown, Code2,
     Braces, Hash, FileCode, Layers, Sparkles, X,
-    RotateCcw, Maximize2, Minimize2, Palette
+    RotateCcw, Maximize2, Minimize2, Palette,
+    Share2, Keyboard, ZoomIn, ZoomOut, History,
+    Type, ChevronUp, Link2, TextCursorInput,
+    PanelRightOpen, PanelRightClose, Settings, Info
 } from 'lucide-react';
 import { LANGUAGES, ALGORITHM_TEMPLATES } from '../data/dsaTemplates';
 import { EDITOR_THEMES, registerAllThemes, getSavedTheme, saveTheme } from '../data/editorThemes';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const getAuthHeaders = () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('token');
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+};
 
 // ─── Default starter code per language ───
 const DEFAULT_CODE = {
@@ -256,13 +268,28 @@ export default function CodingPlayground() {
     const [consoleHeight, setConsoleHeight] = useState(200);
     const [timer, setTimer] = useState(0);
     const [timerActive, setTimerActive] = useState(false);
-    const [fullscreen, setFullscreen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [editorTheme, setEditorTheme] = useState(() => getSavedTheme('playground-editor-theme'));
     const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+    // ─── NEW FEATURE STATE ───
+    const [stdinInput, setStdinInput] = useState('');
+    const [showStdin, setShowStdin] = useState(false);
+    const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('pg-font-size')) || 14);
+    const [execHistory, setExecHistory] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('pg-exec-history') || '[]'); } catch { return []; }
+    });
+    const [showHistory, setShowHistory] = useState(false);
+    const [showShortcuts, setShowShortcuts] = useState(false);
+    const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+    const [shareCopied, setShareCopied] = useState(false);
+    const [showSidebar, setShowSidebar] = useState(false);
+    const [sidebarTab, setSidebarTab] = useState('input');
 
     // Console resize ref
     const draggingRef = useRef(null);
     const monacoRef = useRef(null);
+    const rootRef = useRef(null);
 
     // ─── Load saved code or default ───
     useEffect(() => {
@@ -294,14 +321,116 @@ export default function CodingPlayground() {
     };
 
     // ─── Run code ───
-    const handleRun = useCallback(() => {
+    const handleRun = useCallback(async () => {
         setRunning(true);
-        setTimeout(() => {
-            const output = simulateOutput(code, language);
-            setConsoleOutput(prev => [...prev, ...output]);
+        const timestamp = new Date().toLocaleTimeString();
+        setConsoleOutput(prev => [...prev, { type: 'info', text: `[${timestamp}] Running ${language}...` }]);
+
+        try {
+            const res = await fetch(`${API_URL}/api/practice/execute`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ code, language, input: stdinInput }),
+            });
+            const data = await res.json();
+            const outputText = (data.output || '').trim();
+            const errorText = (data.error || '').trim();
+            const outputLines = [];
+
+            if (data.success && outputText) {
+                outputText.split('\n').forEach(line => {
+                    outputLines.push({ type: 'output', text: line });
+                });
+            } else if (!data.success && errorText) {
+                errorText.split('\n').forEach(line => {
+                    outputLines.push({ type: 'error', text: line });
+                });
+            } else if (outputText) {
+                outputText.split('\n').forEach(line => {
+                    outputLines.push({ type: 'output', text: line });
+                });
+            } else {
+                outputLines.push({ type: 'info', text: '(No output — use console.log() or print() to see results)' });
+            }
+
+            const runtime = data.executionTime ? `${Math.round(data.executionTime)}ms` : 'N/A';
+            outputLines.push({ type: 'info', text: `\n⏱ Runtime: ${runtime}` });
+            setConsoleOutput(prev => [...prev, ...outputLines]);
+
+            // Save to execution history
+            const histEntry = {
+                id: Date.now(),
+                timestamp,
+                language,
+                codeSnippet: code.slice(0, 100),
+                outputPreview: outputText.slice(0, 80) || errorText.slice(0, 80) || 'No output',
+                success: data.success,
+            };
+            setExecHistory(prev => {
+                const updated = [histEntry, ...prev].slice(0, 10);
+                localStorage.setItem('pg-exec-history', JSON.stringify(updated));
+                return updated;
+            });
+        } catch (err) {
+            setConsoleOutput(prev => [...prev, { type: 'error', text: `Network error: ${err.message}` }]);
+        } finally {
             setRunning(false);
-        }, 400 + Math.random() * 600);
-    }, [code, language]);
+        }
+    }, [code, language, stdinInput]);
+
+    // ─── Font size ───
+    const handleFontSize = (delta) => {
+        setFontSize(prev => {
+            const next = Math.max(10, Math.min(24, prev + delta));
+            localStorage.setItem('pg-font-size', next);
+            return next;
+        });
+    };
+
+    // ─── Fullscreen ───
+    const handleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            rootRef.current?.requestFullscreen?.();
+            setIsFullscreen(true);
+        } else {
+            document.exitFullscreen?.();
+            setIsFullscreen(false);
+        }
+    };
+
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', onFsChange);
+        return () => document.removeEventListener('fullscreenchange', onFsChange);
+    }, []);
+
+    // ─── Share code via URL ───
+    const handleShare = () => {
+        try {
+            const encoded = btoa(encodeURIComponent(code));
+            const url = `${window.location.origin}/playground?lang=${language}&code=${encoded}`;
+            navigator.clipboard.writeText(url);
+            setShareCopied(true);
+            setTimeout(() => setShareCopied(false), 2500);
+        } catch { /* code too long */ }
+    };
+
+    // Load shared code from URL on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const sharedCode = params.get('code');
+        const sharedLang = params.get('lang');
+        if (sharedCode) {
+            try {
+                const decoded = decodeURIComponent(atob(sharedCode));
+                setCode(decoded);
+                if (sharedLang && LANGUAGES.find(l => l.id === sharedLang)) {
+                    setLanguage(sharedLang);
+                    localStorage.setItem('playground-lang', sharedLang);
+                }
+            } catch { /* invalid share link */ }
+        }
+    }, []);
 
     // ─── Clear console ───
     const clearConsole = () => setConsoleOutput([]);
@@ -313,14 +442,20 @@ export default function CodingPlayground() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // ─── Download code ───
     const handleDownload = () => {
-        const extensions = { python: 'py', javascript: 'js', cpp: 'cpp', java: 'java', go: 'go' };
-        const blob = new Blob([code], { type: 'text/plain' });
+        const fileInfo = {
+            python: { ext: 'py', mime: 'text/x-python' },
+            javascript: { ext: 'js', mime: 'text/javascript' },
+            cpp: { ext: 'cpp', mime: 'text/x-c++src' },
+            java: { ext: 'java', mime: 'text/x-java-source' },
+            go: { ext: 'go', mime: 'text/x-go' },
+        };
+        const info = fileInfo[language] || { ext: 'txt', mime: 'text/plain' };
+        const blob = new Blob([code], { type: info.mime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `playground.${extensions[language] || 'txt'}`;
+        a.download = `playground.${info.ext}`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -386,6 +521,21 @@ export default function CodingPlayground() {
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
                 handleRun();
+            } else if (e.ctrlKey && e.key === '=') {
+                e.preventDefault();
+                handleFontSize(1);
+            } else if (e.ctrlKey && e.key === '-') {
+                e.preventDefault();
+                handleFontSize(-1);
+            } else if (e.key === 'F11') {
+                e.preventDefault();
+                handleFullscreen();
+            } else if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                setShowShortcuts(s => !s);
+            } else if (e.ctrlKey && e.key === 'i') {
+                e.preventDefault();
+                setShowStdin(s => !s);
             }
         };
         window.addEventListener('keydown', handler);
@@ -407,6 +557,11 @@ export default function CodingPlayground() {
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
             run: () => handleRun(),
         });
+
+        // Track cursor position
+        editor.onDidChangeCursorPosition((e) => {
+            setCursorPos({ line: e.position.lineNumber, col: e.position.column });
+        });
     };
 
     // ─── Theme change handler ───
@@ -422,7 +577,7 @@ export default function CodingPlayground() {
     const langInfo = LANGUAGES.find(l => l.id === language) || LANGUAGES[0];
 
     return (
-        <div className="pg-root">
+        <div className="pg-root" ref={rootRef}>
             {/* ─── Top Bar ─── */}
             <div className="pg-topbar">
                 <div className="pg-topbar-left">
@@ -558,113 +713,276 @@ export default function CodingPlayground() {
                     )}
 
                     {/* Actions */}
-                    <button className="pg-toolbar-btn-icon" onClick={handleCopy} title="Copy code">
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                    <div className="pg-toolbar-divider" />
+                    <button className="pg-toolbar-btn-icon" onClick={() => handleFontSize(-1)} title="Zoom out (Ctrl-)"><ZoomOut size={14} /></button>
+                    <span className="pg-font-label">{fontSize}px</span>
+                    <button className="pg-toolbar-btn-icon" onClick={() => handleFontSize(1)} title="Zoom in (Ctrl+)"><ZoomIn size={14} /></button>
+                    <div className="pg-toolbar-divider" />
+                    <button className="pg-toolbar-btn-icon" onClick={handleFullscreen} title="Fullscreen (F11)">{isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>
+                    <button className="pg-toolbar-btn-icon" onClick={handleReset} title="Reset"><Trash2 size={14} /></button>
+                    <button className={`pg-toolbar-btn-icon ${showSidebar ? 'pg-active' : ''}`} onClick={() => setShowSidebar(s => !s)} title="Toggle sidebar">
+                        {showSidebar ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
                     </button>
-                    <button className="pg-toolbar-btn-icon" onClick={handleDownload} title="Download">
-                        <Download size={14} />
-                    </button>
-                    <button className="pg-toolbar-btn-icon" onClick={handleReset} title="Reset to default">
-                        <Trash2 size={14} />
-                    </button>
-
-                    {/* Run button */}
-                    <button className="pg-run-btn" onClick={handleRun} disabled={running}>
-                        <Play size={14} />
-                        <span>{running ? 'Running...' : 'Run'}</span>
-                        <kbd>Ctrl+↵</kbd>
-                    </button>
+                    <button className="pg-run-btn" onClick={handleRun} disabled={running}><Play size={14} /><span>{running ? 'Running...' : 'Run'}</span><kbd>Ctrl+&#x21b5;</kbd></button>
                 </div>
             </div>
 
-            {/* ─── Main Editor Area ─── */}
-            <div className="pg-editor-area">
-                <div className="pg-editor-wrapper" style={{ flex: 1 }}>
-                    <Editor
-                        height="100%"
-                        language={langInfo.monacoId}
-                        value={code}
-                        onChange={val => setCode(val || '')}
-                        beforeMount={handleBeforeMount}
-                        onMount={handleEditorMount}
-                        theme={editorTheme}
-                        options={{
-                            fontSize: 14,
-                            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                            fontLigatures: true,
-                            minimap: { enabled: false },
-                            scrollBeyondLastLine: false,
-                            smoothScrolling: true,
-                            cursorBlinking: 'smooth',
-                            cursorSmoothCaretAnimation: 'on',
-                            padding: { top: 16, bottom: 16 },
-                            lineNumbers: 'on',
-                            renderLineHighlight: 'all',
-                            bracketPairColorization: { enabled: true },
-                            guides: { bracketPairs: true, indentation: true },
-                            autoClosingBrackets: 'always',
-                            autoClosingQuotes: 'always',
-                            folding: true,
-                            wordWrap: 'on',
-                            suggestOnTriggerCharacters: true,
-                            tabSize: 4,
-                            detectIndentation: true,
-                        }}
-                    />
+            {/* Main Split: Editor + Sidebar */}
+            <div className="pg-main-split">
+                {/* Left: Editor + Console */}
+                <div className="pg-editor-area">
+                    <div className="pg-editor-wrapper" style={{ flex: 1 }}>
+                        <Editor
+                            height="100%"
+                            language={langInfo.monacoId}
+                            value={code}
+                            onChange={val => setCode(val || '')}
+                            beforeMount={handleBeforeMount}
+                            onMount={handleEditorMount}
+                            theme={editorTheme}
+                            options={{
+                                fontSize,
+                                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                                fontLigatures: true,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                smoothScrolling: true,
+                                cursorBlinking: 'smooth',
+                                cursorSmoothCaretAnimation: 'on',
+                                padding: { top: 16, bottom: 16 },
+                                lineNumbers: 'on',
+                                renderLineHighlight: 'all',
+                                bracketPairColorization: { enabled: true },
+                                guides: { bracketPairs: true, indentation: true },
+                                autoClosingBrackets: 'always',
+                                autoClosingQuotes: 'always',
+                                folding: true,
+                                wordWrap: 'on',
+                                suggestOnTriggerCharacters: true,
+                                tabSize: 4,
+                                detectIndentation: true,
+                            }}
+                        />
+                        <div className="pg-lang-badge">
+                            <span>{langInfo.icon}</span> {langInfo.label}
+                        </div>
+                    </div>
 
-                    {/* Language badge overlay */}
-                    <div className="pg-lang-badge">
-                        <span>{langInfo.icon}</span> {langInfo.label}
+                    {/* Console Panel */}
+                    <div className="pg-console" style={{ height: consoleHeight }}>
+                        <div className="pg-console-resize" onMouseDown={handleResizeMouseDown}>
+                            <div className="pg-console-resize-bar" />
+                        </div>
+                        <div className="pg-console-header">
+                            <div className="pg-console-title">
+                                <Terminal size={13} />
+                                <span>Console</span>
+                                <span className="pg-console-count">{consoleOutput.length} lines</span>
+                            </div>
+                            <button className="pg-console-clear" onClick={clearConsole}>
+                                <Trash2 size={12} /><span>Clear</span>
+                            </button>
+                        </div>
+                        <div className="pg-console-body">
+                            {consoleOutput.length === 0 ? (
+                                <div className="pg-console-empty">
+                                    <Terminal size={24} strokeWidth={1} />
+                                    <p>Run your code to see output here</p>
+                                    <kbd>Ctrl + Enter</kbd>
+                                </div>
+                            ) : (
+                                consoleOutput.map((line, i) => (
+                                    <div key={i} className={`pg-console-line pg-console-${line.type}`}>
+                                        {line.type === 'info' && <span className="pg-console-prefix">›</span>}
+                                        {line.type === 'output' && <span className="pg-console-prefix">»</span>}
+                                        {line.type === 'error' && <span className="pg-console-prefix">✕</span>}
+                                        <span>{line.text}</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* ─── Console Panel ─── */}
-                <div className="pg-console" style={{ height: consoleHeight }}>
-                    {/* Resize handle */}
-                    <div className="pg-console-resize" onMouseDown={handleResizeMouseDown}>
-                        <div className="pg-console-resize-bar" />
-                    </div>
-
-                    <div className="pg-console-header">
-                        <div className="pg-console-title">
-                            <Terminal size={13} />
-                            <span>Console</span>
-                            <span className="pg-console-count">{consoleOutput.length} lines</span>
+                {/* Right Sidebar */}
+                {showSidebar && (
+                    <div className="pg-sidebar">
+                        <div className="pg-sidebar-tabs">
+                            {[
+                                { id: 'input', icon: <TextCursorInput size={16} />, label: 'Input' },
+                                { id: 'actions', icon: <Share2 size={16} />, label: 'Actions' },
+                                { id: 'history', icon: <History size={16} />, label: 'History' },
+                                { id: 'shortcuts', icon: <Keyboard size={16} />, label: 'Keys' },
+                                { id: 'info', icon: <Info size={16} />, label: 'Info' },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    className={`pg-sidebar-tab ${sidebarTab === tab.id ? 'pg-sidebar-tab-active' : ''}`}
+                                    onClick={() => setSidebarTab(tab.id)}
+                                    title={tab.label}
+                                >
+                                    {tab.icon}
+                                </button>
+                            ))}
                         </div>
-                        <button className="pg-console-clear" onClick={clearConsole}>
-                            <Trash2 size={12} />
-                            <span>Clear</span>
-                        </button>
-                    </div>
 
-                    <div className="pg-console-body">
-                        {consoleOutput.length === 0 ? (
-                            <div className="pg-console-empty">
-                                <Terminal size={24} strokeWidth={1} />
-                                <p>Run your code to see output here</p>
-                                <kbd>Ctrl + Enter</kbd>
-                            </div>
-                        ) : (
-                            consoleOutput.map((line, i) => (
-                                <div key={i} className={`pg-console-line pg-console-${line.type}`}>
-                                    {line.type === 'info' && <span className="pg-console-prefix">›</span>}
-                                    {line.type === 'output' && <span className="pg-console-prefix">»</span>}
-                                    {line.type === 'error' && <span className="pg-console-prefix">✕</span>}
-                                    <span>{line.text}</span>
+                        <div className="pg-sidebar-content">
+                            {sidebarTab === 'input' && (
+                                <div className="pg-sidebar-section">
+                                    <div className="pg-sidebar-section-header">
+                                        <TextCursorInput size={14} />
+                                        <span>Input (stdin)</span>
+                                    </div>
+                                    <textarea
+                                        className="pg-stdin-input pg-sidebar-textarea"
+                                        value={stdinInput}
+                                        onChange={e => setStdinInput(e.target.value)}
+                                        placeholder={"Enter input for your program...\nEach line = one input\n\nPython: input()\nC++: cin >> x\nJava: Scanner"}
+                                        spellCheck={false}
+                                    />
                                 </div>
-                            ))
-                        )}
+                            )}
+
+                            {sidebarTab === 'actions' && (
+                                <div className="pg-sidebar-section">
+                                    <div className="pg-sidebar-section-header">
+                                        <Share2 size={14} />
+                                        <span>Actions</span>
+                                    </div>
+                                    <div className="pg-sidebar-scroll">
+                                        <div className="pg-sidebar-actions">
+                                            <button className="pg-sidebar-action-btn" onClick={handleShare}>
+                                                {shareCopied ? <Check size={16} /> : <Share2 size={16} />}
+                                                <span>{shareCopied ? 'Link Copied!' : 'Share Code'}</span>
+                                                <span className="pg-sidebar-action-hint">Copy shareable URL</span>
+                                            </button>
+                                            <button className="pg-sidebar-action-btn" onClick={handleCopy}>
+                                                {copied ? <Check size={16} /> : <Copy size={16} />}
+                                                <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+                                                <span className="pg-sidebar-action-hint">Copy to clipboard</span>
+                                            </button>
+                                            <button className="pg-sidebar-action-btn" onClick={handleDownload}>
+                                                <Download size={16} />
+                                                <span>Download</span>
+                                                <span className="pg-sidebar-action-hint">.{({ python: 'py', javascript: 'js', cpp: 'cpp', java: 'java', go: 'go' })[language] || 'txt'} file</span>
+                                            </button>
+                                            <button className="pg-sidebar-action-btn" onClick={handleReset}>
+                                                <RotateCcw size={16} />
+                                                <span>Reset Code</span>
+                                                <span className="pg-sidebar-action-hint">Restore default</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {sidebarTab === 'history' && (
+                                <div className="pg-sidebar-section">
+                                    <div className="pg-sidebar-section-header">
+                                        <History size={14} />
+                                        <span>History</span>
+                                        <span className="pg-sidebar-badge">{execHistory.length}</span>
+                                    </div>
+                                    <div className="pg-sidebar-scroll">
+                                        {execHistory.length === 0 ? (
+                                            <div className="pg-sidebar-empty">
+                                                <History size={28} strokeWidth={1} />
+                                                <p>No runs yet</p>
+                                                <span>Click Run to start!</span>
+                                            </div>
+                                        ) : execHistory.map(entry => (
+                                            <div key={entry.id} className={`pg-history-entry ${entry.success ? '' : 'pg-history-error'}`}>
+                                                <div className="pg-history-meta">
+                                                    <span>{entry.timestamp}</span>
+                                                    <span className="pg-history-lang">{entry.language}</span>
+                                                    {entry.success ? <span style={{ color: '#4ade80' }}>✓</span> : <span style={{ color: '#f87171' }}>✗</span>}
+                                                </div>
+                                                <div className="pg-history-preview">{entry.outputPreview}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {sidebarTab === 'shortcuts' && (
+                                <div className="pg-sidebar-section">
+                                    <div className="pg-sidebar-section-header">
+                                        <Keyboard size={14} />
+                                        <span>Shortcuts</span>
+                                    </div>
+                                    <div className="pg-sidebar-scroll">
+                                        {[
+                                            ['Ctrl+Enter', 'Run code'],
+                                            ['Ctrl + =', 'Zoom in'],
+                                            ['Ctrl + -', 'Zoom out'],
+                                            ['Ctrl + /', 'Shortcuts'],
+                                            ['Ctrl + I', 'Input panel'],
+                                            ['F11', 'Fullscreen'],
+                                            ['Ctrl + D', 'Duplicate line'],
+                                            ['Ctrl+Shift+K', 'Delete line'],
+                                            ['Alt + ↑/↓', 'Move line'],
+                                            ['Ctrl + [/]', 'Indent'],
+                                        ].map(([key, action], i) => (
+                                            <div key={i} className="pg-shortcut-row">
+                                                <kbd>{key}</kbd>
+                                                <span>{action}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {sidebarTab === 'info' && (
+                                <div className="pg-sidebar-section">
+                                    <div className="pg-sidebar-section-header">
+                                        <Info size={14} />
+                                        <span>Code Info</span>
+                                    </div>
+                                    <div className="pg-sidebar-scroll">
+                                        <div className="pg-info-grid">
+                                            {[
+                                                ['Language', `${langInfo.icon} ${langInfo.label}`],
+                                                ['Cursor', `Ln ${cursorPos.line}, Col ${cursorPos.col}`],
+                                                ['Lines', code.split('\n').length],
+                                                ['Characters', code.length],
+                                                ['Font Size', `${fontSize}px`],
+                                                ['Encoding', 'UTF-8'],
+                                                ['Theme', editorTheme],
+                                                ['Total Runs', execHistory.length],
+                                            ].map(([label, value], i) => (
+                                                <div key={i} className="pg-info-item">
+                                                    <span className="pg-info-label">{label}</span>
+                                                    <span className="pg-info-value">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
+                )}
+            </div>
+
+            {/* Status Bar */}
+            <div className="pg-status-bar">
+                <div className="pg-status-left">
+                    <span className="pg-status-item">Ln {cursorPos.line}, Col {cursorPos.col}</span>
+                    <span className="pg-status-item">{code.split('\n').length} lines</span>
+                    <span className="pg-status-item">{code.length} chars</span>
+                </div>
+                <div className="pg-status-right">
+                    <span className="pg-status-item">{langInfo.icon} {langInfo.label}</span>
+                    <span className="pg-status-item">Font: {fontSize}px</span>
+                    <span className="pg-status-item">UTF-8</span>
                 </div>
             </div>
 
             {/* Click-away listener for dropdowns */}
             {(showLangMenu || showSnippets || showTemplates || showThemeMenu) && (
-                <div
-                    className="pg-overlay"
-                    onClick={() => { setShowLangMenu(false); setShowSnippets(false); setShowTemplates(false); setShowThemeMenu(false); }}
-                />
+                <div className="pg-overlay" onClick={() => { setShowLangMenu(false); setShowSnippets(false); setShowTemplates(false); setShowThemeMenu(false); }} />
             )}
         </div>
     );
 }
+

@@ -48,11 +48,11 @@ In this approach, we traverse with one pointer, and when it lands on an element 
             "Moving zeros to the end of an array"
         ],
         problems: [
-            { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending", link: "/problem/valid-palindrome" },
-            { id: "two-sum-ii", title: "Two Sum II - Input Array Is Sorted", difficulty: "Medium", status: "pending", link: "/problem/two-sum-ii" },
+            { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/valid-palindrome/", link: "/problem/valid-palindrome" },
+            { id: "two-sum-ii", title: "Two Sum II - Input Array Is Sorted", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/", link: "/problem/two-sum-ii" },
             { id: "3sum", title: "3Sum", difficulty: "Medium", status: "pending", link: "/problem/3sum" },
-            { id: "container-with-most-water", title: "Container With Most Water", difficulty: "Medium", status: "pending", link: "/problem/container-with-most-water" },
-            { id: "trapping-rain-water", title: "Trapping Rain Water", difficulty: "Hard", status: "pending", link: "/problem/trapping-rain-water" },
+            { id: "container-with-most-water", title: "Container With Most Water", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/container-with-most-water/", link: "/problem/container-with-most-water" },
+            { id: "trapping-rain-water", title: "Trapping Rain Water", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/trapping-rain-water/", link: "/problem/trapping-rain-water" },
             { id: "move-zeroes", title: "Move Zeroes", difficulty: "Easy", status: "pending", link: "/problem/move-zeroes" }
         ]
     },
@@ -209,11 +209,11 @@ Q3. What is the time complexity of Container With Most Water using two pointers?
             "Trapping rain water between elevation bars"
         ],
         problems: [
-            { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending", link: "/problem/valid-palindrome" },
-            { id: "two-sum-ii", title: "Two Sum II - Sorted", difficulty: "Medium", status: "pending", link: "/problem/two-sum-ii" },
+            { id: "valid-palindrome", title: "Valid Palindrome", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/valid-palindrome/", link: "/problem/valid-palindrome" },
+            { id: "two-sum-ii", title: "Two Sum II - Sorted", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/", link: "/problem/two-sum-ii" },
             { id: "3sum", title: "3Sum", difficulty: "Medium", status: "pending", link: "/problem/3sum" },
-            { id: "container-with-most-water", title: "Container With Most Water", difficulty: "Medium", status: "pending", link: "/problem/container-with-most-water" },
-            { id: "trapping-rain-water", title: "Trapping Rain Water", difficulty: "Hard", status: "pending", link: "/problem/trapping-rain-water" }
+            { id: "container-with-most-water", title: "Container With Most Water", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/container-with-most-water/", link: "/problem/container-with-most-water" },
+            { id: "trapping-rain-water", title: "Trapping Rain Water", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/trapping-rain-water/", link: "/problem/trapping-rain-water" }
         ]
     },
 
@@ -332,7 +332,7 @@ Q3. What additional step finds the ENTRANCE of a cycle after detection?
         problems: [
             { id: "detect-cycle", title: "Detect Cycle in Linked List", difficulty: "Easy", status: "pending", link: "/problem/detect-cycle" },
             { id: "remove-nth-node-from-end", title: "Remove Nth Node From End", difficulty: "Medium", status: "pending", link: "/problem/remove-nth-node-from-end" },
-            { id: "reorder-list", title: "Reorder List", difficulty: "Medium", status: "pending", link: "/problem/reorder-list" },
+            { id: "reorder-list", title: "Reorder List", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/reorder-list/", link: "/problem/reorder-list" },
             { id: "find-the-duplicate-number", title: "Find the Duplicate Number", difficulty: "Medium", status: "pending", link: "/problem/find-the-duplicate-number" },
             { id: "palindrome-linked-list", title: "Palindrome Linked List", difficulty: "Easy", status: "pending", link: "/problem/palindrome-linked-list" }
         ]
@@ -450,8 +450,8 @@ Q3. For "Previous Smaller Element," which type of monotonic stack do you maintai
         ],
         problems: [
             { id: "next-greater-element", title: "Next Greater Element", difficulty: "Medium", status: "pending", link: "/problem/next-greater-element" },
-            { id: "daily-temperatures", title: "Daily Temperatures", difficulty: "Medium", status: "pending", link: "/problem/daily-temperatures" },
-            { id: "largest-rectangle-in-histogram", title: "Largest Rectangle in Histogram", difficulty: "Hard", status: "pending", link: "/problem/largest-rectangle-in-histogram" },
+            { id: "daily-temperatures", title: "Daily Temperatures", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/daily-temperatures/", link: "/problem/daily-temperatures" },
+            { id: "largest-rectangle-in-histogram", title: "Largest Rectangle in Histogram", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/largest-rectangle-in-histogram/", link: "/problem/largest-rectangle-in-histogram" },
             { id: "stock-span-problem", title: "Stock Span Problem", difficulty: "Medium", status: "pending", link: "/problem/stock-span-problem" },
             { id: "sum-of-subarray-minimums", title: "Sum of Subarray Minimums", difficulty: "Medium", status: "pending", link: "/problem/sum-of-subarray-minimums" }
         ]
@@ -573,7 +573,7 @@ Q3. What is the typical complexity of binary search on answer with an O(n) check
             "Finding the minimum number of days to make bouquets"
         ],
         problems: [
-            { id: "koko-eating-bananas", title: "Koko Eating Bananas", difficulty: "Medium", status: "pending", link: "/problem/koko-eating-bananas" },
+            { id: "koko-eating-bananas", title: "Koko Eating Bananas", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/koko-eating-bananas/", link: "/problem/koko-eating-bananas" },
             { id: "split-array-largest-sum", title: "Split Array Largest Sum", difficulty: "Hard", status: "pending", link: "/problem/split-array-largest-sum" },
             { id: "find-peak-element", title: "Find Peak Element", difficulty: "Medium", status: "pending", link: "/problem/find-peak-element" },
             { id: "kth-smallest-element-in-sorted-matrix", title: "Kth Smallest in Sorted Matrix", difficulty: "Medium", status: "pending", link: "/problem/kth-smallest-element-in-sorted-matrix" },
@@ -710,9 +710,9 @@ Q3. What data structure does 0-1 BFS use instead of a regular queue?
         problems: [
             { id: "number-of-connected-islands", title: "Number of Islands", difficulty: "Medium", status: "pending", link: "/problem/number-of-connected-islands" },
             { id: "rotten-oranges", title: "Rotten Oranges", difficulty: "Medium", status: "pending", link: "/problem/rotten-oranges" },
-            { id: "shortest-path-in-binary-matrix", title: "Shortest Path in Binary Matrix", difficulty: "Medium", status: "pending", link: "/problem/shortest-path-in-binary-matrix" },
+            { id: "shortest-path-in-binary-matrix", title: "Shortest Path in Binary Matrix", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/shortest-path-in-binary-matrix/", link: "/problem/shortest-path-in-binary-matrix" },
             { id: "word-ladder-transformation", title: "Word Ladder", difficulty: "Hard", status: "pending", link: "/problem/word-ladder-transformation" },
-            { id: "binary-tree-level-order-traversal", title: "Binary Tree Level Order Traversal", difficulty: "Medium", status: "pending", link: "/problem/binary-tree-level-order-traversal" }
+            { id: "binary-tree-level-order-traversal", title: "Binary Tree Level Order Traversal", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/binary-tree-level-order-traversal/", link: "/problem/binary-tree-level-order-traversal" }
         ]
     },
 
@@ -825,11 +825,11 @@ Q3. When can you reduce 1D DP space from O(n) to O(1)?
             "Longest increasing subsequence length"
         ],
         problems: [
-            { id: "climbing-stairs", title: "Climbing Stairs", difficulty: "Easy", status: "pending", link: "/problem/climbing-stairs" },
-            { id: "maximum-subarray", title: "Maximum Subarray", difficulty: "Easy", status: "pending", link: "/problem/maximum-subarray" },
-            { id: "house-robber", title: "House Robber", difficulty: "Medium", status: "pending", link: "/problem/house-robber" },
-            { id: "coin-change", title: "Coin Change", difficulty: "Medium", status: "pending", link: "/problem/coin-change" },
-            { id: "longest-increasing-subsequence", title: "Longest Increasing Subsequence", difficulty: "Medium", status: "pending", link: "/problem/longest-increasing-subsequence" }
+            { id: "climbing-stairs", title: "Climbing Stairs", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/climbing-stairs/", link: "/problem/climbing-stairs" },
+            { id: "maximum-subarray", title: "Maximum Subarray", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/maximum-subarray/", link: "/problem/maximum-subarray" },
+            { id: "house-robber", title: "House Robber", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/house-robber/", link: "/problem/house-robber" },
+            { id: "coin-change", title: "Coin Change", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/coin-change/", link: "/problem/coin-change" },
+            { id: "longest-increasing-subsequence", title: "Longest Increasing Subsequence", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/longest-increasing-subsequence/", link: "/problem/longest-increasing-subsequence" }
         ]
     },
 
@@ -946,10 +946,10 @@ Q3. For Unique Paths in a grid with obstacles, what value does dp[i][j] get when
             "Cherry pickup across a grid (multiple traversals)"
         ],
         problems: [
-            { id: "unique-paths", title: "Unique Paths", difficulty: "Medium", status: "pending", link: "/problem/unique-paths" },
+            { id: "unique-paths", title: "Unique Paths", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/unique-paths/", link: "/problem/unique-paths" },
             { id: "minimum-path-sum", title: "Minimum Path Sum", difficulty: "Medium", status: "pending", link: "/problem/minimum-path-sum" },
             { id: "0-1-knapsack", title: "0/1 Knapsack", difficulty: "Medium", status: "pending", link: "/problem/0-1-knapsack" },
-            { id: "coin-change", title: "Coin Change", difficulty: "Medium", status: "pending", link: "/problem/coin-change" },
+            { id: "coin-change", title: "Coin Change", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/coin-change/", link: "/problem/coin-change" },
             { id: "maximal-square", title: "Maximal Square", difficulty: "Medium", status: "pending", link: "/problem/maximal-square" }
         ]
     },
@@ -1080,11 +1080,11 @@ Q3. How can you find the Longest Palindromic Subsequence using LCS?
             "Checking if a string is a valid interleaving of two others"
         ],
         problems: [
-            { id: "longest-common-subsequence", title: "Longest Common Subsequence", difficulty: "Medium", status: "pending", link: "/problem/longest-common-subsequence" },
-            { id: "edit-distance", title: "Edit Distance", difficulty: "Hard", status: "pending", link: "/problem/edit-distance" },
+            { id: "longest-common-subsequence", title: "Longest Common Subsequence", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/longest-common-subsequence/", link: "/problem/longest-common-subsequence" },
+            { id: "edit-distance", title: "Edit Distance", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/edit-distance/", link: "/problem/edit-distance" },
             { id: "longest-palindromic-subsequence", title: "Longest Palindromic Subsequence", difficulty: "Medium", status: "pending", link: "/problem/longest-palindromic-subsequence" },
             { id: "wildcard-matching", title: "Wildcard Matching", difficulty: "Hard", status: "pending", link: "/problem/wildcard-matching" },
-            { id: "interleaving-string", title: "Interleaving String", difficulty: "Medium", status: "pending", link: "/problem/interleaving-string" }
+            { id: "interleaving-string", title: "Interleaving String", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/interleaving-string/", link: "/problem/interleaving-string" }
         ]
     },
 
@@ -1217,7 +1217,7 @@ Q2. In-order traversal of a BST gives? A) Random order  B) Sorted order  C) Reve
         problems: [
             { id: "max-depth-of-binary-tree", title: "Max Depth of Binary Tree", difficulty: "Easy", status: "pending", link: "/problem/max-depth-of-binary-tree" },
             { id: "number-of-connected-islands", title: "Number of Islands", difficulty: "Medium", status: "pending", link: "/problem/number-of-connected-islands" },
-            { id: "course-schedule", title: "Course Schedule", difficulty: "Medium", status: "pending", link: "/problem/course-schedule" },
+            { id: "course-schedule", title: "Course Schedule", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/course-schedule/", link: "/problem/course-schedule" },
             { id: "validate-bst", title: "Validate BST", difficulty: "Medium", status: "pending", link: "/problem/validate-bst" }
         ]
     },
@@ -1276,11 +1276,11 @@ Q2. For generating all subsets of n elements, how many subsets exist? A) n  B) n
         `,
         examples: ["Generating all permutations/combinations", "N-Queens puzzle", "Sudoku solver", "Word search in a grid"],
         problems: [
-            { id: "subsets", title: "Subsets", difficulty: "Medium", status: "pending", link: "/problem/subsets" },
-            { id: "permutations", title: "Permutations", difficulty: "Medium", status: "pending", link: "/problem/permutations" },
-            { id: "combination-sum", title: "Combination Sum", difficulty: "Medium", status: "pending", link: "/problem/combination-sum" },
-            { id: "n-queens", title: "N-Queens", difficulty: "Hard", status: "pending", link: "/problem/n-queens" },
-            { id: "word-search", title: "Word Search", difficulty: "Medium", status: "pending", link: "/problem/word-search" }
+            { id: "subsets", title: "Subsets", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/subsets/", link: "/problem/subsets" },
+            { id: "permutations", title: "Permutations", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/permutations/", link: "/problem/permutations" },
+            { id: "combination-sum", title: "Combination Sum", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/combination-sum/", link: "/problem/combination-sum" },
+            { id: "n-queens", title: "N-Queens", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/n-queens/", link: "/problem/n-queens" },
+            { id: "word-search", title: "Word Search", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/word-search/", link: "/problem/word-search" }
         ]
     },
 
@@ -1334,10 +1334,10 @@ Q2. For interval scheduling, sort by? A) Start time  B) End time  C) Duration  D
         `,
         examples: ["Activity selection / interval scheduling", "Jump Game — can you reach the end?", "Gas station circular tour", "Task scheduling with cooldown"],
         problems: [
-            { id: "jump-game", title: "Jump Game", difficulty: "Medium", status: "pending", link: "/problem/jump-game" },
-            { id: "gas-station", title: "Gas Station", difficulty: "Medium", status: "pending", link: "/problem/gas-station" },
-            { id: "task-scheduler", title: "Task Scheduler", difficulty: "Medium", status: "pending", link: "/problem/task-scheduler" },
-            { id: "merge-intervals", title: "Merge Intervals", difficulty: "Medium", status: "pending", link: "/problem/merge-intervals" }
+            { id: "jump-game", title: "Jump Game", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/jump-game/", link: "/problem/jump-game" },
+            { id: "gas-station", title: "Gas Station", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/gas-station/", link: "/problem/gas-station" },
+            { id: "task-scheduler", title: "Task Scheduler", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/task-scheduler/", link: "/problem/task-scheduler" },
+            { id: "merge-intervals", title: "Merge Intervals", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/merge-intervals/", link: "/problem/merge-intervals" }
         ]
     },
 
@@ -1399,7 +1399,7 @@ Q2. In Kahn's algorithm, which nodes start in the queue? A) All nodes  B) Nodes 
         `,
         examples: ["Course prerequisite ordering", "Build system dependency resolution", "Alien dictionary character ordering"],
         problems: [
-            { id: "course-schedule", title: "Course Schedule", difficulty: "Medium", status: "pending", link: "/problem/course-schedule" },
+            { id: "course-schedule", title: "Course Schedule", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/course-schedule/", link: "/problem/course-schedule" },
             { id: "course-schedule-ii", title: "Course Schedule II", difficulty: "Medium", status: "pending", link: "/problem/course-schedule-ii" },
             { id: "alien-dictionary", title: "Alien Dictionary", difficulty: "Hard", status: "pending", link: "/problem/alien-dictionary" }
         ]
@@ -1460,9 +1460,9 @@ Q2. Union by rank prevents? A) Cycles  B) Tall trees  C) Duplicates  D) Overflow
         `,
         examples: ["Dynamic connectivity queries", "Kruskal's MST edge processing", "Cycle detection in undirected graph", "Merging accounts by email"],
         problems: [
-            { id: "number-of-connected-components", title: "Number of Connected Components", difficulty: "Medium", status: "pending", link: "/problem/number-of-connected-components" },
-            { id: "redundant-connection", title: "Redundant Connection", difficulty: "Medium", status: "pending", link: "/problem/redundant-connection" },
-            { id: "accounts-merge", title: "Accounts Merge", difficulty: "Medium", status: "pending", link: "/problem/accounts-merge" }
+            { id: "number-of-connected-components", title: "Number of Connected Components", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/", link: "/problem/number-of-connected-components" },
+            { id: "redundant-connection", title: "Redundant Connection", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/redundant-connection/", link: "/problem/redundant-connection" },
+            { id: "accounts-merge", title: "Accounts Merge", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/accounts-merge/", link: "/problem/accounts-merge" }
         ]
     },
 
@@ -1516,10 +1516,10 @@ Q2. Two-heap median: the max-heap stores? A) All elements  B) Larger half  C) Sm
         `,
         examples: ["Finding the Kth largest element", "Top K frequent elements", "Merging K sorted lists", "Running median of a data stream"],
         problems: [
-            { id: "kth-largest-element", title: "Kth Largest Element", difficulty: "Medium", status: "pending", link: "/problem/kth-largest-element" },
+            { id: "kth-largest-element", title: "Kth Largest Element", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/kth-largest-element-in-a-stream/", link: "/problem/kth-largest-element" },
             { id: "top-k-frequent-elements", title: "Top K Frequent Elements", difficulty: "Medium", status: "pending", link: "/problem/top-k-frequent" },
-            { id: "merge-k-sorted-lists", title: "Merge K Sorted Lists", difficulty: "Hard", status: "pending", link: "/problem/merge-k-sorted-lists" },
-            { id: "find-median-from-data-stream", title: "Find Median from Data Stream", difficulty: "Hard", status: "pending", link: "/problem/find-median-from-data-stream" }
+            { id: "merge-k-sorted-lists", title: "Merge K Sorted Lists", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/merge-k-sorted-lists/", link: "/problem/merge-k-sorted-lists" },
+            { id: "find-median-from-data-stream", title: "Find Median from Data Stream", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/find-median-from-data-stream/", link: "/problem/find-median-from-data-stream" }
         ]
     },
 
@@ -1565,9 +1565,9 @@ Q2. Two intervals overlap when? A) start1 > end2  B) start1 <= end2 AND start2 <
         `,
         examples: ["Merging overlapping time slots", "Inserting a new interval", "Counting concurrent meetings", "Removing minimum intervals to avoid overlap"],
         problems: [
-            { id: "merge-intervals", title: "Merge Intervals", difficulty: "Medium", status: "pending", link: "/problem/merge-intervals" },
-            { id: "insert-interval", title: "Insert Interval", difficulty: "Medium", status: "pending", link: "/problem/insert-interval" },
-            { id: "non-overlapping-intervals", title: "Non-overlapping Intervals", difficulty: "Medium", status: "pending", link: "/problem/non-overlapping-intervals" }
+            { id: "merge-intervals", title: "Merge Intervals", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/merge-intervals/", link: "/problem/merge-intervals" },
+            { id: "insert-interval", title: "Insert Interval", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/insert-interval/", link: "/problem/insert-interval" },
+            { id: "non-overlapping-intervals", title: "Non-overlapping Intervals", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/non-overlapping-intervals/", link: "/problem/non-overlapping-intervals" }
         ]
     },
 
@@ -1614,7 +1614,7 @@ Q2. Time complexity of cyclic sort? A) O(n log n)  B) O(n²)  C) O(n)  D) O(1)
         `,
         examples: ["Finding the missing number in [1,n]", "Finding all duplicates in O(1) space", "First missing positive integer"],
         problems: [
-            { id: "missing-number", title: "Missing Number", difficulty: "Easy", status: "pending", link: "/problem/missing-number" },
+            { id: "missing-number", title: "Missing Number", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/missing-number/", link: "/problem/missing-number" },
             { id: "find-all-duplicates", title: "Find All Duplicates", difficulty: "Medium", status: "pending", link: "/problem/find-all-duplicates" },
             { id: "first-missing-positive", title: "First Missing Positive", difficulty: "Hard", status: "pending", link: "/problem/first-missing-positive" }
         ]
@@ -1664,10 +1664,10 @@ Q2. How to check if n is a power of 2? A) n % 2 == 0  B) n & (n-1) == 0  C) n >>
         `,
         examples: ["Finding the single non-duplicate element (XOR)", "Checking power of 2 in O(1)", "Counting set bits (Hamming weight)", "Generating subsets via bitmask"],
         problems: [
-            { id: "single-number", title: "Single Number", difficulty: "Easy", status: "pending", link: "/problem/single-number" },
-            { id: "number-of-1-bits", title: "Number of 1 Bits", difficulty: "Easy", status: "pending", link: "/problem/number-of-1-bits" },
-            { id: "counting-bits", title: "Counting Bits", difficulty: "Medium", status: "pending", link: "/problem/counting-bits" },
-            { id: "reverse-bits", title: "Reverse Bits", difficulty: "Easy", status: "pending", link: "/problem/reverse-bits" }
+            { id: "single-number", title: "Single Number", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/single-number/", link: "/problem/single-number" },
+            { id: "number-of-1-bits", title: "Number of 1 Bits", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/number-of-1-bits/", link: "/problem/number-of-1-bits" },
+            { id: "counting-bits", title: "Counting Bits", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/counting-bits/", link: "/problem/counting-bits" },
+            { id: "reverse-bits", title: "Reverse Bits", difficulty: "Easy", status: "pending", leetcodeLink: "https://leetcode.com/problems/reverse-bits/", link: "/problem/reverse-bits" }
         ]
     },
 
@@ -1729,8 +1729,8 @@ Q2. Every path from root to an isEnd node represents? A) A prefix  B) A complete
         `,
         examples: ["Implementing autocomplete", "Word Search II with trie + backtracking", "Finding longest common prefix", "Spell checker with edit distance on trie"],
         problems: [
-            { id: "implement-trie", title: "Implement Trie", difficulty: "Medium", status: "pending", link: "/problem/implement-trie" },
-            { id: "word-search-ii", title: "Word Search II", difficulty: "Hard", status: "pending", link: "/problem/word-search-ii" },
+            { id: "implement-trie", title: "Implement Trie", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/implement-trie-prefix-tree/", link: "/problem/implement-trie" },
+            { id: "word-search-ii", title: "Word Search II", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/word-search-ii/", link: "/problem/word-search-ii" },
             { id: "replace-words", title: "Replace Words", difficulty: "Medium", status: "pending", link: "/problem/replace-words" }
         ]
     },
@@ -1785,7 +1785,7 @@ Q2. Time to find median with two heaps? A) O(n)  B) O(log n)  C) O(1)  D) O(n lo
         `,
         examples: ["Running median of a number stream", "Sliding window median", "Maximizing capital with project selection"],
         problems: [
-            { id: "find-median-from-data-stream", title: "Find Median from Data Stream", difficulty: "Hard", status: "pending", link: "/problem/find-median-from-data-stream" },
+            { id: "find-median-from-data-stream", title: "Find Median from Data Stream", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/find-median-from-data-stream/", link: "/problem/find-median-from-data-stream" },
             { id: "sliding-window-median", title: "Sliding Window Median", difficulty: "Hard", status: "pending", link: "/problem/sliding-window-median" }
         ]
     },
@@ -1841,9 +1841,9 @@ Q2. Dijkstra fails when? A) Graph is dense  B) Edges have negative weights  C) G
         `,
         examples: ["Shortest path in a weighted network", "Cheapest flights with at most K stops", "Network delay time (max of shortest paths)", "Path with minimum effort in a grid"],
         problems: [
-            { id: "network-delay-time", title: "Network Delay Time", difficulty: "Medium", status: "pending", link: "/problem/network-delay-time" },
-            { id: "cheapest-flights", title: "Cheapest Flights Within K Stops", difficulty: "Medium", status: "pending", link: "/problem/cheapest-flights" },
-            { id: "path-with-minimum-effort", title: "Path with Minimum Effort", difficulty: "Hard", status: "pending", link: "/problem/path-with-minimum-effort" }
+            { id: "network-delay-time", title: "Network Delay Time", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/network-delay-time/", link: "/problem/network-delay-time" },
+            { id: "cheapest-flights", title: "Cheapest Flights Within K Stops", difficulty: "Medium", status: "pending", leetcodeLink: "https://leetcode.com/problems/cheapest-flights-within-k-stops/", link: "/problem/cheapest-flights" },
+            { id: "path-with-minimum-effort", title: "Path with Minimum Effort", difficulty: "Hard", status: "pending", leetcodeLink: "https://leetcode.com/problems/path-with-minimum-effort/", link: "/problem/path-with-minimum-effort" }
         ]
     }
 ];

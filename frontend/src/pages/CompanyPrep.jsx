@@ -2,9 +2,10 @@ import React, { useState, useMemo, useCallback } from 'react';
 import {
   Search, Filter, Building2, ChevronDown, ChevronUp, CheckCircle, Circle,
   Bookmark, BookmarkCheck, Star, Clock, Flame, StickyNote, ArrowRight,
-  BarChart3, Target, X, Mic, Brain, Code, MessageSquare
+  BarChart3, Target, X, Mic, Brain, Code, MessageSquare, Calendar,
+  ChevronLeft, ChevronRight, Lightbulb
 } from 'lucide-react';
-import { COMPANIES, COMPANY_QUESTIONS, STAGES, ROLES, DIFFICULTIES, getCompanyStats, getAllTags } from '../data/companyPrepData';
+import { COMPANIES, COMPANY_QUESTIONS, STAGES, ROLES, DIFFICULTIES, getCompanyStats, getAllTags, DATA_LAST_UPDATED } from '../data/companyPrepData';
 import { useCompanyPrepProgress } from '../data/companyPrepProgress';
 import { Link } from 'react-router-dom';
 
@@ -24,6 +25,8 @@ export default function CompanyPrep() {
   const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
   const [activeView, setActiveView] = useState('all'); // 'all' | 'company' | 'recommended'
   const [selectedCompanyTile, setSelectedCompanyTile] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const QUESTIONS_PER_PAGE = 50;
 
   const { progress, toggleSolved, setNote, toggleBookmark, stats, isSolved, isBookmarked, getNote, getRecommendations } = useCompanyPrepProgress();
 
@@ -60,6 +63,15 @@ export default function CompanyPrep() {
 
     return filtered;
   }, [search, selectedCompanies, selectedDifficulty, selectedStage, selectedRole, frequencyMin, recentFilter, showSolvedOnly, showBookmarkedOnly, selectedCompanyTile, progress]);
+
+  // Reset to page 1 when filters change
+  useMemo(() => setCurrentPage(1), [search, selectedCompanies, selectedDifficulty, selectedStage, selectedRole, frequencyMin, recentFilter, showSolvedOnly, showBookmarkedOnly, selectedCompanyTile]);
+
+  const totalPages = Math.ceil(filteredQuestions.length / QUESTIONS_PER_PAGE);
+  const paginatedQuestions = useMemo(() => {
+    const start = (currentPage - 1) * QUESTIONS_PER_PAGE;
+    return filteredQuestions.slice(start, start + QUESTIONS_PER_PAGE);
+  }, [filteredQuestions, currentPage]);
 
   const recommendations = useMemo(() => getRecommendations(8), [getRecommendations]);
 
@@ -109,6 +121,9 @@ export default function CompanyPrep() {
             </div>
             <div className="cp-stat-pill">
               <Flame size={16} /> <strong>{stats.byDifficulty.Hard}</strong> Hard Solved
+            </div>
+            <div className="cp-stat-pill cp-updated-pill">
+              <Calendar size={16} /> Updated: <strong>{DATA_LAST_UPDATED}</strong>
             </div>
           </div>
         </div>
@@ -265,10 +280,10 @@ export default function CompanyPrep() {
       {/* Questions List */}
       <div className="cp-questions-list">
         <div className="cp-list-header">
-          <span>{activeView === 'recommended' ? recommendations.length : filteredQuestions.length} questions</span>
+          <span>{activeView === 'recommended' ? recommendations.length : filteredQuestions.length} questions{activeView !== 'recommended' && totalPages > 1 ? ` · Page ${currentPage} of ${totalPages}` : ''}</span>
         </div>
 
-        {(activeView === 'recommended' ? recommendations : filteredQuestions).map(q => (
+        {(activeView === 'recommended' ? recommendations : paginatedQuestions).map(q => (
           <div key={q.id} className={`cp-question-card ${isSolved(q.id) ? 'solved' : ''}`}>
             <div className="cp-card-header" onClick={() => toggleExpand(q.id)}>
               <button className="cp-solve-btn" onClick={e => { e.stopPropagation(); toggleSolved(q.id); }} title={isSolved(q.id) ? 'Mark unsolved' : 'Mark solved'}>
@@ -340,6 +355,13 @@ export default function CompanyPrep() {
                   </div>
                 )}
 
+                {q.approach && (
+                  <div className="cp-approach-section">
+                    <h4><Lightbulb size={14} /> Approach</h4>
+                    <p className="cp-approach-text">{q.approach}</p>
+                  </div>
+                )}
+
                 {/* Notes Section */}
                 <div className="cp-notes-section">
                   <h4><StickyNote size={14} /> Your Notes</h4>
@@ -368,6 +390,37 @@ export default function CompanyPrep() {
             <h3>No questions found</h3>
             <p>Try adjusting your filters or search term</p>
             <button className="cp-clear-all-btn" onClick={clearFilters}>Clear Filters</button>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {activeView !== 'recommended' && totalPages > 1 && (
+          <div className="cp-pagination">
+            <button className="cp-page-btn" disabled={currentPage === 1} onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+              <ChevronLeft size={16} /> Previous
+            </button>
+            <div className="cp-page-numbers">
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 7) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 4) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 3) {
+                  pageNum = totalPages - 6 + i;
+                } else {
+                  pageNum = currentPage - 3 + i;
+                }
+                return (
+                  <button key={pageNum} className={`cp-page-num ${currentPage === pageNum ? 'active' : ''}`} onClick={() => { setCurrentPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button className="cp-page-btn" disabled={currentPage === totalPages} onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+              Next <ChevronRight size={16} />
+            </button>
           </div>
         )}
       </div>
