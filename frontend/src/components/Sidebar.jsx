@@ -34,6 +34,8 @@ const navSections = [
         category: 'Learning',
         items: [
             { path: '/dsa-path', label: 'DSA Learning Path', subtitle: 'DSA roadmap & patterns', icon: Map },
+            { path: '/technical-path', label: 'Technical Path', subtitle: 'CS & System Design', icon: Server },
+            { path: '/hr-path', label: 'HR Path', subtitle: 'Behavioral & Soft Skills', icon: Users },
             { path: '/learning-path', label: 'Aptitude Path', subtitle: 'Formulas & shortcuts', icon: GraduationCap },
             { path: '/ai-tutor', label: 'AI Tutor', subtitle: 'Guided DSA, SQL & aptitude', icon: Sparkles },
         ]

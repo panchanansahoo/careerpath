@@ -49,6 +49,10 @@ import LearningPath from './pages/LearningPath';
 import TopicLearning from './pages/TopicLearning';
 import DSALearningPath from './pages/DSALearningPath';
 import DSATopicLearning from './pages/DSATopicLearning';
+import TechnicalLearningPath from './pages/TechnicalLearningPath';
+import TechnicalTopicLearning from './pages/TechnicalTopicLearning';
+import HRLearningPath from './pages/HRLearningPath';
+import HRTopicLearning from './pages/HRTopicLearning';
 import AITutorHub from './pages/AITutorHub';
 import CompanyPrep from './pages/CompanyPrep';
 import CompanyInterview from './pages/CompanyInterview';
@@ -180,6 +184,10 @@ function AppContent() {
             <Route path="/learning-path/:topicId" element={<TopicLearning />} />
             <Route path="/dsa-path" element={<DSALearningPath />} />
             <Route path="/dsa-path/:topicId" element={<DSATopicLearning />} />
+            <Route path="/technical-path" element={<TechnicalLearningPath />} />
+            <Route path="/technical-path/:topicId" element={<TechnicalTopicLearning />} />
+            <Route path="/hr-path" element={<HRLearningPath />} />
+            <Route path="/hr-path/:topicId" element={<HRTopicLearning />} />
             <Route path="/ai-tutor" element={<AITutorHub />} />
             <Route path="/company-prep" element={<CompanyPrep />} />
             <Route path="/company-interview" element={<CompanyInterview />} />

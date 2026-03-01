@@ -1,26 +1,21 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Radar } from 'lucide-react';
 
-export default function SkillRadar() {
+export default function SkillRadar({ data }) {
     const canvasRef = useRef(null);
     const [animProgress, setAnimProgress] = useState(0);
 
+    const skillData = data || { dsa: 0, sql: 0, aptitude: 0, systemDesign: 0, behavioral: 0 };
+
     const skills = [
-        { label: 'DSA', value: 72 },
-        { label: 'SQL', value: 58 },
-        { label: 'Aptitude', value: 65 },
-        { label: 'System Design', value: 40 },
-        { label: 'Behavioral', value: 80 },
+        { label: 'DSA', value: skillData.dsa },
+        { label: 'SQL', value: skillData.sql },
+        { label: 'Aptitude', value: skillData.aptitude },
+        { label: 'System Design', value: skillData.systemDesign },
+        { label: 'Behavioral', value: skillData.behavioral },
     ];
 
     useEffect(() => {
-        // Load from localStorage if available
-        try {
-            const dsaSolved = parseInt(localStorage.getItem('solvedCount') || '0');
-            if (dsaSolved > 0) skills[0].value = Math.min(100, Math.round((dsaSolved / 100) * 100));
-        } catch (e) { }
-
-        // Animate in
         let start = null;
         const duration = 1000;
         const step = (ts) => {
@@ -95,7 +90,6 @@ export default function SkillRadar() {
         }
         ctx.closePath();
 
-        // Fill gradient
         const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
         gradient.addColorStop(0, 'rgba(139, 92, 246, 0.35)');
         gradient.addColorStop(1, 'rgba(139, 92, 246, 0.08)');
@@ -112,13 +106,11 @@ export default function SkillRadar() {
             const x = cx + r * Math.cos(angle);
             const y = cy + r * Math.sin(angle);
 
-            // Glow
             ctx.beginPath();
             ctx.arc(x, y, 6, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(139, 92, 246, 0.25)';
             ctx.fill();
 
-            // Dot
             ctx.beginPath();
             ctx.arc(x, y, 3, 0, Math.PI * 2);
             ctx.fillStyle = '#a78bfa';
@@ -138,7 +130,6 @@ export default function SkillRadar() {
             ctx.textBaseline = 'middle';
             ctx.fillText(skills[i].label, x, y);
 
-            // Value below label
             ctx.fillStyle = '#a78bfa';
             ctx.font = 'bold 10px system-ui';
             ctx.fillText(`${Math.round(skills[i].value * animProgress)}%`, x, y + 14);

@@ -451,6 +451,16 @@ export default function AptitudePractice() {
                                 padding: 20, borderRadius: 12, marginBottom: 32,
                                 background: 'rgba(129,140,248,0.06)', border: '1px solid rgba(129,140,248,0.15)'
                             }}>
+                                {currentQ.theory && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#facc15' }}>
+                                            <BookOpen size={14} /> Core Theory
+                                        </div>
+                                        <p style={{ fontSize: 14, color: '#d4d4d8', lineHeight: 1.6, margin: 0 }}>
+                                            {currentQ.theory}
+                                        </p>
+                                    </div>
+                                )}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, fontWeight: 600, color: '#818cf8' }}>
                                     <Lightbulb size={14} /> Explanation
                                 </div>

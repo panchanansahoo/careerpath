@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
     CheckCircle2, Mic, Trophy, Flame, Code2,
-    Database, Brain, Clock, ChevronRight
+    Database, Brain, Clock, ChevronRight, Inbox
 } from 'lucide-react';
 
 const ACTIVITY_TYPES = {
@@ -25,30 +25,27 @@ function timeAgo(timestamp) {
     return `${days}d ago`;
 }
 
-export default function RecentActivity() {
-    const [activities, setActivities] = useState([]);
+export default function RecentActivity({ activities }) {
+    const items = activities || [];
 
-    useEffect(() => {
-        // Try to load from localStorage first
-        let stored = [];
-        try {
-            stored = JSON.parse(localStorage.getItem('recentActivities') || '[]');
-        } catch (e) { }
-
-        // Fall back to generated activities if empty
-        if (stored.length === 0) {
-            stored = [
-                { type: 'problem_solved', title: 'Two Sum — Accepted', timestamp: new Date(Date.now() - 1200000).toISOString() },
-                { type: 'interview_done', title: 'Mock Interview: Arrays & Hashing', timestamp: new Date(Date.now() - 7200000).toISOString() },
-                { type: 'badge_earned', title: 'Earned "7-Day Streak" badge', timestamp: new Date(Date.now() - 18000000).toISOString() },
-                { type: 'sql_practice', title: 'Completed JOIN challenge', timestamp: new Date(Date.now() - 43200000).toISOString() },
-                { type: 'dsa_practice', title: 'Binary Search pattern — 3 problems', timestamp: new Date(Date.now() - 86400000).toISOString() },
-                { type: 'aptitude_quiz', title: 'Quantitative: Percentages — 85%', timestamp: new Date(Date.now() - 172800000).toISOString() },
-            ];
-        }
-
-        setActivities(stored.slice(0, 6));
-    }, []);
+    if (items.length === 0) {
+        return (
+            <div className="recent-activity-card">
+                <div className="recent-activity-header">
+                    <div className="recent-activity-title">
+                        <Clock size={18} style={{ color: '#a78bfa' }} />
+                        <span>Recent Activity</span>
+                    </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 16px', gap: 8 }}>
+                    <Inbox size={32} style={{ color: 'rgba(255,255,255,0.15)' }} />
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
+                        No activity yet. Start solving problems to see your progress here!
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="recent-activity-card">
@@ -60,8 +57,8 @@ export default function RecentActivity() {
             </div>
 
             <div className="recent-activity-list">
-                {activities.map((activity, i) => {
-                    const config = ACTIVITY_TYPES[activity.type] || ACTIVITY_TYPES.problem_solved;
+                {items.map((activity, i) => {
+                    const config = ACTIVITY_TYPES[activity.type] || ACTIVITY_TYPES.dsa_practice;
                     const Icon = config.icon;
                     return (
                         <div key={i} className="recent-activity-item" style={{ animationDelay: `${i * 80}ms` }}>

@@ -101,6 +101,35 @@ export const MOCK_INTERVIEW_QUESTIONS = {
           hints: ["Imputation", "Removal", "Flagging"]
         }
       ]
+    },
+    {
+      id: "fresher",
+      title: "Fresher / Student",
+      description: "Campus placements, Internships, Core CS",
+      icon: "GraduationCap",
+      questions: [
+        {
+          id: "fr_1",
+          text: "Tell me about yourself — what are you studying and what excites you about tech?",
+          difficulty: "Easy",
+          topics: ["Introduction", "Communication"],
+          hints: ["Mention your branch, interests, and a project you enjoyed.", "Keep it concise — 1-2 minutes."]
+        },
+        {
+          id: "fr_2",
+          text: "Walk me through a project you built during college or a hackathon. What was your role?",
+          difficulty: "Easy",
+          topics: ["Projects", "Teamwork"],
+          hints: ["Use STAR format", "Mention tech stack and your specific contribution"]
+        },
+        {
+          id: "fr_3",
+          text: "Explain the difference between a stack and a queue. When would you use each?",
+          difficulty: "Easy",
+          topics: ["Data Structures", "Fundamentals"],
+          hints: ["Think LIFO vs FIFO", "Real-world analogies help"]
+        }
+      ]
     }
   ]
 };

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare, Brain, Code2, FileText, Clock, Filter, ChevronRight } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const typeConfig = {
   interview: { icon: <MessageSquare size={18} />, label: 'AI Interview', color: '#f472b6', bg: 'rgba(236,72,153,0.15)' },
 
@@ -21,7 +23,7 @@ export default function History() {
   const fetchHistory = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/user/history', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_URL}/api/user/history`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
@@ -30,21 +32,7 @@ export default function History() {
     setLoading(false);
   };
 
-  const filtered = filter === 'all' ? sessions : sessions.filter(s => s.type === filter);
-
-  // Demo data when API returns empty
-  const demoSessions = [
-    { id: 1, type: 'interview', title: 'DSA Mock Interview — Arrays & Strings', date: '2026-02-11', score: 85, duration: '25 min' },
-
-    { id: 3, type: 'practice', title: 'Two Sum — Optimal Solution', date: '2026-02-10', score: 92, duration: '12 min' },
-    { id: 4, type: 'interview', title: 'Behavioral Interview — Leadership', date: '2026-02-09', score: 78, duration: '20 min' },
-    { id: 5, type: 'resume', title: 'Resume ATS Analysis', date: '2026-02-09', score: 88, duration: '5 min' },
-    { id: 6, type: 'practice', title: 'Binary Search — Rotated Array', date: '2026-02-08', score: 95, duration: '10 min' },
-
-    { id: 8, type: 'interview', title: 'System Design Mock — Chat System', date: '2026-02-07', score: 72, duration: '30 min' }
-  ];
-
-  const displaySessions = filtered.length > 0 ? filtered : (filter === 'all' ? demoSessions : demoSessions.filter(s => s.type === filter));
+  const displaySessions = filter === 'all' ? sessions : sessions.filter(s => s.type === filter);
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -72,6 +60,14 @@ export default function History() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>Loading history...</div>
+      ) : displaySessions.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 60, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <Clock size={40} style={{ color: 'var(--text-muted)', margin: '0 auto 12px auto' }} />
+          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>No sessions found</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20 }}>
+            You haven't completed any {filter !== 'all' ? filter : ''} sessions yet.
+          </p>
+        </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {displaySessions.map((s, i) => {

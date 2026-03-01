@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     Calculator, Brain, BookOpen, ChevronDown, ChevronRight,
-    Trophy, Zap, Target, Clock, BarChart3, Sparkles,
+    Trophy, Zap, Target, Clock, BarChart3, Sparkles, Building,
     Hash, Percent, Scale, Hammer, Timer, IndianRupee, Dices, Droplets,
     Users, Compass, Lock, ArrowUpNarrowWide, GitBranch, LayoutGrid, Puzzle,
     SpellCheck, TextCursorInput, ArrowLeftRight, Shuffle, Quote,
-    GitCompareArrows, Play, Filter, ArrowRight
+    GitCompareArrows, Play, Filter, ArrowRight, Settings, Database, Box, Network
 } from 'lucide-react';
 import { APTITUDE_CATEGORIES, getCategoryStats, getOverallStats } from '../data/aptitudeData';
 
@@ -14,7 +14,8 @@ const ICON_MAP = {
     Calculator, Brain, BookOpen, Hash, Percent, Scale, Hammer, Timer,
     IndianRupee, Dices, Droplets, Users, Compass, Lock, ArrowUpNarrowWide,
     GitBranch, LayoutGrid, Puzzle, SpellCheck, TextCursorInput,
-    ArrowLeftRight, Shuffle, Quote, GitCompareArrows, Clock
+    ArrowLeftRight, Shuffle, Quote, GitCompareArrows, Clock, Building,
+    Settings, Database, Box, Network
 };
 
 const getIcon = (name, size = 20) => {

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, SlidersHorizontal, X, Star, Eye, EyeOff, GripVertical } from 'lucide-react';
+import { ArrowRight, Sparkles, SlidersHorizontal, X, Star, Eye, EyeOff, GripVertical, Loader2 } from 'lucide-react';
+import useDashboardData from '../hooks/useDashboardData';
 
 // ── Daily Quotes ──
 const DAILY_QUOTES = [
@@ -94,7 +95,8 @@ function getInitialVisibility() {
 
 export default function Dashboard() {
     const { user } = useAuth();
-    const userName = user?.fullName?.split(' ')[0] || user?.name?.split(' ')[0] || 'Engineer';
+    const { data: dashboardData, loading: dashLoading } = useDashboardData();
+    const userName = user?.fullName?.split(' ')[0] || user?.full_name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Engineer';
     const [widgetVisibility, setWidgetVisibility] = useState(getInitialVisibility);
     const [showCustomize, setShowCustomize] = useState(false);
 
@@ -129,27 +131,43 @@ export default function Dashboard() {
     const twoColRight = visible.filter(w => w.layout === '2col-right');
     const threeCol = visible.filter(w => w.layout === '3col');
 
-    // Generate demo heatmap data
-    const demoHeatmapData = useMemo(() => {
-        const data = {};
-        const today = new Date();
-        for (let i = 0; i < 90; i++) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            const key = d.toISOString().split('T')[0];
-            const rand = Math.random();
-            if (rand > 0.4) {
-                const solved = rand > 0.85 ? Math.floor(Math.random() * 4) + 3 : rand > 0.6 ? 2 : 1;
-                data[key] = { solved, xp: solved * 25 };
-            }
+    // Build props for each widget based on DB data
+    const getWidgetProps = (widgetId) => {
+        switch (widgetId) {
+            case 'quickStats':
+                return {
+                    data: {
+                        streak: dashboardData.streak,
+                        problemsSolved: dashboardData.stats.problemsSolved,
+                        avgScore: dashboardData.avgScore,
+                        totalXP: dashboardData.totalXP,
+                    }
+                };
+            case 'streakHeatmap':
+                return {
+                    activityHistory: dashboardData.heatmapData,
+                    currentStreak: dashboardData.streak,
+                    bestStreak: dashboardData.bestStreak,
+                };
+            case 'readinessScore':
+                return { data: dashboardData.readinessData };
+            case 'skillRadar':
+                return { data: dashboardData.skillBreakdown };
+            case 'recentActivity':
+                return { activities: dashboardData.recentActivity };
+            case 'topicProgress':
+                return { topics: dashboardData.topicProgress };
+            case 'weeklyGoals':
+                return { weeklyData: dashboardData.weeklyGoals };
+            default:
+                return {};
         }
-        return data;
-    }, []);
+    };
 
     // Render a single widget with remove button
     const renderWidget = (w) => {
         const Component = w.component;
-        const props = w.id === 'streakHeatmap' ? { activityHistory: demoHeatmapData, currentStreak: 12, bestStreak: 21 } : {};
+        const props = getWidgetProps(w.id);
         return (
             <div key={w.id} className="dash-widget-wrapper">
                 <button
@@ -270,8 +288,15 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* ── Loading State ── */}
+                {dashLoading && (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
+                        <Loader2 size={32} className="dash-spinner" style={{ color: '#a78bfa', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                )}
+
                 {/* ── Dashboard Widgets ── */}
-                {renderRows()}
+                {!dashLoading && renderRows()}
 
             </div>
 

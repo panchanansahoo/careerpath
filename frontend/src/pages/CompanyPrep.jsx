@@ -322,6 +322,12 @@ export default function CompanyPrep() {
             {/* Expanded Answer */}
             {expandedCards[q.id] && (
               <div className="cp-card-expanded">
+                {q.theory && (
+                  <div className="cp-theory-section" style={{ marginBottom: '16px', padding: '14px 18px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.08)', borderLeft: '4px solid #3b82f6' }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '600', color: '#60a5fa', marginBottom: '8px', marginTop: 0 }}><Brain size={16} /> Theory</h4>
+                    <p style={{ color: '#e2e8f0', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>{q.theory}</p>
+                  </div>
+                )}
                 <div className="cp-answer-section">
                   <h4>💡 Answer</h4>
                   <div className="cp-answer-content">

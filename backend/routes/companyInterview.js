@@ -87,32 +87,43 @@ const getInterviewerPersona = (company, role, stage, difficulty, questionNumber,
 You are a senior interviewer at ${company} conducting a ${stage} round interview for a ${role} position.
 Difficulty level: ${difficulty}. This is question ${questionNumber} of ${totalQuestions}.
 
+## IMPORTANT — Candidate Context
+The candidate is most likely a STUDENT or RECENT GRADUATE preparing for campus placements or their first job.
+- They may have LIMITED or NO professional work experience.
+- Their experience comes from: college projects, hackathons, internships, coursework, open-source contributions, personal side projects, competitive programming, or academic research.
+- They might be nervous — this could be one of their first mock interviews.
+- Frame questions around their LEARNING journey, not their professional career.
+- NEVER assume they have had a full-time job before. Use "project" or "experience" instead of "at work" or "in production".
+
 ## Your Interviewer Profile
 - **Role**: ${persona.name} at ${company}
 - **Style**: ${persona.style}
 - **Personality**: ${persona.description}
 
 ## Engagement Rules - STRICT
-- **BE EXTREMELY CONVERSATIONAL AND HUMAN.** Speak like a real person on a video call.
+- **BE EXTREMELY CONVERSATIONAL AND HUMAN.** Speak like a friendly senior on a video call, not a corporate robot.
 - **LIMIT RESPONSES TO 1-3 SENTENCES MAX.** Brevity is critical. Do not give long monologues.
-- React naturally, referencing SPECIFIC things the candidate said. Say things like "Got it", "That makes sense", or "Interesting approach."
+- Be SUPPORTIVE and ENCOURAGING — treat this like a mentorship conversation, not an interrogation.
+- React naturally, referencing SPECIFIC things the candidate said. Say things like "Got it", "That makes sense", "Cool project!", or "Nice thinking!"
+- If the candidate seems nervous or gives a short answer, gently encourage them: "No worries, take your time" or "That's a great start, can you tell me a bit more?"
 - NEVER use robotic transition phrases like "Moving on to my next question" or "Thank you for that detailed answer."
 - ${persona.followUpStyle}
 - ${persona.challengeMode}
-- When the candidate does well: show genuine, brief enthusiasm.
-- When they struggle: be encouraging but honest, nudge them forward.
+- When the candidate does well: show genuine, brief enthusiasm ("That's impressive for a student project!").
+- When they struggle: be kind and supportive, nudge them gently. Say things like "No worries, let me give you a hint" or "Think about it step by step."
 - Build on previous answers — create a flowing conversation.
 
 ## Interview Flow
-${questionNumber === 1 ? `- OPENING: Greet warmly and briefly. Introduce yourself: "Hi! I'm [Name], ${persona.style.toLowerCase()} interviewer at ${company}." Then ask your first question immediately.` : ''}
-${questionNumber === totalQuestions ? `- FINAL QUESTION: Signal this casually: "Great chatting so far — just one last question for you."` : ''}
+${questionNumber === 1 ? `- OPENING: Greet warmly like a friendly senior. Say something like: "Hey! Welcome, I'm [Name] from ${company}. Don't stress — this is all about learning. Let's have a fun conversation!" Then ask your first question immediately.` : ''}
+${questionNumber === totalQuestions ? `- FINAL QUESTION: Signal this casually and warmly: "Awesome, just one last question and we're done — you're doing great!"` : ''}
 ${questionNumber > 1 && questionNumber < totalQuestions ? `- Transition naturally from the previous answer. Keep it feeling like an ongoing chat.` : ''}
 
 ## Stage-Specific Guidelines — FOLLOW STRICTLY
 ${stage === 'Technical' ? `- Ask general technical knowledge questions: OOP concepts, databases, networking, OS, design patterns, language fundamentals
-- ${category === 'faang' ? 'Probe for deep understanding of CAP theorem, distributed systems, concurrency.' : ''}
+- Frame questions around what they've LEARNED: "What did you learn about [topic] in your coursework?" or "Have you used [concept] in any project?"
+- ${category === 'faang' ? 'Probe for understanding of fundamentals, then gradually go deeper.' : ''}
 - ${category === 'big4' ? 'Focus on problem-solving approach and structured thinking.' : ''}
-- ${category === 'indian_it' ? 'Test core CS fundamentals: OOPS, DBMS, OS, SQL, networking.' : ''}
+- ${category === 'indian_it' ? 'Test core CS fundamentals: OOPS, DBMS, OS, SQL, networking — the kind asked in campus placements.' : ''}
 - DO NOT ask behavioral or HR-style questions` : ''}
 ${stage === 'DSA / Coding' ? `- Ask DATA STRUCTURES AND ALGORITHMS coding problems ONLY
 - Present a coding problem with clear constraints (input size, expected complexity)
@@ -121,31 +132,34 @@ ${stage === 'DSA / Coding' ? `- Ask DATA STRUCTURES AND ALGORITHMS coding proble
 - ${category === 'faang' ? 'Leetcode medium-to-hard. Expect optimal Big-O. Ask about edge cases.' : ''}
 - ${category === 'indian_it' ? 'Leetcode easy-to-medium. Basic DS: arrays, strings, stacks, queues, trees.' : ''}
 - ${category === 'startup' ? 'Practical coding. Focus on clean code and working solutions.' : ''}
+- If student is stuck, offer a gentle hint like "What data structure comes to mind for fast lookups?"
 - DO NOT ask behavioral, HR, or system design questions. ONLY coding/algorithm problems.` : ''}
 ${stage === 'System Design' ? `- Ask system design questions relevant to ${company}'s domain
 - Start with requirements, then high-level architecture, then deep dive
-- Probe trade-offs, scaling, failure scenarios, database choices
-- ${category === 'faang' ? 'Detailed component design, data models, API design, scaling.' : ''}
+- Keep in mind the candidate is a student — start simple and build up
+- Probe trade-offs, scaling ideas, database choices
+- ${category === 'faang' ? 'Component design, data models, API design. Guide them if they get stuck.' : ''}
 - ${category === 'startup' ? 'MVP design, practical architecture, iteration speed.' : ''}
 - DO NOT ask coding/DSA or behavioral questions. ONLY system design.` : ''}
-${stage === 'HR' ? `- Ask ONLY culture-fit, motivation, and personal questions
-- Examples: "Tell me about yourself", "Why ${company}?", "Where do you see yourself in 5 years?", "Salary expectations?", "Open to relocation?"
-- Career goals, work preferences, team fit, company interest
-- ${category === 'big4' ? 'Professional maturity, client-facing skills, career clarity.' : ''}
-- ${category === 'startup' ? 'Ownership mentality, learning agility, passion for the product.' : ''}
-- Be warm, conversational, and genuine
+${stage === 'HR' ? `- Ask ONLY culture-fit, motivation, and personal questions appropriate for a STUDENT/FRESHER
+- Examples: "Tell me about yourself — what are you studying and what excites you about tech?", "Why ${company}?", "Where do you see yourself in 3-5 years?", "What kind of work environment do you thrive in?"
+- Ask about: college life, favorite subjects, career aspirations, what they want to learn, hobbies, extracurriculars
+- DO NOT ask about salary expectations, current role, or reasons for leaving — they're students!
+- ${category === 'big4' ? 'Assess communication skills, curiosity, and willingness to learn.' : ''}
+- ${category === 'startup' ? 'Ownership mentality, learning agility, passion for building things.' : ''}
+- Be warm, conversational, and genuinely interested in them as a person
 - ⚠️ DO NOT ask ANY technical, coding, DSA, or system design questions. STRICTLY HR.` : ''}
-${stage === 'Behavioral' ? `- Ask ONLY behavioral/situational questions using STAR method
-- Examples: "Tell me about a time you handled conflict", "Describe a challenging project"
-- ${category === 'faang' ? 'Amazon-style Leadership Principles: Ownership, Bias for Action, Dive Deep.' : ''}
-- ${category === 'big4' ? 'Client management, stakeholder communication, cross-functional teamwork.' : ''}
-- Probe for specifics: "What was YOUR role?", "What was the measurable outcome?"
+${stage === 'Behavioral' ? `- Ask ONLY behavioral/situational questions using STAR method, but framed for STUDENTS
+- Examples: "Tell me about a challenging group project in college", "Describe a hackathon or competition you participated in", "Tell me about a time you had to learn something new very quickly for a deadline"
+- ${category === 'faang' ? 'Ownership, taking initiative, learning from failure — framed around academic/project experiences.' : ''}
+- ${category === 'big4' ? 'Teamwork, communication, handling pressure during exams or project deadlines.' : ''}
+- Probe for specifics: "What was YOUR role in the team?", "What did you learn from that?"
 - ⚠️ DO NOT ask technical, coding, or DSA questions. STRICTLY behavioral.` : ''}
 ${stage === 'OA' ? `- Simulate online assessment: coding/aptitude problems
 - Clear problem statements with input/output examples
 - Focus on problem-solving, logic, code correctness` : ''}
-${stage === 'Managerial' ? `- Leadership, project management, team handling, conflict resolution
-- Decision-making, prioritization, stakeholder management
+${stage === 'Managerial' ? `- For students: focus on leadership in college activities, event organization, team coordination
+- Decision-making, prioritization in academic/project settings
 - Mix of behavioral and high-level technical judgment` : ''}
 `;
 };
@@ -218,16 +232,16 @@ router.post('/start', optionalAuth, async (req, res) => {
     if (!groq) {
       // Stage-specific fallback questions
       const fallbackQuestions = {
-        'HR': `Hi! Welcome to your HR interview at ${company}. I'm excited to get to know you better. Let's start simple — can you tell me about yourself and what excites you about this ${role} role at ${company}?`,
-        'Behavioral': `Hi! Welcome to your behavioral interview. I'd love to hear about your experiences. Can you tell me about a time when you faced a significant challenge at work and how you handled it?`,
-        'DSA / Coding': `Hi! Welcome to your coding round. Let's start with a classic problem — given an array of integers, can you walk me through how you'd find two numbers that add up to a target sum? Think about both approach and time complexity.`,
-        'System Design': `Hi! Welcome to your system design round at ${company}. Let's start with a high-level question — how would you design a URL shortening service like bit.ly? Think about scale, storage, and the key components.`,
-        'Technical': `Hi! Welcome to your technical interview. Let's start — can you explain the difference between a process and a thread? When would you use one over the other?`,
-        'OA': `Welcome to your online assessment simulation. Here's your first problem: Given a string, find the length of the longest substring without repeating characters. Think about your approach before coding.`,
-        'Managerial': `Hi! Welcome to the managerial round. I'd like to understand your leadership style. Can you tell me about a time you had to manage a difficult project with competing priorities?`,
+        'HR': `Hey! Welcome to your HR interview at ${company}. I'm really excited to get to know you! Let's start simple — tell me a bit about yourself, what you're studying, and what excites you about this ${role} role at ${company}?`,
+        'Behavioral': `Hey! Welcome to your behavioral interview. I'd love to hear about your experiences. Can you tell me about a challenging project or assignment you worked on — maybe in college or during an internship?`,
+        'DSA / Coding': `Hey! Welcome to your coding round. Let's start with a classic problem — given an array of integers, can you walk me through how you'd find two numbers that add up to a target sum? Think about both approach and time complexity.`,
+        'System Design': `Hey! Welcome to your system design round at ${company}. Let's start with something fun — how would you design a URL shortening service like bit.ly? Don't worry about getting it perfect, just think out loud!`,
+        'Technical': `Hey! Welcome to your technical interview. Let's start — can you explain the difference between a process and a thread? You might have covered this in your OS course!`,
+        'OA': `Welcome to your online assessment simulation. Here's your first problem: Given a string, find the length of the longest substring without repeating characters. Take your time to think about your approach.`,
+        'Managerial': `Hey! Welcome to the managerial round. I'd like to understand how you work with others. Can you tell me about a time you led or coordinated a team project — maybe in college or a hackathon?`,
       };
       return res.json({
-        question: fallbackQuestions[stage] || `Hi! Great to have you here for this ${stage} interview at ${company}. Let's start — tell me about your relevant experience as a ${role}.`,
+        question: fallbackQuestions[stage] || `Hey! Great to have you here for this ${stage} interview at ${company}. Let's start easy — tell me about a project you've worked on that you're proud of!`,
         context: { company, role, stage, difficulty, totalQuestions },
         tips: ['Take a moment to collect your thoughts', 'Structure your answer: context → approach → result'],
         interviewerReaction: 'greeting',
@@ -269,16 +283,16 @@ Respond as JSON:
     console.error('Interview start error:', error.message?.substring(0, 200));
     // Graceful fallback — serve stage-specific opening question
     const fallbackQuestions = {
-      'HR': `Hi! Welcome to your HR interview at ${company}. I'm excited to get to know you better! Tell me about yourself — what excites you about this ${role} role at ${company}?`,
-      'Behavioral': `Hi! Welcome to your behavioral round. I'd love to hear about your experiences. Tell me about a time you faced a significant challenge at work and how you handled it.`,
-      'DSA / Coding': `Hi! Welcome to your coding round. Let's start — given an array of integers, how would you find two numbers that add up to a target sum? Walk me through your approach and time complexity.`,
-      'System Design': `Hi! Welcome to your system design interview at ${company}. How would you design a URL shortening service? Think about key components, scale, and storage.`,
-      'Technical': `Hi! Welcome to your technical interview. Let's start — can you explain the difference between a process and a thread? When would you choose one over the other?`,
-      'OA': `Welcome to your online assessment. Your first problem: Given a string, find the length of the longest substring without repeating characters. Think carefully about your approach.`,
-      'Managerial': `Hi! Welcome to the managerial round. Tell me about a time you had to manage a difficult project with competing priorities. How did you handle it?`,
+      'HR': `Hey! Welcome to your HR interview at ${company}. I'm really excited to get to know you! Tell me about yourself — what are you studying and what excites you about this ${role} role at ${company}?`,
+      'Behavioral': `Hey! Welcome to your behavioral round. I'd love to hear about your experiences. Tell me about a challenging project or assignment you worked on and how you handled it.`,
+      'DSA / Coding': `Hey! Welcome to your coding round. Let's start — given an array of integers, how would you find two numbers that add up to a target sum? Walk me through your approach and time complexity.`,
+      'System Design': `Hey! Welcome to your system design interview at ${company}. How would you design a URL shortening service? Think about key components and storage — don't worry about getting it perfect!`,
+      'Technical': `Hey! Welcome to your technical interview. Let's start — can you explain the difference between a process and a thread? You might remember this from your OS class!`,
+      'OA': `Welcome to your online assessment. Your first problem: Given a string, find the length of the longest substring without repeating characters. Take your time to think carefully!`,
+      'Managerial': `Hey! Welcome to the managerial round. Tell me about a time you led or coordinated a group project in college. How did you handle it?`,
     };
     res.json({
-      question: fallbackQuestions[stage] || `Hi! Great to have you here for this ${stage} interview at ${company}. Tell me about your relevant experience as a ${role}.`,
+      question: fallbackQuestions[stage] || `Hey! Great to have you here for this ${stage} interview at ${company}. Tell me about a project you've worked on that you're proud of!`,
       context: { company, role, stage, difficulty, totalQuestions },
       tips: ['Take a moment to collect your thoughts', 'Structure your answer clearly'],
       interviewerReaction: 'greeting',
@@ -391,34 +405,34 @@ router.post('/follow-up', optionalAuth, async (req, res) => {
           'Design a parking lot system. Start with the object model, then think about scaling.',
         ],
         'Behavioral': [
-          'Tell me about a time you had to give difficult feedback to a teammate. How did you handle it?',
-          'Describe a situation where you had to learn a completely new technology under a tight deadline.',
-          'Can you share an example where you disagreed with your manager? What was the outcome?',
-          'Tell me about a project that failed. What did you learn and what would you do differently?',
-          'Describe a time when you had to prioritize between multiple urgent tasks. How did you decide?',
-          'Share an experience where you mentored someone. What approach did you take?',
-          'Tell me about a time you went above and beyond what was expected of you.',
-          'Describe how you handled a situation with an ambiguous or unclear requirement.',
+          'Tell me about a time you worked on a challenging group project in college. How did you handle disagreements?',
+          'Describe a hackathon, competition, or event you participated in. What was your role?',
+          'Can you share an example where you had to learn something completely new under a tight deadline?',
+          'Tell me about a project that didn\'t go as planned. What did you learn from it?',
+          'Describe a time when you had to balance multiple assignments or deadlines. How did you prioritize?',
+          'Share an experience where you helped a classmate or junior understand something difficult.',
+          'Tell me about a time you took initiative on something — maybe a club, project, or side hustle.',
+          'Describe how you handled a situation where you were unsure how to approach a problem or assignment.',
         ],
         'HR': [
-          'What motivates you to come to work every day? What kind of work environment do you thrive in?',
+          'What motivates you to pursue a career in tech? What gets you excited about building things?',
           'Where do you see yourself in 3 to 5 years? How does this role fit into that vision?',
-          'Why are you interested in leaving your current position? What are you looking for next?',
-          'How do you handle work-life balance? What does a good day at work look like for you?',
-          'Tell me about a value or principle that guides your professional decisions.',
-          'What are your salary expectations? And what factors are most important to you in an offer?',
-          'How would your current colleagues describe you in three words?',
-          'What questions do you have for me about the team, the role, or the company culture?',
+          'What made you choose your branch or field of study? Do you enjoy it?',
+          'What kind of work environment do you think you\'d thrive in? Do you prefer working solo or in teams?',
+          'Tell me about a value or principle that guides how you work and learn.',
+          'What are you most proud of from your time in college — could be academic or extracurricular!',
+          'How would your friends or classmates describe you in three words?',
+          'What questions do you have for me about the team, the role, or what it\'s like to work at this company?',
         ],
         'Managerial': [
-          'How do you handle underperforming team members? Walk me through your approach.',
-          'Tell me about a time you had to make a tough call between shipping fast and maintaining quality.',
-          'How do you keep your team motivated during a long, challenging sprint?',
-          'Describe your approach to giving performance reviews. How do you prepare?',
-          'How would you handle a situation where two team members have a personal conflict?',
-          'What is your process for setting team goals and tracking progress?',
-          'How do you balance being hands-on technically while also managing people?',
-          'Tell me about a time you had to push back on a stakeholder request. How did you navigate it?',
+          'Have you ever had to coordinate or lead a team? Maybe a college project, club, or event?',
+          'Tell me about a time you had to convince your team to go with your idea. How did you handle it?',
+          'How do you keep yourself and your team motivated during a stressful period, like exams or a project deadline?',
+          'If you had to organize a technical event or workshop, how would you plan it?',
+          'How would you handle a situation where a team member isn\'t contributing fairly in a group project?',
+          'What is your approach to managing your time when you have multiple deadlines?',
+          'Do you enjoy mentoring juniors? Tell me about a time you helped someone learn something.',
+          'Tell me about a tough decision you made — maybe about choosing between two projects, events, or even career options.',
         ],
         'OA': [
           'Given an array of integers, find the contiguous subarray with the maximum sum. Explain your approach.',
@@ -553,8 +567,8 @@ Respond as JSON:
     console.error('Follow-up error:', error.message?.substring(0, 200));
     // Graceful fallback — contextual follow-up
     const fallbackFollowUps = {
-      'HR': 'That\'s interesting! Can you tell me about your long-term career goals? Where do you see yourself in 5 years?',
-      'Behavioral': 'Good insight. Can you give me another example where you demonstrated leadership or took initiative in a difficult situation?',
+      'HR': 'That\'s interesting! Can you tell me about your career goals? Where do you see yourself in a few years after starting your career?',
+      'Behavioral': 'Good insight. Can you give me another example where you showed leadership or took initiative — maybe in a college project or extracurricular?',
       'DSA / Coding': 'Nice approach. Now, can you think of a way to optimize that solution? What would the time and space complexity be?',
       'System Design': 'Good thinking. How would your design handle 10x the current traffic? What would you scale first?',
       'Technical': 'Solid answer. Can you explain how this concept applies in a distributed systems context?',
@@ -684,7 +698,9 @@ router.post('/evaluate', optionalAuth, async (req, res) => {
         {
           role: 'system',
           content: `You are the interview panel at ${company} evaluating a ${stage} interview for ${role}.
-Be honest but constructive. Reference SPECIFIC things the candidate said.
+The candidate is most likely a STUDENT or RECENT GRADUATE — evaluate them fairly for their experience level.
+Be honest but constructive and encouraging. Reference SPECIFIC things the candidate said.
+Celebrate what they did well, and frame improvements as growth opportunities, not failures.
 
 Respond as JSON:
 {

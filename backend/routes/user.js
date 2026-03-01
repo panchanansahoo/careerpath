@@ -77,75 +77,352 @@ router.put("/profile", authenticateToken, async (req, res) => {
 
 router.get("/dashboard", authenticateToken, async (req, res) => {
   try {
-    // Get counts from various tables
+    const userId = req.user.id;
+
+    // ── 1) User progress (solved problems) ──
     const { data: progress } = await supabaseAdmin
       .from("user_progress")
       .select("problem_id, status")
-      .eq("user_id", req.user.id);
-
-    const { data: submissions } = await supabaseAdmin
-      .from("submissions")
-      .select("id")
-      .eq("user_id", req.user.id);
-
-    const { data: interviews } = await supabaseAdmin
-      .from("mock_interviews")
-      .select("id")
-      .eq("user_id", req.user.id)
-      .not("completed_at", "is", null);
-
-    const { data: resumes } = await supabaseAdmin
-      .from("resume_analyses")
-      .select("id")
-      .eq("user_id", req.user.id);
+      .eq("user_id", userId);
 
     const solvedCount = (progress || []).filter(
       (p) => p.status === "solved",
     ).length;
 
-    const stats = {
-      problems_solved: solvedCount,
-      total_submissions: (submissions || []).length,
-      mock_interviews_completed: (interviews || []).length,
-      resumes_analyzed: (resumes || []).length,
-    };
-
-    // Recent activity
-    const { data: recentSubs } = await supabaseAdmin
+    // ── 2) All submissions (for streak, heatmap, weekly) ──
+    const { data: allSubmissions } = await supabaseAdmin
       .from("submissions")
-      .select("submitted_at, problems(title)")
-      .eq("user_id", req.user.id)
-      .order("submitted_at", { ascending: false })
-      .limit(10);
+      .select("id, submitted_at, status, problem_id, problems(title, difficulty, tags)")
+      .eq("user_id", userId)
+      .order("submitted_at", { ascending: false });
 
-    const recentActivity = (recentSubs || []).map((s) => ({
-      type: "submission",
-      timestamp: s.submitted_at,
-      detail: s.problems?.title,
-    }));
+    const subs = allSubmissions || [];
 
-    // Streak (last 7 days of submissions)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // ── 3) Mock interviews ──
+    const { data: allInterviews } = await supabaseAdmin
+      .from("mock_interviews")
+      .select("id, interview_type, overall_score, communication_score, technical_score, problem_solving_score, started_at, completed_at")
+      .eq("user_id", userId)
+      .order("started_at", { ascending: false });
 
-    const { data: streakSubs } = await supabaseAdmin
-      .from("submissions")
-      .select("submitted_at")
-      .eq("user_id", req.user.id)
-      .gte("submitted_at", sevenDaysAgo.toISOString());
+    const interviews = allInterviews || [];
+    const completedInterviews = interviews.filter((i) => i.completed_at);
 
-    const uniqueDays = new Set(
-      (streakSubs || []).map((s) => new Date(s.submitted_at).toDateString()),
+    // ── 4) Resume analyses ──
+    const { data: resumes } = await supabaseAdmin
+      .from("resume_analyses")
+      .select("id")
+      .eq("user_id", userId);
+
+    // ── 5) Streak calculation (consecutive days ending today) ──
+    const submissionDates = [...new Set(
+      subs.map((s) => new Date(s.submitted_at).toISOString().split("T")[0])
+    )].sort().reverse();
+
+    let currentStreak = 0;
+    let bestStreak = 0;
+
+    if (submissionDates.length > 0) {
+      // Calculate current streak
+      const today = new Date().toISOString().split("T")[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+      if (submissionDates[0] === today || submissionDates[0] === yesterday) {
+        currentStreak = 1;
+        for (let i = 1; i < submissionDates.length; i++) {
+          const prev = new Date(submissionDates[i - 1]);
+          const curr = new Date(submissionDates[i]);
+          const diffDays = Math.round((prev - curr) / 86400000);
+          if (diffDays === 1) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+      }
+
+      // Calculate best streak
+      let tempStreak = 1;
+      const allDates = [...submissionDates].sort();
+      for (let i = 1; i < allDates.length; i++) {
+        const prev = new Date(allDates[i - 1]);
+        const curr = new Date(allDates[i]);
+        const diffDays = Math.round((curr - prev) / 86400000);
+        if (diffDays === 1) {
+          tempStreak++;
+        } else {
+          bestStreak = Math.max(bestStreak, tempStreak);
+          tempStreak = 1;
+        }
+      }
+      bestStreak = Math.max(bestStreak, tempStreak);
+    }
+
+    // ── 6) Average interview score ──
+    let avgScore = 0;
+    if (completedInterviews.length > 0) {
+      const totalScore = completedInterviews.reduce(
+        (sum, i) => sum + (i.overall_score || 0), 0
+      );
+      avgScore = Math.round(totalScore / completedInterviews.length);
+    }
+
+    // ── 7) Total XP (derived) ──
+    const totalXP = solvedCount * 25 + completedInterviews.length * 50;
+
+    // ── 8) Heatmap data (last 365 days, submissions grouped by date) ──
+    const heatmapData = {};
+    subs.forEach((s) => {
+      const dateKey = new Date(s.submitted_at).toISOString().split("T")[0];
+      if (!heatmapData[dateKey]) {
+        heatmapData[dateKey] = { solved: 0, xp: 0 };
+      }
+      heatmapData[dateKey].solved++;
+      heatmapData[dateKey].xp += 25;
+    });
+
+    // ── 9) Skill breakdown (for radar chart) ──
+    // Count solved problems by category/tags
+    const solvedProblemIds = new Set(
+      (progress || []).filter((p) => p.status === "solved").map((p) => p.problem_id)
     );
 
+    // Fetch problem details for solved problems to categorize
+    let skillBreakdown = { dsa: 0, sql: 0, aptitude: 0, systemDesign: 0, behavioral: 0 };
+    if (solvedProblemIds.size > 0) {
+      const { data: solvedProblems } = await supabaseAdmin
+        .from("problems")
+        .select("id, tags, difficulty")
+        .in("id", [...solvedProblemIds]);
+
+      const totalProblems = solvedProblems?.length || 0;
+      // DSA score based on the number of solved problems  
+      skillBreakdown.dsa = totalProblems > 0 ? Math.min(100, Math.round((totalProblems / 100) * 100)) : 0;
+    }
+    // SQL, aptitude from mock interview types
+    const sqlInterviews = completedInterviews.filter((i) =>
+      i.interview_type?.toLowerCase().includes("sql")
+    );
+    const aptitudeInterviews = completedInterviews.filter((i) =>
+      i.interview_type?.toLowerCase().includes("aptitude")
+    );
+    const sysDesignInterviews = completedInterviews.filter((i) =>
+      i.interview_type?.toLowerCase().includes("system") || i.interview_type?.toLowerCase().includes("design")
+    );
+    const behavioralInterviews = completedInterviews.filter((i) =>
+      i.interview_type?.toLowerCase().includes("behavioral") || i.interview_type?.toLowerCase().includes("hr")
+    );
+
+    if (sqlInterviews.length > 0) {
+      skillBreakdown.sql = Math.round(sqlInterviews.reduce((s, i) => s + (i.overall_score || 0), 0) / sqlInterviews.length);
+    }
+    if (aptitudeInterviews.length > 0) {
+      skillBreakdown.aptitude = Math.round(aptitudeInterviews.reduce((s, i) => s + (i.overall_score || 0), 0) / aptitudeInterviews.length);
+    }
+    if (sysDesignInterviews.length > 0) {
+      skillBreakdown.systemDesign = Math.round(sysDesignInterviews.reduce((s, i) => s + (i.overall_score || 0), 0) / sysDesignInterviews.length);
+    }
+    if (behavioralInterviews.length > 0) {
+      skillBreakdown.behavioral = Math.round(behavioralInterviews.reduce((s, i) => s + (i.overall_score || 0), 0) / behavioralInterviews.length);
+    }
+
+    // ── 10) Topic progress (solved per pattern/category) ──
+    const { data: allPatterns } = await supabaseAdmin
+      .from("patterns")
+      .select("id, name, category");
+
+    const { data: allProblems } = await supabaseAdmin
+      .from("problems")
+      .select("id, pattern_id, difficulty");
+
+    const topicProgressMap = {};
+    const patternColors = [
+      '#a78bfa', '#38bdf8', '#22c55e', '#f59e0b', '#fb923c',
+      '#ec4899', '#14b8a6', '#ef4444', '#8b5cf6', '#06b6d4'
+    ];
+    (allPatterns || []).forEach((pattern, idx) => {
+      const patternProblems = (allProblems || []).filter((p) => p.pattern_id === pattern.id);
+      const patternSolved = patternProblems.filter((p) => solvedProblemIds.has(p.id)).length;
+      if (patternProblems.length > 0) {
+        topicProgressMap[pattern.name] = {
+          name: pattern.name,
+          solved: patternSolved,
+          total: patternProblems.length,
+          color: patternColors[idx % patternColors.length],
+        };
+      }
+    });
+
+    const topicProgress = Object.values(topicProgressMap);
+
+    // ── 11) Recent activity (merged submissions + interviews) ──
+    const recentActivity = [];
+
+    // Recent submissions (max 6)
+    subs.slice(0, 6).forEach((s) => {
+      recentActivity.push({
+        type: s.status === "accepted" ? "problem_solved" : "dsa_practice",
+        title: s.problems?.title ? `${s.problems.title} — ${s.status === "accepted" ? "Accepted" : "Attempted"}` : "Problem submission",
+        timestamp: s.submitted_at,
+      });
+    });
+
+    // Recent completed interviews (max 4)
+    completedInterviews.slice(0, 4).forEach((i) => {
+      recentActivity.push({
+        type: "interview_done",
+        title: `Mock Interview: ${i.interview_type || "General"} — ${i.overall_score ? i.overall_score + "%" : "Completed"}`,
+        timestamp: i.completed_at || i.started_at,
+      });
+    });
+
+    // Sort by timestamp descending and limit to 6
+    recentActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const recentActivityFinal = recentActivity.slice(0, 6);
+
+    // ── 12) Weekly goals data (solved this week by difficulty) ──
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const weekStart = startOfWeek.toISOString();
+
+    const thisWeekSubs = subs.filter(
+      (s) => s.status === "accepted" && new Date(s.submitted_at) >= new Date(weekStart)
+    );
+
+    const weeklyByDifficulty = { easy: 0, medium: 0, hard: 0 };
+    thisWeekSubs.forEach((s) => {
+      const diff = s.problems?.difficulty?.toLowerCase();
+      if (diff === "easy") weeklyByDifficulty.easy++;
+      else if (diff === "medium") weeklyByDifficulty.medium++;
+      else if (diff === "hard") weeklyByDifficulty.hard++;
+    });
+
+    // ── 13) Readiness data ──
+    const readinessData = {
+      practiceCount: solvedCount,
+      mockCount: completedInterviews.length,
+      streak: currentStreak,
+      timedSessions: subs.filter((s) => s.status === "accepted").length,
+    };
+
+    // ── Response ──
     res.json({
-      stats,
-      recentActivity,
-      streak: uniqueDays.size,
+      stats: {
+        problemsSolved: solvedCount,
+        totalSubmissions: subs.length,
+        mockInterviews: completedInterviews.length,
+        resumesAnalyzed: (resumes || []).length,
+      },
+      streak: currentStreak,
+      bestStreak,
+      avgScore,
+      totalXP,
+      heatmapData,
+      skillBreakdown,
+      topicProgress,
+      recentActivity: recentActivityFinal,
+      weeklyGoals: weeklyByDifficulty,
+      readinessData,
     });
   } catch (error) {
     console.error("Error fetching dashboard:", error);
     res.status(500).json({ error: "Failed to fetch dashboard data" });
+  }
+});
+
+router.get("/history", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const sessions = [];
+
+    // 1) Mock Interviews
+    const { data: interviews } = await supabaseAdmin
+      .from("mock_interviews")
+      .select("id, interview_type, overall_score, started_at, completed_at, company, role")
+      .eq("user_id", userId)
+      .order("started_at", { ascending: false });
+
+    if (interviews) {
+      interviews.forEach(i => {
+        if (!i.completed_at) return;
+
+        let titleStr = "AI Interview";
+        if (i.company && i.role) {
+          titleStr = `${i.company} ${i.role} Interview`;
+        } else if (i.interview_type) {
+          titleStr = `${i.interview_type} Interview`;
+        }
+
+        let durationStr = "N/A";
+        if (i.started_at && i.completed_at) {
+          const ds = new Date(i.started_at);
+          const de = new Date(i.completed_at);
+          const mins = Math.max(1, Math.round((de - ds) / 60000));
+          durationStr = `${mins} min`;
+        }
+
+        sessions.push({
+          id: `interview_${i.id}`,
+          type: "interview",
+          title: titleStr,
+          date: new Date(i.completed_at).toISOString().split("T")[0],
+          timestamp: new Date(i.completed_at).getTime(),
+          score: i.overall_score || 0,
+          duration: durationStr
+        });
+      });
+    }
+
+    // 2) Code Practice
+    const { data: submissions } = await supabaseAdmin
+      .from("submissions")
+      .select("id, submitted_at, status, problems(title, difficulty)")
+      .eq("user_id", userId)
+      .order("submitted_at", { ascending: false });
+
+    if (submissions) {
+      submissions.forEach(s => {
+        sessions.push({
+          id: `practice_${s.id}`,
+          type: "practice",
+          title: s.problems?.title ? `${s.problems.title} - ${s.status}` : `Practice - ${s.status}`,
+          date: new Date(s.submitted_at).toISOString().split("T")[0],
+          timestamp: new Date(s.submitted_at).getTime(),
+          score: s.status === "accepted" ? 100 : 0,
+          duration: "N/A"
+        });
+      });
+    }
+
+    // 3) Resume Analysis
+    const { data: resumes } = await supabaseAdmin
+      .from("resume_analyses")
+      .select("id, created_at, overall_score")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (resumes) {
+      resumes.forEach(r => {
+        sessions.push({
+          id: `resume_${r.id}`,
+          type: "resume",
+          title: "Resume ATS Analysis",
+          date: new Date(r.created_at).toISOString().split("T")[0],
+          timestamp: new Date(r.created_at).getTime(),
+          score: Math.round(r.overall_score) || 0,
+          duration: "N/A"
+        });
+      });
+    }
+
+    // Sort by timestamp descending
+    sessions.sort((a, b) => b.timestamp - a.timestamp);
+
+    res.json({ sessions });
+  } catch (error) {
+    console.error("Error fetching user history:", error);
+    res.status(500).json({ error: "Failed to fetch user history" });
   }
 });
 

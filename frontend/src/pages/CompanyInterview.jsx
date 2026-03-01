@@ -232,6 +232,7 @@ export default function CompanyInterview() {
     const speakingStartRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const consecutiveSkipsRef = useRef(0);
     const captionsEndRef = useRef(null);
     const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -871,6 +872,36 @@ export default function CompanyInterview() {
         if (!answerText && !isAutoSkip) return;
         const answer = isAutoSkip && !answerText ? "I do not have a response to this question." : answerText;
 
+        // Track consecutive skipped/unanswered questions
+        const isSkipped = !answerText || answer === "I do not have a response to this question.";
+        if (isSkipped) {
+            consecutiveSkipsRef.current += 1;
+        } else {
+            consecutiveSkipsRef.current = 0;
+        }
+
+        // Auto-end interview after 3 consecutive unanswered questions
+        if (consecutiveSkipsRef.current >= 3) {
+            clearTimeout(autoSendTimerRef.current);
+            clearInterval(autoSendCountdownRef.current);
+            clearTimeout(inactivityTimerRef.current);
+            setAutoSendCountdown(0);
+            clearInterval(thinkTimerRef.current);
+            setThinkTimeLeft(0);
+
+            const compliment = `That's perfectly okay! I can see you've been thinking hard about these questions. ` +
+                `Interviews can be intense, and it's completely normal to feel stuck sometimes. ` +
+                `You showed great courage by participating today — that itself is a big step! ` +
+                `Let me compile your results so you can review the areas to focus on. Keep practicing, you're doing great! 🌟`;
+            setConversation(prev => [...prev,
+            { role: 'candidate', content: answer, timestamp: new Date().toISOString() },
+            { role: 'interviewer', content: compliment, tips: [], reaction: 'encouraging', timestamp: new Date().toISOString() }
+            ]);
+            speakText(compliment);
+            setTimeout(() => { endInterview(); }, 8000);
+            return;
+        }
+
         // Clear auto-send timers
         clearTimeout(autoSendTimerRef.current);
         clearInterval(autoSendCountdownRef.current);
@@ -1125,6 +1156,7 @@ export default function CompanyInterview() {
         setElapsed(0);
         setHintData(null);
         setInterviewerReaction(null);
+        consecutiveSkipsRef.current = 0;
         clearInterval(thinkTimerRef.current);
         setThinkTimeLeft(0);
         // Stop voice
@@ -1253,8 +1285,8 @@ export default function CompanyInterview() {
                             <Link to="/company-prep" className="ti-lobby-back">
                                 <ArrowLeft size={16} /> Back
                             </Link>
-                            <h1>AI Mock Interview</h1>
-                            <p>Simulate a real interview experience with our AI interviewer</p>
+                            <h1>AI Mock Interview 🎓</h1>
+                            <p>Practice for your dream company — no pressure, just growth!</p>
                         </div>
 
                         <div className="ti-lobby-form">
@@ -1279,9 +1311,17 @@ export default function CompanyInterview() {
                             <div className="ti-form-row">
                                 <div className="ti-form-section">
                                     <label>Role</label>
-                                    <select value={config.role} onChange={e => setConfig(prev => ({ ...prev, role: e.target.value }))}>
-                                        {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                                    </select>
+                                    <input
+                                        type="text"
+                                        list="role-suggestions"
+                                        value={config.role}
+                                        onChange={e => setConfig(prev => ({ ...prev, role: e.target.value }))}
+                                        placeholder="e.g. ML Engineer, iOS Dev..."
+                                        className="ti-role-input"
+                                    />
+                                    <datalist id="role-suggestions">
+                                        {ROLES.map(r => <option key={r} value={r} />)}
+                                    </datalist>
                                 </div>
                                 <div className="ti-form-section">
                                     <label>Stage</label>
@@ -1360,7 +1400,7 @@ export default function CompanyInterview() {
                         {/* Join button */}
                         <button className="ti-join-btn" onClick={startInterview} disabled={loading}>
                             <Video size={20} />
-                            {loading ? 'Connecting...' : 'Join Interview Room'}
+                            {loading ? 'Connecting...' : 'Start Practice Session 🚀'}
                         </button>
 
                         <div className="ti-device-status">
@@ -1374,6 +1414,8 @@ export default function CompanyInterview() {
 
                         <div className="ti-lobby-footnote">
                             <span>🔒 Your camera feed stays local — nothing is recorded or sent</span>
+                            <br />
+                            <span style={{ fontSize: '12px', opacity: 0.7, marginTop: '4px', display: 'inline-block' }}>💪 This is a safe space to practice — mistakes are part of learning!</span>
                         </div>
                     </div>
                 </div>
@@ -1524,6 +1566,9 @@ export default function CompanyInterview() {
                         </button>
                         <Link to="/company-prep" className="ti-back-btn">
                             <ArrowLeft size={16} /> Back to Prep
+                        </Link>
+                        <Link to="/dashboard" className="ti-home-btn">
+                            🏠 Go Home
                         </Link>
                     </div>
 

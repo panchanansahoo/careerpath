@@ -30,36 +30,8 @@ function AnimatedCounter({ end, duration = 1200, suffix = '' }) {
     return <span ref={ref}>{count}{suffix}</span>;
 }
 
-export default function QuickStats() {
-    const [stats, setStats] = useState({
-        streak: 0,
-        problemsSolved: 0,
-        avgScore: 0,
-        totalXP: 0
-    });
-
-    useEffect(() => {
-        const streak = parseInt(localStorage.getItem('streakCount') || '0');
-        const solved = parseInt(localStorage.getItem('solvedCount') || '0');
-        const xp = parseInt(localStorage.getItem('totalXP') || '0');
-
-        let avgScore = 0;
-        try {
-            const history = JSON.parse(localStorage.getItem('interviewHistory') || '[]');
-            if (history.length > 0) {
-                avgScore = Math.round(history.reduce((sum, h) => sum + (h.score || 0), 0) / history.length);
-            }
-        } catch (e) { }
-
-        // Use real data if meaningful, otherwise show demo data
-        const hasRealData = streak > 0 || solved > 0 || xp > 0 || avgScore > 0;
-        setStats({
-            streak: hasRealData ? streak : 12,
-            problemsSolved: hasRealData ? solved : 147,
-            avgScore: hasRealData ? avgScore : 86,
-            totalXP: hasRealData ? xp : 4820
-        });
-    }, []);
+export default function QuickStats({ data }) {
+    const stats = data || { streak: 0, problemsSolved: 0, avgScore: 0, totalXP: 0 };
 
     const cards = [
         {

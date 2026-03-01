@@ -33,25 +33,25 @@ const getFallbackQuestions = (type, difficulty) => {
     },
     behavioral: {
       easy: [
-        { question: "Tell me about a time you worked on a challenging project.", context: "Use the STAR format: Situation, Task, Action, Result." },
-        { question: "Describe a situation where you had to learn a new technology quickly.", context: "Focus on your learning approach and outcomes." },
-        { question: "How do you handle constructive criticism?", context: "Provide a specific example from your experience." },
-        { question: "Tell me about a time you helped a team member.", context: "Highlight collaboration and impact." },
-        { question: "What motivates you as a software engineer?", context: "Be authentic and connect to your career goals." }
+        { question: "Tell me about a project you worked on in college or during an internship that you're proud of.", context: "Use the STAR format: Situation, Task, Action, Result." },
+        { question: "Describe a time you had to learn a new technology or tool quickly for a project or assignment.", context: "Focus on your learning approach and outcomes." },
+        { question: "How do you handle constructive criticism from professors, mentors, or teammates?", context: "Provide a specific example from your experience." },
+        { question: "Tell me about a time you helped a classmate or team member with something they were struggling with.", context: "Highlight collaboration and impact." },
+        { question: "What motivates you as someone getting into the tech field?", context: "Be authentic and connect to your career goals." }
       ],
       medium: [
-        { question: "Tell me about a time you disagreed with your team. How did you handle it?", context: "Show conflict resolution and communication skills." },
-        { question: "Describe a project that failed. What did you learn?", context: "Demonstrate ownership and growth mindset." },
-        { question: "Tell me about a time you had to make a trade-off decision.", context: "Explain your reasoning and the impact." },
-        { question: "How do you prioritize when you have multiple urgent tasks?", context: "Discuss your prioritization framework." },
-        { question: "Describe a time you had to give difficult feedback to someone.", context: "Show empathy and professionalism." }
+        { question: "Tell me about a time you disagreed with your team in a group project. How did you handle it?", context: "Show conflict resolution and communication skills." },
+        { question: "Describe a project that didn't go as planned. What did you learn from it?", context: "Demonstrate ownership and growth mindset." },
+        { question: "Tell me about a time you had to make a trade-off decision in a project — maybe between features, time, or quality.", context: "Explain your reasoning and the impact." },
+        { question: "How do you prioritize when you have multiple assignments or deadlines approaching at the same time?", context: "Discuss your prioritization approach." },
+        { question: "Describe a time you gave feedback to a teammate on their work. How did you approach it?", context: "Show empathy and professionalism." }
       ],
       hard: [
-        { question: "Tell me about the most complex technical problem you've solved.", context: "Go deep into the technical details and your thought process." },
-        { question: "Describe a time you had to make a decision with incomplete information.", context: "Show decision-making under uncertainty." },
-        { question: "How have you handled a situation where you missed a deadline?", context: "Demonstrate accountability and problem-solving." },
-        { question: "Tell me about a time you had to influence without authority.", context: "Show leadership and persuasion skills." },
-        { question: "Describe your biggest professional failure and what you learned.", context: "Be vulnerable and show growth." }
+        { question: "Tell me about the most complex technical challenge you've faced in a project.", context: "Go deep into the technical details and your thought process." },
+        { question: "Describe a time you had to make a decision with incomplete information — maybe in a hackathon or project.", context: "Show decision-making under uncertainty." },
+        { question: "How have you handled a situation where you missed a deadline for an assignment or project?", context: "Demonstrate accountability and problem-solving." },
+        { question: "Tell me about a time you had to convince others to go with your approach or idea.", context: "Show leadership and persuasion skills." },
+        { question: "Describe a time something you built or worked on didn't work out. What did you learn?", context: "Be honest and show growth." }
       ]
     },
     'system-design': {
@@ -101,7 +101,7 @@ const getFallbackQuestions = (type, difficulty) => {
       ]
     }
   };
-  
+
   const questions = questionSets[type]?.[difficulty] || questionSets.technical.medium;
   return questions;
 };
@@ -115,7 +115,8 @@ const generateAIQuestion = async (type, difficulty, previousQuestions = []) => {
       messages: [
         {
           role: 'system',
-          content: `You are an expert technical interviewer. Generate a unique ${difficulty} ${type} interview question.
+          content: `You are an expert technical interviewer. Generate a unique ${difficulty} ${type} interview question suitable for a STUDENT or RECENT GRADUATE.
+          The candidate may have limited professional experience — frame questions around college projects, internships, coursework, or learning.
           Also provide a brief "context" or hint for the interviewer (or candidate) to understand what to focus on.
           Avoid repeating these previously asked questions: ${JSON.stringify(previousQuestions)}.
           
@@ -139,10 +140,10 @@ const generateAIQuestion = async (type, difficulty, previousQuestions = []) => {
 router.post('/start', authenticateToken, async (req, res) => {
   try {
     const { type, difficulty, duration } = req.body;
-    
+
     // Try to get AI question first
     const aiQuestion = await generateAIQuestion(type, difficulty);
-    
+
     if (aiQuestion) {
       res.json({ questions: [aiQuestion] });
     } else {
@@ -150,12 +151,12 @@ router.post('/start', authenticateToken, async (req, res) => {
       const questions = getFallbackQuestions(type, difficulty);
       const selectedQuestions = [];
       const questionCount = 5;
-      
+
       for (let i = 0; i < questionCount && i < questions.length; i++) {
         const randomIndex = Math.floor(Math.random() * questions.length);
         selectedQuestions.push(questions[randomIndex]);
       }
-      
+
       res.json({ questions: selectedQuestions });
     }
   } catch (error) {
@@ -168,7 +169,7 @@ router.post('/next-question', authenticateToken, async (req, res) => {
   try {
     const { previousResponses, type } = req.body;
     const difficulty = req.body.difficulty || 'medium'; // Pass difficulty if available, else default
-    
+
     // Extract previous questions to avoid repetition
     const previousQuestions = previousResponses.map(r => r.question.question);
 
@@ -191,12 +192,12 @@ router.post('/next-question', authenticateToken, async (req, res) => {
 router.post('/complete', authenticateToken, async (req, res) => {
   try {
     const { type, difficulty, duration, responses } = req.body;
-    
+
     const overallScore = Math.random() * 40 + 60;
     const communicationScore = Math.random() * 40 + 60;
     const technicalScore = Math.random() * 40 + 60;
     const problemSolvingScore = Math.random() * 40 + 60;
-    
+
     const { data, error } = await supabaseAdmin
       .from('mock_interviews')
       .insert({
@@ -216,7 +217,7 @@ router.post('/complete', authenticateToken, async (req, res) => {
       .single();
 
     if (error) throw error;
-    
+
     res.json({
       interviewId: data.id,
       scores: {
@@ -252,7 +253,7 @@ router.get('/history', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const { data, error } = await supabaseAdmin
       .from('mock_interviews')
       .select('*')
@@ -263,7 +264,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     if (error || !data) {
       return res.status(404).json({ error: 'Interview not found' });
     }
-    
+
     res.json({ interview: data });
   } catch (error) {
     console.error('Error fetching interview:', error);

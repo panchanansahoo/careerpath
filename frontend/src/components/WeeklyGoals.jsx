@@ -9,25 +9,52 @@ function getWeekKey() {
     return `${now.getFullYear()}-W${weekNum}`;
 }
 
-function getInitialGoals() {
+function getInitialGoals(weeklyData) {
     try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (parsed.week === getWeekKey()) return parsed;
+            if (parsed.week === getWeekKey()) {
+                // Update done counts from DB data if available
+                if (weeklyData) {
+                    parsed.items = parsed.items.map(item => {
+                        if (item.label === 'Easy problems') return { ...item, done: weeklyData.easy || 0 };
+                        if (item.label === 'Medium problems') return { ...item, done: weeklyData.medium || 0 };
+                        if (item.label === 'Hard problems') return { ...item, done: weeklyData.hard || 0 };
+                        return item;
+                    });
+                }
+                return parsed;
+            }
         }
     } catch { }
+
     return {
         week: getWeekKey(), target: 15, completed: 0, items: [
-            { label: 'Easy problems', target: 5, done: 0 },
-            { label: 'Medium problems', target: 7, done: 0 },
-            { label: 'Hard problems', target: 3, done: 0 },
+            { label: 'Easy problems', target: 5, done: weeklyData?.easy || 0 },
+            { label: 'Medium problems', target: 7, done: weeklyData?.medium || 0 },
+            { label: 'Hard problems', target: 3, done: weeklyData?.hard || 0 },
         ]
     };
 }
 
-export default function WeeklyGoals() {
-    const [goals, setGoals] = useState(getInitialGoals);
+export default function WeeklyGoals({ weeklyData }) {
+    const [goals, setGoals] = useState(() => getInitialGoals(weeklyData));
+
+    // Sync done counts when weeklyData changes from DB
+    useEffect(() => {
+        if (weeklyData) {
+            setGoals(prev => ({
+                ...prev,
+                items: prev.items.map(item => {
+                    if (item.label === 'Easy problems') return { ...item, done: weeklyData.easy || 0 };
+                    if (item.label === 'Medium problems') return { ...item, done: weeklyData.medium || 0 };
+                    if (item.label === 'Hard problems') return { ...item, done: weeklyData.hard || 0 };
+                    return item;
+                })
+            }));
+        }
+    }, [weeklyData]);
 
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(goals));
@@ -36,16 +63,6 @@ export default function WeeklyGoals() {
     const totalDone = goals.items.reduce((s, i) => s + i.done, 0);
     const totalTarget = goals.items.reduce((s, i) => s + i.target, 0);
     const pct = totalTarget > 0 ? Math.round((totalDone / totalTarget) * 100) : 0;
-
-    const increment = (idx) => {
-        setGoals(prev => {
-            const items = prev.items.map((item, i) => {
-                if (i === idx && item.done < item.target) return { ...item, done: item.done + 1 };
-                return item;
-            });
-            return { ...prev, items };
-        });
-    };
 
     // SVG ring
     const size = 90, stroke = 7, radius = (size - stroke) / 2;
@@ -92,14 +109,7 @@ export default function WeeklyGoals() {
                             <div key={idx}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{item.label}</span>
-                                    <button onClick={() => increment(idx)} style={{
-                                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: 6, width: 22, height: 22, color: 'rgba(255,255,255,0.5)',
-                                        fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', transition: 'all 0.2s', lineHeight: 1, padding: 0,
-                                    }} onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.12)'}
-                                        onMouseLeave={e => e.target.style.background = 'rgba(255,255,255,0.06)'}
-                                        title={`+1 ${item.label}`}>+</button>
+                                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{item.done}/{item.target}</span>
                                 </div>
                                 <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
                                     <div style={{
@@ -107,7 +117,6 @@ export default function WeeklyGoals() {
                                         background: colors[idx], transition: 'width 0.4s ease',
                                     }} />
                                 </div>
-                                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{item.done}/{item.target}</div>
                             </div>
                         );
                     })}

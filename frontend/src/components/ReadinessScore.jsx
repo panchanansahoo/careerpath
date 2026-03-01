@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Shield, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 function AnimatedGauge({ value, size = 140, strokeWidth = 10, color = 'var(--accent)' }) {
     const canvasRef = useRef(null);
@@ -20,7 +19,6 @@ function AnimatedGauge({ value, size = 140, strokeWidth = 10, color = 'var(--acc
         const cy = size / 2;
         const r = (size - strokeWidth * 2) / 2;
 
-        // Background arc
         ctx.clearRect(0, 0, size, size);
         ctx.beginPath();
         ctx.arc(cx, cy, r, Math.PI * 0.75, Math.PI * 2.25);
@@ -29,7 +27,6 @@ function AnimatedGauge({ value, size = 140, strokeWidth = 10, color = 'var(--acc
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Value arc
         const angle = Math.PI * 0.75 + (Math.PI * 1.5) * (value / 100);
         ctx.beginPath();
         ctx.arc(cx, cy, r, Math.PI * 0.75, angle);
@@ -38,7 +35,6 @@ function AnimatedGauge({ value, size = 140, strokeWidth = 10, color = 'var(--acc
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Center text
         ctx.fillStyle = '#fff';
         ctx.font = `bold ${size * 0.22}px system-ui`;
         ctx.textAlign = 'center';
@@ -52,63 +48,29 @@ function AnimatedGauge({ value, size = 140, strokeWidth = 10, color = 'var(--acc
     return <canvas ref={canvasRef} />;
 }
 
-export default function ReadinessScore({ company = null, compact = false }) {
-    const { user } = useAuth();
-    const [score, setScore] = useState(null);
-    const [breakdown, setBreakdown] = useState(null);
-    const [loading, setLoading] = useState(true);
+export default function ReadinessScore({ data, company = null, compact = false }) {
+    const rd = data || { practiceCount: 0, mockCount: 0, streak: 0, timedSessions: 0 };
 
-    useEffect(() => {
-        calculateScore();
-    }, [company]);
+    // Calculate sub-scores (0-100 each)
+    const practiceScore = Math.min(100, Math.round((rd.practiceCount / 50) * 100));
+    const mockScore = Math.min(100, Math.round((rd.mockCount / 5) * 100));
+    const streakScore = Math.min(100, Math.round((rd.streak / 14) * 100));
+    const timedScore = Math.min(100, Math.round((rd.timedSessions / 10) * 100));
 
-    const calculateScore = () => {
-        // Client-side readiness calculation from localStorage data
-        const streak = parseInt(localStorage.getItem('streakCount') || '0');
-        const solvedCount = parseInt(localStorage.getItem('solvedCount') || '0');
-        const mockSessions = parseInt(localStorage.getItem('mockSessionsCompleted') || '0');
-        const timedSessions = parseInt(localStorage.getItem('timedSessionsCompleted') || '0');
-        const trackProgress = JSON.parse(localStorage.getItem(`ct_progress_${company || 'general'}`) || '{}');
-        const sectionsCompleted = Object.values(trackProgress).filter(Boolean).length;
+    // Weighted average
+    const score = Math.round(
+        practiceScore * 0.35 +
+        mockScore * 0.25 +
+        streakScore * 0.20 +
+        timedScore * 0.20
+    );
 
-        const hasRealData = streak > 0 || solvedCount > 0 || mockSessions > 0 || timedSessions > 0 || sectionsCompleted > 0;
-
-        if (!hasRealData) {
-            // Show impressive demo data
-            setScore(72);
-            setBreakdown({ practice: 85, mocks: 60, streak: 78, timed: 55, track: 45 });
-            setLoading(false);
-            return;
-        }
-
-        // Calculate sub-scores (0-100 each)
-        const practiceScore = Math.min(100, Math.round((solvedCount / 50) * 100));
-        const mockScore = Math.min(100, Math.round((mockSessions / 5) * 100));
-        const streakScore = Math.min(100, Math.round((streak / 14) * 100));
-        const timedScore = Math.min(100, Math.round((timedSessions / 3) * 100));
-        const trackScore = Math.min(100, Math.round((sectionsCompleted / 4) * 100));
-
-        // Weighted average
-        const overall = Math.round(
-            practiceScore * 0.30 +
-            mockScore * 0.25 +
-            streakScore * 0.15 +
-            timedScore * 0.15 +
-            trackScore * 0.15
-        );
-
-        setScore(overall);
-        setBreakdown({
-            practice: practiceScore,
-            mocks: mockScore,
-            streak: streakScore,
-            timed: timedScore,
-            track: trackScore,
-        });
-        setLoading(false);
+    const breakdown = {
+        practice: practiceScore,
+        mocks: mockScore,
+        streak: streakScore,
+        timed: timedScore,
     };
-
-    if (loading) return null;
 
     const getColor = (v) => v >= 70 ? '#22c55e' : v >= 40 ? '#f59e0b' : '#ef4444';
     const getLabel = (v) => v >= 80 ? 'Interview Ready! 🎯' : v >= 60 ? 'Almost There 💪' : v >= 30 ? 'Making Progress 📈' : 'Just Getting Started 🌱';
@@ -143,27 +105,24 @@ export default function ReadinessScore({ company = null, compact = false }) {
                 </div>
             </div>
 
-            {breakdown && (
-                <div className="rs-breakdown">
-                    {[
-                        { label: 'Practice', value: breakdown.practice, icon: '📝' },
-                        { label: 'Mocks', value: breakdown.mocks, icon: '🎤' },
-                        { label: 'Streak', value: breakdown.streak, icon: '🔥' },
-                        { label: 'Timed', value: breakdown.timed, icon: '⏱️' },
-                        { label: 'Track', value: breakdown.track, icon: '🗺️' },
-                    ].map(item => (
-                        <div key={item.label} className="rs-break-item">
-                            <div className="rs-break-header">
-                                <span>{item.icon} {item.label}</span>
-                                <span style={{ color: getColor(item.value) }}>{item.value}%</span>
-                            </div>
-                            <div className="rs-break-bar">
-                                <div className="rs-break-fill" style={{ width: `${item.value}%`, background: getColor(item.value) }} />
-                            </div>
+            <div className="rs-breakdown">
+                {[
+                    { label: 'Practice', value: breakdown.practice, icon: '📝' },
+                    { label: 'Mocks', value: breakdown.mocks, icon: '🎤' },
+                    { label: 'Streak', value: breakdown.streak, icon: '🔥' },
+                    { label: 'Timed', value: breakdown.timed, icon: '⏱️' },
+                ].map(item => (
+                    <div key={item.label} className="rs-break-item">
+                        <div className="rs-break-header">
+                            <span>{item.icon} {item.label}</span>
+                            <span style={{ color: getColor(item.value) }}>{item.value}%</span>
                         </div>
-                    ))}
-                </div>
-            )}
+                        <div className="rs-break-bar">
+                            <div className="rs-break-fill" style={{ width: `${item.value}%`, background: getColor(item.value) }} />
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

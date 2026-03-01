@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { PROBLEMS } from '../data/problemsDatabase';
 import {
   Search, Bell, Menu, X, ChevronRight, User, LogOut,
-  Settings, Sparkles, Flame, Zap, Crown, Command, TrendingUp,
+  Settings, Sparkles, Crown, Command, TrendingUp,
   Award, ChevronDown
 } from 'lucide-react';
 
@@ -220,8 +220,6 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
   // ─── Premium Dashboard Navbar ───
   const pageTitle = getPageTitle(location.pathname);
   const notifCount = 3; // Demo count
-  const streakCount = 12;
-  const xpCount = 1250;
   const userTier = 'Free'; // or 'Pro'
 
   return (
@@ -285,18 +283,6 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
                 )}
               </div>
             )}
-          </div>
-
-          {/* Streak Chip */}
-          <div className="topbar-chip streak-chip" title={`${streakCount} day streak`}>
-            <Flame size={14} className="streak-fire" />
-            <span>{streakCount}</span>
-          </div>
-
-          {/* XP Chip */}
-          <div className="topbar-chip xp-chip desktop-only" title={`${xpCount} XP earned`}>
-            <Zap size={14} className="xp-bolt" />
-            <span>{xpCount.toLocaleString()}</span>
           </div>
 
           {/* Notification Bell */}
@@ -379,27 +365,6 @@ export default function Navbar({ hasSidebar, onMobileMenuToggle }) {
                   <span className={`user-tier-badge ${userTier === 'Pro' ? 'pro' : 'free'}`}>
                     {userTier === 'Pro' ? <><Crown size={10} /> Pro</> : 'Free'}
                   </span>
-                </div>
-
-                {/* Quick stats */}
-                <div className="user-dropdown-stats">
-                  <div className="dropdown-stat">
-                    <Flame size={14} className="streak-fire" />
-                    <span className="dropdown-stat-value">{streakCount}</span>
-                    <span className="dropdown-stat-label">Streak</span>
-                  </div>
-                  <div className="dropdown-stat-divider" />
-                  <div className="dropdown-stat">
-                    <Zap size={14} className="xp-bolt" />
-                    <span className="dropdown-stat-value">{xpCount.toLocaleString()}</span>
-                    <span className="dropdown-stat-label">XP</span>
-                  </div>
-                  <div className="dropdown-stat-divider" />
-                  <div className="dropdown-stat">
-                    <TrendingUp size={14} style={{ color: '#22c55e' }} />
-                    <span className="dropdown-stat-value">Lv. 5</span>
-                    <span className="dropdown-stat-label">Level</span>
-                  </div>
                 </div>
 
                 {/* Links */}

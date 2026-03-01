@@ -1,21 +1,31 @@
 import React from 'react';
+import { Inbox } from 'lucide-react';
 
-const topics = [
-    { name: 'Arrays & Hashing', solved: 18, total: 30, color: '#a78bfa' },
-    { name: 'Two Pointers', solved: 12, total: 20, color: '#38bdf8' },
-    { name: 'Sliding Window', solved: 8, total: 15, color: '#22c55e' },
-    { name: 'Stack', solved: 10, total: 18, color: '#f59e0b' },
-    { name: 'Binary Search', solved: 6, total: 20, color: '#fb923c' },
-    { name: 'Linked List', solved: 9, total: 15, color: '#ec4899' },
-    { name: 'Trees', solved: 14, total: 25, color: '#14b8a6' },
-    { name: 'Dynamic Programming', solved: 5, total: 30, color: '#ef4444' },
-    { name: 'Graphs', solved: 7, total: 22, color: '#8b5cf6' },
-    { name: 'Backtracking', solved: 3, total: 12, color: '#06b6d4' },
-];
+export default function TopicProgress({ topics }) {
+    const items = topics || [];
 
-export default function TopicProgress() {
-    const totalSolved = topics.reduce((s, t) => s + t.solved, 0);
-    const totalProblems = topics.reduce((s, t) => s + t.total, 0);
+    if (items.length === 0) {
+        return (
+            <div style={{
+                background: 'rgba(255,255,255,0.03)', borderRadius: 16,
+                border: '1px solid rgba(255,255,255,0.06)', padding: '20px 24px',
+            }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    📊 Topic Progress
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 18 }}>DSA roadmap completion</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px', gap: 8 }}>
+                    <Inbox size={28} style={{ color: 'rgba(255,255,255,0.12)' }} />
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
+                        No topic progress yet. Start solving problems to track your progress!
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const totalSolved = items.reduce((s, t) => s + t.solved, 0);
+    const totalProblems = items.reduce((s, t) => s + t.total, 0);
 
     return (
         <div style={{
@@ -38,8 +48,8 @@ export default function TopicProgress() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {topics.map((topic, i) => {
-                    const pct = Math.round((topic.solved / topic.total) * 100);
+                {items.map((topic, i) => {
+                    const pct = topic.total > 0 ? Math.round((topic.solved / topic.total) * 100) : 0;
                     return (
                         <div key={i}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>

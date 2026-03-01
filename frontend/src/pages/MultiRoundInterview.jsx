@@ -18,7 +18,7 @@ const ROUND_TYPES = [
         stage: 'DSA / Coding',
         icon: <Code2 size={20} />,
         color: '#8b5cf6',
-        description: 'Data structures, algorithms, and coding problems',
+        description: 'Coding problems — like what you\'d see on LeetCode 🧩',
         duration: '25 min',
         questions: 4
     },
@@ -28,7 +28,7 @@ const ROUND_TYPES = [
         stage: 'System Design',
         icon: <Brain size={20} />,
         color: '#3b82f6',
-        description: 'Architecture, scalability, and system thinking',
+        description: 'Design real systems — think big picture & architecture 🏛️',
         duration: '20 min',
         questions: 3
     },
@@ -38,7 +38,7 @@ const ROUND_TYPES = [
         stage: 'Behavioral',
         icon: <Users size={20} />,
         color: '#22c55e',
-        description: 'Leadership, teamwork, and situational questions',
+        description: 'Your experiences & teamwork stories — college projects count! 🤝',
         duration: '15 min',
         questions: 3
     },
@@ -48,7 +48,7 @@ const ROUND_TYPES = [
         stage: 'HR',
         icon: <Briefcase size={20} />,
         color: '#f59e0b',
-        description: 'Culture fit, career goals, and expectations',
+        description: 'Get to know you — your goals, interests & personality 😊',
         duration: '10 min',
         questions: 2
     }
@@ -174,142 +174,212 @@ export default function MultiRoundInterview() {
         return (
             <div style={{
                 minHeight: '100vh',
-                background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 50%, #0f0f23 100%)',
+                background: '#080811',
                 color: '#e2e8f0',
-                padding: '40px 20px',
-                fontFamily: "'Inter', system-ui, sans-serif"
+                padding: '48px 24px',
+                fontFamily: "'Inter', system-ui, sans-serif",
+                position: 'relative',
+                overflow: 'hidden'
             }}>
-                <div style={{ maxWidth: 800, margin: '0 auto' }}>
+                {/* Background Effects */}
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: `
+                        radial-gradient(ellipse 60% 50% at 20% 15%, rgba(99,102,241,0.1) 0%, transparent 65%),
+                        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(139,92,246,0.08) 0%, transparent 65%)`,
+                    pointerEvents: 'none'
+                }} />
+                <div style={{
+                    position: 'absolute', inset: 0,
+                    background: `
+                        repeating-linear-gradient(90deg, rgba(99,102,241,0.012) 0px, rgba(99,102,241,0.012) 1px, transparent 1px, transparent 60px),
+                        repeating-linear-gradient(0deg, rgba(99,102,241,0.012) 0px, rgba(99,102,241,0.012) 1px, transparent 1px, transparent 60px)`,
+                    pointerEvents: 'none'
+                }} />
+
+                <div style={{ maxWidth: 840, margin: '0 auto', position: 'relative', zIndex: 1 }}>
                     {/* Header */}
-                    <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                        <Link to="/dashboard" style={{ color: '#64748b', textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 16 }}>
+                    <div style={{ textAlign: 'center', marginBottom: 48 }}>
+                        <Link to="/dashboard" style={{
+                            color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontSize: 13,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
+                            marginBottom: 20, transition: 'color 0.2s', fontWeight: 500
+                        }}>
                             ← Back to Dashboard
                         </Link>
-                        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
-                            <Zap size={24} style={{ color: '#8b5cf6' }} /> Full Interview Loop
+                        <h1 style={{
+                            fontSize: 32, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.5px',
+                            background: 'linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.75) 100%)',
+                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+                        }}>
+                            <Zap size={26} style={{ color: '#8b5cf6', verticalAlign: '-3px', marginRight: 8 }} />
+                            Full Interview Loop
                         </h1>
-                        <p style={{ color: '#94a3b8', fontSize: 14 }}>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, fontWeight: 500 }}>
                             Simulate a complete multi-round interview cycle — just like the real thing
                         </p>
                     </div>
 
-                    {/* Company & Role Selection */}
+                    {/* Interview Setup Card */}
                     <div style={{
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 16,
-                        padding: 24,
-                        marginBottom: 24
+                        background: 'linear-gradient(145deg, rgba(15,15,30,0.9) 0%, rgba(10,10,22,0.95) 100%)',
+                        border: '1.5px solid rgba(99,102,241,0.1)',
+                        borderRadius: 20, padding: 28, marginBottom: 20,
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)',
+                        position: 'relative', overflow: 'hidden'
                     }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: '#e2e8f0' }}>
+                        {/* Top gradient line */}
+                        <div style={{
+                            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.3) 30%, rgba(139,92,246,0.3) 70%, transparent 100%)'
+                        }} />
+                        <h3 style={{
+                            fontSize: 13, fontWeight: 700, marginBottom: 18,
+                            color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px'
+                        }}>
                             Interview Setup
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-                            <div>
-                                <label style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 4 }}>Company</label>
-                                <select
-                                    value={company}
-                                    onChange={e => setCompany(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '8px 12px',
-                                        background: 'rgba(255,255,255,0.06)',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: 8, color: '#e2e8f0', fontSize: 13
-                                    }}
-                                >
-                                    {COMPANIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 4 }}>Role</label>
-                                <select
-                                    value={role}
-                                    onChange={e => setRole(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '8px 12px',
-                                        background: 'rgba(255,255,255,0.06)',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: 8, color: '#e2e8f0', fontSize: 13
-                                    }}
-                                >
-                                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 4 }}>Difficulty</label>
-                                <select
-                                    value={difficulty}
-                                    onChange={e => setDifficulty(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '8px 12px',
-                                        background: 'rgba(255,255,255,0.06)',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: 8, color: '#e2e8f0', fontSize: 13
-                                    }}
-                                >
-                                    {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
-                                </select>
-                            </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                            {[
+                                { label: 'Company', value: company, onChange: e => setCompany(e.target.value), options: COMPANIES.map(c => ({ value: c.id, label: c.name })) },
+                                { label: 'Role', value: role, onChange: e => setRole(e.target.value), options: ROLES.map(r => ({ value: r, label: r })) },
+                                { label: 'Difficulty', value: difficulty, onChange: e => setDifficulty(e.target.value), options: DIFFICULTIES.map(d => ({ value: d, label: d })) }
+                            ].map((field, i) => (
+                                <div key={i}>
+                                    <label style={{
+                                        fontSize: 10, color: 'rgba(255,255,255,0.3)', display: 'block',
+                                        marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px'
+                                    }}>{field.label}</label>
+                                    <select
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        style={{
+                                            width: '100%', padding: '11px 36px 11px 14px',
+                                            background: 'rgba(255,255,255,0.04)',
+                                            border: '1px solid rgba(255,255,255,0.08)',
+                                            borderRadius: 12, color: '#fff', fontSize: 13,
+                                            fontWeight: 600, fontFamily: 'inherit',
+                                            outline: 'none', cursor: 'pointer', appearance: 'none',
+                                            transition: 'all 0.25s',
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                                            backgroundRepeat: 'no-repeat',
+                                            backgroundPosition: 'right 12px center'
+                                        }}
+                                    >
+                                        {field.options.map(o => <option key={o.value} value={o.value} style={{ background: '#13131f' }}>{o.label}</option>)}
+                                    </select>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Round Selection */}
+                    {/* Round Selection Card */}
                     <div style={{
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        borderRadius: 16,
-                        padding: 24,
-                        marginBottom: 24
+                        background: 'linear-gradient(145deg, rgba(15,15,30,0.9) 0%, rgba(10,10,22,0.95) 100%)',
+                        border: '1.5px solid rgba(99,102,241,0.1)',
+                        borderRadius: 20, padding: 28, marginBottom: 24,
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)',
+                        position: 'relative', overflow: 'hidden'
                     }}>
-                        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: '#e2e8f0' }}>
+                        <div style={{
+                            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.3) 30%, rgba(139,92,246,0.3) 70%, transparent 100%)'
+                        }} />
+                        <h3 style={{
+                            fontSize: 13, fontWeight: 700, marginBottom: 18,
+                            color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1px'
+                        }}>
                             Select Interview Rounds
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-                            {ROUND_TYPES.map(round => (
-                                <div
-                                    key={round.id}
-                                    onClick={() => toggleRound(round.id)}
-                                    style={{
-                                        padding: 16,
-                                        background: selectedRounds.includes(round.id)
-                                            ? `rgba(${round.color === '#8b5cf6' ? '139,92,246' : round.color === '#3b82f6' ? '59,130,246' : round.color === '#22c55e' ? '34,197,94' : '245,158,11'}, 0.1)`
-                                            : 'rgba(255,255,255,0.02)',
-                                        border: `1px solid ${selectedRounds.includes(round.id) ? round.color + '40' : 'rgba(255,255,255,0.06)'}`,
-                                        borderRadius: 12,
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 12
-                                    }}
-                                >
-                                    <div style={{
-                                        width: 40, height: 40,
-                                        borderRadius: 10,
-                                        background: selectedRounds.includes(round.id) ? round.color + '20' : 'rgba(255,255,255,0.04)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: selectedRounds.includes(round.id) ? round.color : '#64748b'
-                                    }}>
-                                        {round.icon}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 600, fontSize: 13 }}>{round.name}</div>
-                                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>{round.description}</div>
-                                        <div style={{ fontSize: 10, color: '#64748b', marginTop: 4 }}>
-                                            ⏱ {round.duration} · {round.questions} questions
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+                            {ROUND_TYPES.map(round => {
+                                const isSelected = selectedRounds.includes(round.id);
+                                return (
+                                    <div
+                                        key={round.id}
+                                        onClick={() => toggleRound(round.id)}
+                                        style={{
+                                            padding: '18px 20px',
+                                            background: isSelected
+                                                ? `linear-gradient(145deg, ${round.color}12, ${round.color}08)`
+                                                : 'rgba(255,255,255,0.02)',
+                                            border: `1.5px solid ${isSelected ? round.color + '35' : 'rgba(255,255,255,0.06)'}`,
+                                            borderRadius: 16,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 14,
+                                            position: 'relative',
+                                            overflow: 'hidden',
+                                            transform: isSelected ? 'scale(1)' : 'scale(1)',
+                                            boxShadow: isSelected ? `0 0 24px ${round.color}12` : 'none'
+                                        }}
+                                        onMouseEnter={e => {
+                                            if (!isSelected) {
+                                                e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                                                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                            }
+                                        }}
+                                        onMouseLeave={e => {
+                                            if (!isSelected) {
+                                                e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                                                e.currentTarget.style.transform = 'scale(1)';
+                                            }
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: 44, height: 44,
+                                            borderRadius: 12,
+                                            background: isSelected ? round.color + '18' : 'rgba(255,255,255,0.04)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            color: isSelected ? round.color : 'rgba(255,255,255,0.35)',
+                                            transition: 'all 0.3s',
+                                            flexShrink: 0,
+                                            border: `1px solid ${isSelected ? round.color + '25' : 'rgba(255,255,255,0.04)'}`
+                                        }}>
+                                            {round.icon}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                fontWeight: 700, fontSize: 14,
+                                                color: isSelected ? '#fff' : 'rgba(255,255,255,0.7)',
+                                                transition: 'color 0.3s'
+                                            }}>{round.name}</div>
+                                            <div style={{
+                                                fontSize: 12, color: 'rgba(255,255,255,0.35)',
+                                                marginTop: 3, lineHeight: 1.4
+                                            }}>{round.description}</div>
+                                            <div style={{
+                                                fontSize: 11, color: isSelected ? round.color : 'rgba(255,255,255,0.25)',
+                                                marginTop: 5, fontWeight: 600,
+                                                display: 'flex', alignItems: 'center', gap: 8,
+                                                transition: 'color 0.3s'
+                                            }}>
+                                                <span>⏱ {round.duration}</span>
+                                                <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor', opacity: 0.4 }} />
+                                                <span>{round.questions} questions</span>
+                                            </div>
+                                        </div>
+                                        <div style={{
+                                            width: 22, height: 22,
+                                            borderRadius: 7,
+                                            border: `2px solid ${isSelected ? round.color : 'rgba(255,255,255,0.12)'}`,
+                                            background: isSelected ? round.color : 'transparent',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            flexShrink: 0,
+                                            boxShadow: isSelected ? `0 0 12px ${round.color}40` : 'none'
+                                        }}>
+                                            {isSelected && <CheckCircle size={13} color="white" />}
                                         </div>
                                     </div>
-                                    <div style={{
-                                        width: 20, height: 20,
-                                        borderRadius: 6,
-                                        border: `2px solid ${selectedRounds.includes(round.id) ? round.color : 'rgba(255,255,255,0.15)'}`,
-                                        background: selectedRounds.includes(round.id) ? round.color : 'transparent',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        {selectedRounds.includes(round.id) && <CheckCircle size={12} color="white" />}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -319,24 +389,53 @@ export default function MultiRoundInterview() {
                         disabled={selectedRounds.length === 0}
                         style={{
                             width: '100%',
-                            padding: '16px',
-                            background: selectedRounds.length > 0 ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'rgba(255,255,255,0.05)',
-                            color: selectedRounds.length > 0 ? 'white' : '#64748b',
-                            border: 'none',
-                            borderRadius: 12,
+                            padding: '18px',
+                            background: selectedRounds.length > 0
+                                ? 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%)'
+                                : 'rgba(255,255,255,0.04)',
+                            color: selectedRounds.length > 0 ? 'white' : 'rgba(255,255,255,0.25)',
+                            border: selectedRounds.length > 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                            borderRadius: 16,
                             fontSize: 16,
                             fontWeight: 700,
                             cursor: selectedRounds.length > 0 ? 'pointer' : 'not-allowed',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 8,
-                            transition: 'all 0.2s'
+                            gap: 10,
+                            transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            fontFamily: 'inherit',
+                            boxShadow: selectedRounds.length > 0
+                                ? '0 6px 30px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.15)'
+                                : 'none',
+                            letterSpacing: '0.3px',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}
+                        onMouseEnter={e => {
+                            if (selectedRounds.length > 0) {
+                                e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)';
+                                e.currentTarget.style.boxShadow = '0 20px 48px rgba(99,102,241,0.5), 0 0 0 4px rgba(99,102,241,0.15)';
+                            }
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.transform = '';
+                            e.currentTarget.style.boxShadow = selectedRounds.length > 0
+                                ? '0 6px 30px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.15)' : 'none';
                         }}
                     >
                         <Play size={18} />
                         Start {selectedRounds.length}-Round Interview Loop
                     </button>
+
+                    {/* Privacy note */}
+                    <div style={{
+                        textAlign: 'center', marginTop: 16, fontSize: 11,
+                        color: 'rgba(255,255,255,0.2)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', gap: 4
+                    }}>
+                        🔒 Your interview data is private and never shared
+                    </div>
                 </div>
             </div>
         );

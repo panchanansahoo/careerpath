@@ -1,7 +1,8 @@
-// Central aptitude data index — combines all categories with metadata
 import { quantQuestions } from './quantQuestions';
 import { reasoningQuestions } from './reasoningQuestions';
 import { verbalQuestions } from './verbalQuestions';
+import { companyQuestions } from './companyQuestions';
+import { technicalQuestions } from './technicalQuestions';
 
 // Top-level categories
 export const APTITUDE_CATEGORIES = {
@@ -31,6 +32,24 @@ export const APTITUDE_CATEGORIES = {
     gradient: 'linear-gradient(135deg, #34d399, #10b981)',
     description: 'Grammar, vocabulary, reading comprehension and verbal logic',
     subcategories: verbalQuestions
+  },
+  technical: {
+    id: 'technical',
+    title: 'Technical Aptitude',
+    icon: 'Database',
+    color: '#38bdf8',
+    gradient: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+    description: 'Core CS subjects like OS, DBMS, Computer Networks, OOPS, and DSA concepts',
+    subcategories: technicalQuestions
+  },
+  company: {
+    id: 'company',
+    title: 'Company Specific',
+    icon: 'Building',
+    color: '#f59e0b',
+    gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+    description: 'Previous year questions from top tech companies like TCS, Infosys, Amazon, etc.',
+    subcategories: companyQuestions
   }
 };
 
